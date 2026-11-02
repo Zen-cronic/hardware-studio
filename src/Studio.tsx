@@ -408,6 +408,9 @@ export default function Studio({
           <button
             className={"button icon-only " + (notes ? "selected" : "")}
             aria-label="Open shared notes"
+            title="Shared notes"
+            aria-expanded={notes}
+            aria-controls="shared-notes-drawer"
             onClick={() => setNotes(!notes)}
           >
             <MessageSquare size={18} />
@@ -1177,7 +1180,7 @@ export default function Studio({
         </aside>
       </main>
       {notes && (
-        <div className="notes-drawer">
+        <div className="notes-drawer" id="shared-notes-drawer">
           <div className="panel-heading">
             <h2>Work together</h2>
             <button

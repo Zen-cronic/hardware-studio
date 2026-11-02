@@ -203,3 +203,51 @@ test("mobile editor opens dimensions first and switches to a compact prompt with
     await context.close();
   }
 });
+
+for (const width of [320, 375, 768]) {
+  test(`mobile shared notes at ${width}px exchange and persist with another editor`, async ({ browser, request }) => {
+    const r = await create(request);
+    const mobile = await browser.newContext({ viewport: { width, height: 900 }, isMobile: true, hasTouch: true });
+    const desktop = await browser.newContext();
+    const phone = await mobile.newPage(), peer = await desktop.newPage();
+    try {
+      await Promise.all([phone.goto(url(r)), peer.goto(url(r))]);
+      const toggle = phone.getByRole("button", { name: "Open shared notes", exact: true });
+      await expect(toggle).toBeVisible();
+      const box = await toggle.boundingBox();
+      expect(box!.width).toBeGreaterThanOrEqual(44);
+      expect(box!.height).toBeGreaterThanOrEqual(44);
+      expect(box!.x + box!.width).toBeLessThanOrEqual(width);
+      await expect(toggle).toHaveAttribute("aria-expanded", "false");
+      await expect(phone.locator(".scene-panel .model-canvas")).toHaveAttribute("data-ready", "true");
+      await phone.screenshot({ path: `.artifacts/mobile-notes-${width}-closed.png` });
+      await toggle.tap();
+      await expect(toggle).toHaveAttribute("aria-expanded", "true");
+      await peer.getByRole("button", { name: "Open shared notes", exact: true }).click();
+      for (const p of [phone, peer]) {
+        await expect(p.locator(".shared-tabs").getByText("Connected", { exact: true })).toBeVisible();
+      }
+      await phone.getByLabel("Add a shared note", { exact: true }).fill("Check the base diameter before assembly.");
+      await phone.getByRole("button", { name: "Add note", exact: true }).tap();
+      await expect(peer.locator(".notes-list")).toContainText("Check the base diameter before assembly.");
+      await peer.getByLabel("Add a shared note", { exact: true }).fill("Confirmed: the base matches this revision.");
+      await peer.getByRole("button", { name: "Add note", exact: true }).click();
+      await expect(phone.locator(".notes-list")).toContainText("Confirmed: the base matches this revision.");
+      expect(await phone.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      await phone.screenshot({ path: `.artifacts/mobile-notes-${width}-open.png` });
+      await phone.getByRole("button", { name: "Close shared notes", exact: true }).tap();
+      await expect(phone.locator(".notes-drawer")).toHaveCount(0);
+      await expect(toggle).toHaveAttribute("aria-expanded", "false");
+      await expect(phone.getByTestId("param-diameter")).toBeVisible();
+      await phone.reload();
+      await phone.getByRole("button", { name: "Open shared notes", exact: true }).tap();
+      await expect(phone.locator(".notes-list article")).toHaveCount(2);
+      await phone.getByRole("tab", { name: "Sketch", exact: true }).tap();
+      await expect(phone.getByTestId("shared-sketch")).toBeVisible();
+      expect(await phone.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    } finally {
+      await mobile.close();
+      await desktop.close();
+    }
+  });
+}

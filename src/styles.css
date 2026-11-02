@@ -2264,9 +2264,6 @@ strong {
     padding: 7px;
     min-height: 32px;
   }
-  .studio-header-actions > .button:first-of-type {
-    display: none;
-  }
   .design-title > span {
     font-size: 0.625rem;
   }
