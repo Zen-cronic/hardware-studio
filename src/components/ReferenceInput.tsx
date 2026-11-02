@@ -12,8 +12,51 @@ export function VoiceButton({
 }) {
   const [listening, setListening] = useState(false);
   const ref = useRef<Recognition>(null);
-  useEffect(() => () => ref.current?.abort(), []);
+  useEffect(
+    () => () => {
+      const active = ref.current;
+      ref.current = null;
+      if (active) {
+        active.onstart = active.onend = active.onerror = active.onresult = null;
+        try {
+          active.abort();
+        } catch {
+          // A browser may already have ended this recognition session.
+        }
+      }
+    },
+    [],
+  );
+  function errorMessage(code: string) {
+    if (code === "no-speech")
+      return "No speech was detected. Try again or type your instruction.";
+    if (code === "network")
+      return "Speech recognition could not reach its service. Check your connection or type your instruction.";
+    if (code === "audio-capture")
+      return "No microphone was available. Connect or enable an input device, or type your instruction.";
+    if (code === "language-not-supported")
+      return "English (US) speech recognition is unavailable in this browser. You can type your instruction.";
+    if (code === "not-allowed" || code === "service-not-allowed")
+      return "Microphone access was unavailable. Check your browser permission or type your instruction.";
+    return "Voice input could not start. Try again or type your instruction.";
+  }
   function listen() {
+    // The ref guards the pending permission/start interval before onstart fires.
+    if (ref.current) {
+      try {
+        ref.current.stop();
+      } catch {
+        const active = ref.current;
+        ref.current = null;
+        setListening(false);
+        try {
+          active?.abort();
+        } catch {
+          // Stop/abort may both reject an already-ended session.
+        }
+      }
+      return;
+    }
     const C =
       (window as any).SpeechRecognition ||
       (window as any).webkitSpeechRecognition;
@@ -23,24 +66,51 @@ export function VoiceButton({
       );
       return;
     }
-    if (listening) {
-      ref.current?.stop();
-      return;
-    }
-    const r = new C();
-    r.lang = "en-US";
-    r.interimResults = false;
-    r.onstart = () => setListening(true);
-    r.onend = () => setListening(false);
-    r.onerror = () => {
+    let r: Recognition;
+    try {
+      r = new C();
+      r.lang = "en-US";
+      r.interimResults = false;
+      r.onstart = () => {
+        if (ref.current === r) setListening(true);
+      };
+      r.onend = () => {
+        if (ref.current !== r) return;
+        ref.current = null;
+        setListening(false);
+      };
+      r.onerror = (event: { error?: string }) => {
+        if (ref.current !== r) return;
+        ref.current = null;
+        setListening(false);
+        try {
+          r.abort();
+        } catch {
+          // The service may already have ended after its error.
+        }
+        if (event.error !== "aborted") onError(errorMessage(event.error || ""));
+      };
+      r.onresult = (event: any) => {
+        if (ref.current !== r) return;
+        const text = event.results?.[event.resultIndex ?? 0]?.[0]?.transcript;
+        if (typeof text === "string" && text.trim()) onText(text);
+      };
+      ref.current = r;
+      setListening(true);
+      r.start();
+    } catch (error) {
+      const active = ref.current;
+      ref.current = null;
       setListening(false);
+      try {
+        active?.abort();
+      } catch {
+        // A failed start need not have created an active service session.
+      }
       onError(
-        "Microphone access was unavailable. Check your browser permission or type your instruction.",
+        errorMessage((error as Error).name === "NotAllowedError" ? "not-allowed" : ""),
       );
-    };
-    r.onresult = (e: any) => onText(e.results[0][0].transcript);
-    ref.current = r;
-    r.start();
+    }
   }
   return (
     <button
