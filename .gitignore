@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+.data/
+.artifacts/
+__pycache__/
+.pytest_cache/
+.DS_Store
+
+.playwright-mcp/
