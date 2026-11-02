@@ -117,7 +117,7 @@ function PartMesh({
     referencePreview = reference && !!onSelect;
   const materialColor = useMemo(() => {
     const c = new THREE.Color(part.color);
-    return metal ? c.multiplyScalar(0.88) : c;
+    return metal ? c.multiplyScalar(0.82) : c;
   }, [part.color, metal]);
   useFrame((_, delta) => {
     const m = ref.current;
@@ -167,7 +167,7 @@ function PartMesh({
       <meshStandardMaterial
         color={materialColor}
         metalness={metal ? 0.82 : 0.02}
-        roughness={metal ? 0.24 : 0.78}
+        roughness={metal ? 0.38 : 0.78}
         emissive={
           selected === part.id
             ? colors.focus
@@ -200,7 +200,7 @@ function PartMesh({
               ? colors.focus
               : referencePreview
                 ? part.color
-                : colors.primary
+                : colors.text
           }
           transparent
           opacity={
@@ -210,7 +210,7 @@ function PartMesh({
                 ? 0.07
                 : referencePreview
                   ? 0.45
-                  : 0.26
+                  : 0.38
           }
         />
       )}
@@ -327,7 +327,7 @@ function Camera({
         );
       }
     }
-    camera.position.copy(center).addScaledVector(dir, distance);
+    camera.position.copy(center).addScaledVector(dir, distance * 1.08);
     camera.lookAt(center);
     if (ref.current) {
       ref.current.target.copy(center);
@@ -439,11 +439,11 @@ export default function ModelCanvas(props: Props) {
           <FrameSignal parts={parts} onReady={() => setReady(true)} />
           <color attach="background" args={[colors.surface]} />
           <StudioLight />
-          <ambientLight intensity={0.5} />
-          <hemisphereLight args={[colors.white, colors.border, 0.8]} />
+          <ambientLight intensity={0.38} />
+          <hemisphereLight args={[colors.white, colors.border, 0.65]} />
           <directionalLight
             position={[extent, extent * 2, extent]}
-            intensity={2.1}
+            intensity={1.7}
             castShadow
             shadow-mapSize={[1024, 1024]}
             shadow-camera-left={-extent}
@@ -469,10 +469,10 @@ export default function ModelCanvas(props: Props) {
             {!compact && (
               <ContactShadows
                 position={[center[0], box.min.y - 1, center[2]]}
-                scale={extent * 3}
-                far={extent * 1.2}
-                opacity={0.3}
-                blur={1.8}
+                scale={extent * 4}
+                far={extent * 0.22}
+                opacity={0.24}
+                blur={1.6}
                 resolution={512}
                 frames={1}
               />
@@ -498,6 +498,12 @@ export default function ModelCanvas(props: Props) {
           </Suspense>
         </Canvas>
       </CanvasBoundary>
+      {ready && !failed && !compact && props.onSelect && !props.activePartIds &&
+        props.parts.filter((part) => part.role === "reference").slice(0, 1).map((part) => (
+          <span className="canvas-reference-label" key={part.id}>
+            <i style={{ background: part.color }} />{part.name}
+          </span>
+        ))}
       {!ready && !failed && <div className="model-loading">Loading model…</div>}
     </div>
   );

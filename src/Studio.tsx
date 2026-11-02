@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
-  ArrowRight,
   Check,
   CheckCircle2,
   ChevronDown,
@@ -565,7 +564,7 @@ export default function Studio({
                       {promptBusy ? (
                         <Loader2 className="spin" size={17} />
                       ) : (
-                        <ArrowRight size={18} />
+                        <ChevronRight size={18} />
                       )}
                     </button>
                   </div>
@@ -605,7 +604,7 @@ export default function Studio({
                             </dt>
                             <dd>
                               <del>{design.params[k]}</del>
-                              <ArrowRight size={12} />
+                              <ChevronRight size={12} />
                               <strong>{v}</strong>
                               <small>
                                 {

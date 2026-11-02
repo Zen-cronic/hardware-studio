@@ -34,7 +34,7 @@ export default function SharedNotes({
   const canvas = useRef<HTMLCanvasElement>(null),
     current = useRef<[number, number][]>([]),
     strokeRef = useRef<Stroke[]>([]);
-  const color = [colors.primary, colors.focus, colors.success][
+  const color = [colors.action, colors.focus, colors.success][
     Array.from(actor).reduce((sum, c) => sum + c.charCodeAt(0), 0) % 3
   ];
   useEffect(() => {

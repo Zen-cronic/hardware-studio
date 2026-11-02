@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
-  ArrowRight,
   Box,
   ChevronRight,
   FolderOpen,
@@ -158,13 +157,9 @@ function Catalog({ navigate }: { navigate: Navigate }) {
     <main className="catalog-page">
       <section className="hero">
         <div className="hero-copy">
-          <span className="eyebrow">
-            <span className="tiny-square" /> A workshop of possibilities
-          </span>
           <h1>
-            Start with a design.
-            <br />
-            Make it your own.
+            <span className="hero-intro">Start with a design.</span>
+            <span>Make it your own.</span>
           </h1>
           <p>
             Try working 3D products, shape the details together, and leave with
@@ -174,12 +169,8 @@ function Catalog({ navigate }: { navigate: Navigate }) {
             className="button primary"
             onClick={() => navigate("/designs/turntable")}
           >
-            Try the turntable <ArrowRight size={18} />
+            Try the turntable <ChevronRight size={18} />
           </button>
-          <div className="hero-note">
-            <Layers3 size={17} />
-            <span>Six working designs. One connected workflow.</span>
-          </div>
         </div>
         <div className="hero-stage">
           <div className="stage-label">
@@ -193,7 +184,6 @@ function Catalog({ navigate }: { navigate: Navigate }) {
           />
           <div className="hero-stage-bottom">
             <div>
-              <span className="eyebrow">Made for your next idea</span>
               <strong>Motorized turntable</strong>
             </div>
             <button
@@ -306,7 +296,7 @@ function ProductCard({
           ariaLabel={product.name + " 3D preview"}
         />
         <span className="preview-action">
-          Explore design <ArrowRight size={16} />
+          Explore design <ChevronRight size={16} />
         </span>
       </button>
       <div className="product-meta">
@@ -320,7 +310,7 @@ function ProductCard({
           aria-label={"Open " + product.name}
           onClick={() => navigate("/designs/" + product.kind)}
         >
-          <ArrowRight size={20} />
+          <ChevronRight size={20} />
         </button>
       </div>
       <div className="product-facts">
@@ -518,7 +508,7 @@ function Work({ navigate }: { navigate: Navigate }) {
                   })}
                 </span>
               </div>
-              <ArrowRight size={19} />
+              <ChevronRight size={19} />
             </button>
           ))}
         </div>
@@ -660,7 +650,7 @@ function Judge({ navigate }: { navigate: Navigate }) {
         className="button primary"
         onClick={() => navigate("/designs/turntable")}
       >
-        Begin with the turntable <ArrowRight size={18} />
+        Begin with the turntable <ChevronRight size={18} />
       </button>
       <button className="button" onClick={() => navigate("/new")}>
         Try a new design
