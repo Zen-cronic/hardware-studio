@@ -1,3 +1,4 @@
+import { standardSlider } from "./slider";
 import { standardTurntable } from "./turntable";
 import { defaultParams, getProduct, productForDesign } from "./catalog";
 import type {
@@ -31,7 +32,9 @@ export function createDesign(
     kind,
     name: name?.trim().slice(0, 120) || getProduct(kind).name,
     revision: 0,
-    ...(kind === "turntable" ? { mechanismVersion: 2 as const } : {}),
+    ...(["turntable", "slider"].includes(kind)
+      ? { mechanismVersion: 2 as const }
+      : {}),
     params: defaultParams(kind),
     createdAt: now,
     updatedAt: now,
@@ -78,9 +81,9 @@ export function readSetFor(
     readDependencies(design.kind, changes).map((k) => [k, design.params[k]]),
   );
 }
-export function validateParts(parts: Part[]): void {
-  if (!Array.isArray(parts) || parts.length < 1 || parts.length > 100)
-    throw new DesignError("Use between 1 and 100 parts.");
+export function validateParts(parts: Part[], maximum = 256): void {
+  if (!Array.isArray(parts) || parts.length < 1 || parts.length > maximum)
+    throw new DesignError(`Use between 1 and ${maximum} parts.`);
   const ids = new Set<string>();
   for (const part of parts) {
     if (!part || typeof part !== "object" || Array.isArray(part))
@@ -294,6 +297,25 @@ export function validateParts(parts: Part[]): void {
     )
       throw new DesignError("Part motion is invalid.");
   }
+  for (const part of parts) {
+    const m = part.motion;
+    if (m && (m.drivenBy !== undefined || m.travelPerTurn !== undefined)) {
+      const leader = parts.find((p) => p.id === m.drivenBy);
+      if (
+        m.type !== "rotate" ||
+        !Number.isFinite(m.travelPerTurn) ||
+        m.travelPerTurn! <= 0 ||
+        !leader ||
+        leader.id === part.id ||
+        leader.parentId ||
+        leader.motion?.type !== "slide" ||
+        leader.motion.drivenBy
+      )
+        throw new DesignError(
+          "A driven rotation requires an independent sliding part and positive travel per turn.",
+        );
+    }
+  }
   for (const part of parts)
     if (part.parentId) {
       if (!ids.has(part.parentId))
@@ -311,7 +333,7 @@ export function validateParts(parts: Part[]): void {
 export function validateDesign(d: Design): void {
   if (
     d.mechanismVersion !== undefined &&
-    (d.kind !== "turntable" || d.mechanismVersion !== 2)
+    (!["turntable", "slider"].includes(d.kind) || d.mechanismVersion !== 2)
   )
     throw new DesignError("Unsupported mechanism version.");
   const def = productForDesign(d);
@@ -359,7 +381,7 @@ export function validateDesign(d: Design): void {
   if (d.kind === "planter" && !Number.isInteger(p.pots))
     throw new DesignError("Choose a whole number of pots.");
   if (d.kind === "custom") {
-    validateParts(d.customParts || []);
+    validateParts(d.customParts || [], 100);
     validateParts(
       (d.customParts || []).map((part) => ({
         ...part,
@@ -389,6 +411,12 @@ export function validateDesign(d: Design): void {
               }
             : {}),
         })),
+        motion: part.motion?.drivenBy
+          ? {
+              ...part.motion,
+              travelPerTurn: part.motion.travelPerTurn! * p.scale,
+            }
+          : part.motion,
         loopSpan:
           part.loopSpan === undefined ? undefined : part.loopSpan * p.scale,
         holeDiameter:
@@ -396,6 +424,7 @@ export function validateDesign(d: Design): void {
             ? undefined
             : part.holeDiameter * p.scale,
       })),
+      100,
     );
   }
 }
@@ -835,6 +864,19 @@ export function deriveDesign(d: Design): DerivedDesign {
       break;
     }
     case "slider": {
+      if (d.mechanismVersion === 2) {
+        const standard = standardSlider(p);
+        parts = standard.parts;
+        steps = standard.steps;
+        metrics = standard.metrics;
+        connections = standard.connections;
+        warnings.push(...standard.warnings);
+        validateParts(parts, 256);
+        break;
+      }
+      warnings.push(
+        "Legacy conceptual slider. Create a new slider for dimensioned guide, mounting and belt-drive interfaces.",
+      );
       const l = p.travel + 120,
         w = p.railSpacing;
       parts = [
@@ -1538,6 +1580,12 @@ export function deriveDesign(d: Design): DerivedDesign {
               }
             : {}),
         })),
+        motion: part.motion?.drivenBy
+          ? {
+              ...part.motion,
+              travelPerTurn: part.motion.travelPerTurn! * p.scale,
+            }
+          : part.motion,
         loopSpan:
           part.loopSpan === undefined ? undefined : part.loopSpan * p.scale,
         holeDiameter:
@@ -1599,6 +1647,44 @@ export function deriveDesign(d: Design): DerivedDesign {
       if (row.id.endsWith("-bearing"))
         row.sourceUrl =
           "https://www.nsk.com/content/dam/nsk-marketing/projects-completed/literature/service/guides/bearing-replacement-guide-brg/en_bearing-replacement-guide-brg/preview-pdf_bearing-replacement-guide-brg_en/NSK_Bro_BRG_E_preview.pdf";
+    }
+  }
+  if (d.kind === "slider" && d.mechanismVersion === 2) {
+    rows = rows.filter(
+      (row) => row.id !== "drive-shaft" && !row.id.startsWith("idler-bearing-"),
+    );
+    for (const row of rows) {
+      // Assign only specific dimensional sources; generic search links imply no fit.
+      row.sourceUrl = undefined;
+      if (row.id === "drive")
+        row.sourceUrl = "https://www.pololu.com/product/2267";
+      if (row.id === "drive-pulley")
+        row.sourceUrl = "https://sg.misumi-ec.com/pdf/fa/2015/p1_1415_001.pdf";
+      if (row.id === "idler") {
+        row.sourceUrl =
+          "https://us.misumi-ec.com/pdf/fa/2019/2019_US_1424_001.pdf";
+        row.specification +=
+          " · includes two 675ZZ bearings (5 × 8 × 2.5); body and bearings shown separately";
+      }
+      if (
+        ["rail-front", "rail-rear", "block-front", "block-rear"].includes(
+          row.id,
+        )
+      )
+        row.sourceUrl =
+          "https://hiwin.co.uk/wp-content/uploads/2017/06/Linear-Guideways.pdf";
+      if (row.id === "camera-screw")
+        row.specification +=
+          " · cut 1/4-20 thread on upper 9 mm; 4 mm projection above carriage";
+      if (row.id === "idler-axle")
+        row.specification +=
+          " · M5 lower 6 mm thread; smooth 5 mm bearing journal; verify bearing preload and retention";
+      if (row.id === "base")
+        row.specification +=
+          " · 3 mm nominal holes indicate M3 threads; choose tap-drill dimensions in fabrication review";
+      if (row.id === "tension-plate")
+        row.specification +=
+          " · 5 mm nominal centre hole indicates M5 thread; 7 mm clearances permit ±2 mm X adjustment";
     }
   }
   return { parts, bom: rows, steps, connections, metrics, warnings };

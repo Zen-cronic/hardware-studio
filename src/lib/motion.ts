@@ -12,8 +12,19 @@ function ownPose(
   const axis = motion.axis === "x" ? 0 : motion.axis === "y" ? 1 : 2;
   const distance = Math.max(0.001, motion.range || 40),
     travel = Math.max(0, seconds) * Math.abs(motion.speed);
-  if (motion.type === "rotate")
-    rotation[axis] += (seconds * motion.speed * 2 * Math.PI) / 60;
+  if (motion.type === "rotate") {
+    const leader = motion.drivenBy
+      ? parts.find((p) => p.id === motion.drivenBy)
+      : undefined;
+    if (leader?.motion && motion.travelPerTurn) {
+      const leaderAxis =
+        leader.motion.axis === "x" ? 0 : leader.motion.axis === "y" ? 1 : 2;
+      const displacement =
+        ownPose(leader, parts, seconds).position[leaderAxis] -
+        leader.position[leaderAxis];
+      rotation[axis] -= (displacement * 2 * Math.PI) / motion.travelPerTurn;
+    } else rotation[axis] += (seconds * motion.speed * 2 * Math.PI) / 60;
+  }
   if (motion.type === "slide") {
     if (part.id === "parcel") {
       position[axis] += travel % distance;

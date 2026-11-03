@@ -31,6 +31,8 @@ export interface Motion {
   axis: "x" | "y" | "z";
   speed: number;
   range?: number;
+  drivenBy?: string;
+  travelPerTurn?: number;
 }
 export interface Part {
   id: string;
