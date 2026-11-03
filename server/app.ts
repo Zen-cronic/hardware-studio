@@ -54,6 +54,8 @@ export async function createApp(options: Options = {}) {
     Map<WebSocket, { presence: Presence; role: "editor" | "viewer" }>
   >();
   const jobs: { job: BuildJob; snapshot: Snapshot }[] = [];
+  const activeBuilds = new Map<string, string>();
+  const buildKey = (id: string, revision: number) => `${id}:${revision}`;
   let running = false;
   let child: ChildProcess | undefined;
   let stopping = false;
@@ -168,6 +170,7 @@ export async function createApp(options: Options = {}) {
           error instanceof Error ? error.message : "Package generation failed.",
       });
     } finally {
+      activeBuilds.delete(buildKey(job.designId, job.revision));
       child = undefined;
       running = false;
       void processQueue();
@@ -269,12 +272,15 @@ export async function createApp(options: Options = {}) {
   app.post("/api/designs/:id/build", async (r) => {
     const id = designId(r);
     store.authorize(id, tokenOf(r), true);
+    const snapshot = store.get(id);
+    const key = buildKey(id, snapshot.design.revision);
+    const existing = activeBuilds.get(key);
+    if (existing) return store.getBuild(existing).job;
     if (jobs.length > 12)
       throw new HttpError(
         429,
         "Several packages are being prepared. Please try again shortly.",
       );
-    const snapshot = store.get(id);
     const job: BuildJob = {
       id: randomUUID(),
       designId: id,
@@ -282,6 +288,7 @@ export async function createApp(options: Options = {}) {
       status: "queued",
     };
     store.setBuild(job);
+    activeBuilds.set(key, job.id);
     jobs.push({ job, snapshot });
     void processQueue();
     return job;

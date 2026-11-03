@@ -50,3 +50,5 @@ Configure request limits and access controls at the deployment boundary before m
 Keep one replica while SQLite and the in-process build queue are authoritative. Back up SQLite consistently, including pending WAL state; do not copy only a live database file. Keep build packages with the database so existing download jobs remain valid. Do not ship development `.data` or editor invitations as seed data.
 
 Before release verify health, a real two-browser note and sketch exchange through the public origin, edit conflict behavior, a revision-bound CAD download, restart persistence, and anonymous access to the intended public surfaces. A local proxy check does not establish public TLS, firewall, backup or uptime behavior. Select and approve the host and public-access policy before deployment.
+
+Repeated authorized build requests for the same design revision share its queued or running job, including when the waiting queue is full. Different revisions remain separate; completed or failed jobs may be rebuilt. This reduces duplicate work but does not replace public request limits, storage controls or the single-instance requirement.
