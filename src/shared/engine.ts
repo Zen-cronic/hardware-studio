@@ -1,3 +1,4 @@
+import { standardLamp } from "./lamp";
 import { standardConveyor } from "./conveyor";
 import { standardSlider } from "./slider";
 import { standardTurntable } from "./turntable";
@@ -33,7 +34,7 @@ export function createDesign(
     kind,
     name: name?.trim().slice(0, 120) || getProduct(kind).name,
     revision: 0,
-    ...(["turntable", "slider", "conveyor"].includes(kind)
+    ...(["turntable", "slider", "conveyor", "lamp"].includes(kind)
       ? { mechanismVersion: 2 as const }
       : {}),
     params: defaultParams(kind),
@@ -82,7 +83,11 @@ export function readSetFor(
     readDependencies(design.kind, changes).map((k) => [k, design.params[k]]),
   );
 }
-export function validateParts(parts: Part[], maximum = 256): void {
+export function validateParts(
+  parts: Part[],
+  maximum = 256,
+  minimumDimension = 0.25,
+): void {
   if (!Array.isArray(parts) || parts.length < 1 || parts.length > maximum)
     throw new DesignError(`Use between 1 and ${maximum} parts.`);
   const ids = new Set<string>();
@@ -107,9 +112,13 @@ export function validateParts(parts: Part[], maximum = 256): void {
     if (
       !Array.isArray(part.size) ||
       part.size.length !== 3 ||
-      part.size.some((n) => !Number.isFinite(n) || n < 0.5 || n > 5000)
+      part.size.some(
+        (n) => !Number.isFinite(n) || n < minimumDimension || n > 5000,
+      )
     )
-      throw new DesignError("Part dimensions must be between 0.5 and 5000 mm.");
+      throw new DesignError(
+        `Part dimensions must be between ${minimumDimension} and 5000 mm.`,
+      );
     if (
       !Array.isArray(part.position) ||
       part.position.length !== 3 ||
@@ -334,7 +343,7 @@ export function validateParts(parts: Part[], maximum = 256): void {
 export function validateDesign(d: Design): void {
   if (
     d.mechanismVersion !== undefined &&
-    (!["turntable", "slider", "conveyor"].includes(d.kind) ||
+    (!["turntable", "slider", "conveyor", "lamp"].includes(d.kind) ||
       d.mechanismVersion !== 2)
   )
     throw new DesignError("Unsupported mechanism version.");
@@ -383,7 +392,7 @@ export function validateDesign(d: Design): void {
   if (d.kind === "planter" && !Number.isInteger(p.pots))
     throw new DesignError("Choose a whole number of pots.");
   if (d.kind === "custom") {
-    validateParts(d.customParts || [], 100);
+    validateParts(d.customParts || [], 100, 0.5);
     validateParts(
       (d.customParts || []).map((part) => ({
         ...part,
@@ -427,6 +436,7 @@ export function validateDesign(d: Design): void {
             : part.holeDiameter * p.scale,
       })),
       100,
+      0.5,
     );
   }
 }
@@ -1142,6 +1152,19 @@ export function deriveDesign(d: Design): DerivedDesign {
       break;
     }
     case "lamp": {
+      if (d.mechanismVersion === 2) {
+        const standard = standardLamp(p);
+        parts = standard.parts;
+        steps = standard.steps;
+        metrics = standard.metrics;
+        connections = standard.connections;
+        warnings.push(...standard.warnings);
+        validateParts(parts, 256, 0.25);
+        break;
+      }
+      warnings.push(
+        "Legacy conceptual lamp. Create a new lamp for retained joints and a hollow light housing.",
+      );
       const r = p.reach,
         theta = (p.angle * Math.PI) / 180,
         link = r / 2,
@@ -1727,6 +1750,21 @@ export function deriveDesign(d: Design): DerivedDesign {
       if (row.id === "base")
         row.specification +=
           " · nominal Ø4 holes indicate M4 threads; select tap-drill dimensions in fabrication review";
+    }
+  }
+  if (d.kind === "lamp" && d.mechanismVersion === 2) {
+    for (const row of rows) {
+      row.sourceUrl = undefined;
+      if (row.id === "led")
+        row.sourceUrl = "https://www.adafruit.com/product/2855";
+      if (row.id === "thermal-pad")
+        row.sourceUrl =
+          "https://multimedia.3m.com/mws/media/122119O/3m-thermally-conductive-adhesive-transfer-tapes-8800-series.pdf";
+      if (row.id.includes("screw"))
+        row.sourceUrl = "https://www.hpcgears.com/pdf_c33/5.54-5.59.pdf";
+      if (row.id.includes("washer") || row.id.endsWith("-nut"))
+        row.sourceUrl =
+          "https://www.muepro.com/out/media/KP_EDELSTAHL-SECHSKANTMUTTER_DIN934_UNTERLEGSCHEIBEN_EN.PDF";
     }
   }
   return { parts, bom: rows, steps, connections, metrics, warnings };

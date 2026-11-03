@@ -26,7 +26,9 @@ const cases: Case[] = [
   {
     kind: "turntable",
     change: { height: 200 },
-    check: (d) => part(d, "motor-plate").position[1] === 105 && part(d, "post-lower-0").size[1] === 99,
+    check: (d) =>
+      part(d, "motor-plate").position[1] === 105 &&
+      part(d, "post-lower-0").size[1] === 99,
     reason: "Motor plate and frame spacers follow base height",
   },
   {
@@ -65,8 +67,10 @@ const cases: Case[] = [
     kind: "lamp",
     change: { reach: 350 },
     check: (d) =>
-      part(d, "lower-arm").size[1] === 175 &&
-      part(d, "upper-arm").size[1] === 175,
+      ["lower-arm", "upper-arm"].every((id) => {
+        const holes = part(d, id).holes!;
+        return holes.length === 2 && Math.abs(holes[1].x - holes[0].x) === 175;
+      }),
     reason: "Both lamp links follow reach",
   },
   {
