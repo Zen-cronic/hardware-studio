@@ -84,7 +84,7 @@ const cases: Case[] = [
     change: { pots: 4 },
     check: (d) =>
       d.parts.filter((p) => p.id.startsWith("pot-")).length === 4 &&
-      d.connections.length === 4,
+      d.connections.filter((c) => c.to.startsWith("pot-")).length === 4,
     reason: "Each pot receives an outlet",
   },
   {

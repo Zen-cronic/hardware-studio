@@ -262,7 +262,7 @@ export const CATALOG: ProductDefinition[] = [
         "reservoirHeight",
         "Reservoir height",
         "mm",
-        40,
+        60,
         120,
         10,
         70,
@@ -369,6 +369,13 @@ export function defaultParams(kind: ProductKind): Record<string, number> {
 // Unversioned saved designs retain their original parameter and geometry contract.
 export function productForDesign(d: Design): ProductDefinition {
   const current = getProduct(d.kind);
+  if (d.kind === "planter" && d.mechanismVersion !== 2)
+    return {
+      ...current,
+      parameters: current.parameters.map((p) =>
+        p.key === "reservoirHeight" ? { ...p, min: 40 } : p,
+      ),
+    };
   if (d.kind !== "turntable" || d.mechanismVersion === 2) return current;
   return {
     ...current,

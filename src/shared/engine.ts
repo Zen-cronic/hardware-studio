@@ -1,3 +1,4 @@
+import { standardPlanter } from "./planter";
 import { standardLamp } from "./lamp";
 import { standardConveyor } from "./conveyor";
 import { standardSlider } from "./slider";
@@ -34,7 +35,7 @@ export function createDesign(
     kind,
     name: name?.trim().slice(0, 120) || getProduct(kind).name,
     revision: 0,
-    ...(["turntable", "slider", "conveyor", "lamp"].includes(kind)
+    ...(["turntable", "slider", "conveyor", "lamp", "planter"].includes(kind)
       ? { mechanismVersion: 2 as const }
       : {}),
     params: defaultParams(kind),
@@ -343,7 +344,7 @@ export function validateParts(
 export function validateDesign(d: Design): void {
   if (
     d.mechanismVersion !== undefined &&
-    (!["turntable", "slider", "conveyor", "lamp"].includes(d.kind) ||
+    (!["turntable", "slider", "conveyor", "lamp", "planter"].includes(d.kind) ||
       d.mechanismVersion !== 2)
   )
     throw new DesignError("Unsupported mechanism version.");
@@ -1285,6 +1286,19 @@ export function deriveDesign(d: Design): DerivedDesign {
       break;
     }
     case "planter": {
+      if (d.mechanismVersion === 2) {
+        const standard = standardPlanter(p);
+        parts = standard.parts;
+        steps = standard.steps;
+        metrics = standard.metrics;
+        connections = standard.connections;
+        warnings.push(...standard.warnings);
+        validateParts(parts);
+        break;
+      }
+      warnings.push(
+        "Legacy conceptual planter. Create a new planter for supported cups, drainage and a connected water path.",
+      );
       const pitch = p.potDiameter + 20,
         l = p.pots * pitch + 20,
         h = p.reservoirHeight;
@@ -1765,6 +1779,21 @@ export function deriveDesign(d: Design): DerivedDesign {
       if (row.id.includes("washer") || row.id.endsWith("-nut"))
         row.sourceUrl =
           "https://www.muepro.com/out/media/KP_EDELSTAHL-SECHSKANTMUTTER_DIN934_UNTERLEGSCHEIBEN_EN.PDF";
+    }
+  }
+  if (d.kind === "planter" && d.mechanismVersion === 2) {
+    rows = rows.filter((row) => row.id !== "pump-outlet");
+    for (const row of rows) {
+      row.sourceUrl = undefined;
+      if (row.id === "pump") {
+        row.sourceUrl = "https://www.adafruit.com/product/4546";
+        row.specification +=
+          " · integral outlet included; measure actual revision";
+      }
+      if (row.id === "inlet" || /^outlet-\d+$/.test(row.id))
+        row.sourceUrl = "https://www.adafruit.com/product/4545";
+      if (row.id.includes("screw"))
+        row.sourceUrl = "https://shop.hpceurope.com/pdf/gbPDFauto/CHCSS.pdf";
     }
   }
   return { parts, bom: rows, steps, connections, metrics, warnings };
