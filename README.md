@@ -63,3 +63,7 @@ Local data lives in .data and stays out of Git. Do not expose this local preview
 ## Hosting preparation
 
 See [hosting configuration](docs/HOSTING.md) for persistent storage, listener settings and same-origin HTTPS collaboration. Public hosting and access controls must be configured separately from the local preview.
+
+## Third-party materials
+
+See [third-party attribution](THIRD_PARTY.md) for libraries, CAD dependencies, fonts, hosted services and the versioned runtime inventory.

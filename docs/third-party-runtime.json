@@ -1,0 +1,4352 @@
+{
+  "schemaVersion": 1,
+  "scope": "Installed production npm packages on this platform and CadQuery Python runtime dependency closure; not a complete audit of nested binary components or development tools. Runtime package presence is not proof of import/use. Other platforms may select additional optional packages.",
+  "lockSha256": {
+    "package-lock.json": "fd666a07ac0222b2af0ba9bea963a44d5e1ab01acafacbe8c15099b33856d399",
+    "poetry.lock": "d59198edf43b6d92814a41c062f9845971cb138ed7cb2acbd9a094cc23697e1c"
+  },
+  "npm": [
+    {
+      "name": "@babel/runtime",
+      "version": "7.29.10",
+      "path": "node_modules/@babel/runtime",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/@babel/runtime/-/runtime-7.29.10.tgz",
+      "repository": "https://github.com/babel/babel.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "117da2af0d4ce0fe1c8e19b5cff9dcd806adf973d328d27b11d4448c4ff24f76"
+        }
+      ]
+    },
+    {
+      "name": "@dimforge/rapier3d-compat",
+      "version": "0.12.0",
+      "path": "node_modules/@dimforge/rapier3d-compat",
+      "direct": false,
+      "license": "Apache-2.0",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/@dimforge/rapier3d-compat/-/rapier3d-compat-0.12.0.tgz",
+      "repository": "https://github.com/dimforge/rapier.js",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "4c05555705e3efde601fb1252ae48f1d63992af8a8fb8947745b7fa834e8f519"
+        }
+      ]
+    },
+    {
+      "name": "@esbuild/darwin-arm64",
+      "version": "0.28.2",
+      "path": "node_modules/@esbuild/darwin-arm64",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/@esbuild/darwin-arm64/-/darwin-arm64-0.28.2.tgz",
+      "repository": "git+https://github.com/evanw/esbuild.git",
+      "notices": []
+    },
+    {
+      "name": "@fastify/accept-negotiator",
+      "version": "2.1.2",
+      "path": "node_modules/@fastify/accept-negotiator",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/@fastify/accept-negotiator/-/accept-negotiator-2.1.2.tgz",
+      "repository": "git+https://github.com/fastify/accept-negotiator.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "e2d09f74a77005e85e9f9bd501e3b7599ccae19d918538461196dde42f7f1b97"
+        }
+      ]
+    },
+    {
+      "name": "@fastify/ajv-compiler",
+      "version": "4.0.7",
+      "path": "node_modules/@fastify/ajv-compiler",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/@fastify/ajv-compiler/-/ajv-compiler-4.0.7.tgz",
+      "repository": "git+https://github.com/fastify/ajv-compiler.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "e2d09f74a77005e85e9f9bd501e3b7599ccae19d918538461196dde42f7f1b97"
+        }
+      ]
+    },
+    {
+      "name": "@fastify/deepmerge",
+      "version": "3.2.4",
+      "path": "node_modules/@fastify/deepmerge",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/@fastify/deepmerge/-/deepmerge-3.2.4.tgz",
+      "repository": "git+https://github.com/fastify/deepmerge.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "e2d09f74a77005e85e9f9bd501e3b7599ccae19d918538461196dde42f7f1b97"
+        }
+      ]
+    },
+    {
+      "name": "@fastify/error",
+      "version": "4.2.1",
+      "path": "node_modules/@fastify/error",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/@fastify/error/-/error-4.2.1.tgz",
+      "repository": "git+https://github.com/fastify/fastify-error.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "8d3c1dd501e056405ab56f4ad87b987070d55d1fe814616584ec2360045f9017"
+        }
+      ]
+    },
+    {
+      "name": "@fastify/fast-json-stringify-compiler",
+      "version": "5.1.1",
+      "path": "node_modules/@fastify/fast-json-stringify-compiler",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/@fastify/fast-json-stringify-compiler/-/fast-json-stringify-compiler-5.1.1.tgz",
+      "repository": "git+https://github.com/fastify/fast-json-stringify-compiler.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "e2d09f74a77005e85e9f9bd501e3b7599ccae19d918538461196dde42f7f1b97"
+        }
+      ]
+    },
+    {
+      "name": "@fastify/forwarded",
+      "version": "3.1.2",
+      "path": "node_modules/@fastify/forwarded",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/@fastify/forwarded/-/forwarded-3.1.2.tgz",
+      "repository": "git+https://github.com/fastify/forwarded.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "9276503e39bdcaad7d26993fae17b1e82d7ef65cf0fe0ae54c361bbc6cbc33da"
+        }
+      ]
+    },
+    {
+      "name": "@fastify/merge-json-schemas",
+      "version": "0.2.2",
+      "path": "node_modules/@fastify/merge-json-schemas",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/@fastify/merge-json-schemas/-/merge-json-schemas-0.2.2.tgz",
+      "repository": "git+https://github.com/fastify/merge-json-schemas.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "6881fdd0f607b4f202c5421b0e6de1cf72041e0207b73681bbf6509fe7b86c44"
+        }
+      ]
+    },
+    {
+      "name": "@fastify/proxy-addr",
+      "version": "5.1.2",
+      "path": "node_modules/@fastify/proxy-addr",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/@fastify/proxy-addr/-/proxy-addr-5.1.2.tgz",
+      "repository": "git+https://github.com/fastify/proxy-addr.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "4ffb54af38f35ca8005893c382e19f3c3e919c499d50804c00d3c124bc6508f4"
+        }
+      ]
+    },
+    {
+      "name": "@fastify/send",
+      "version": "4.2.0",
+      "path": "node_modules/@fastify/send",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/@fastify/send/-/send-4.2.0.tgz",
+      "repository": "git+https://github.com/fastify/send.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "1756787cdb2b0e68ef6c927c41f16f60dea0e31b282fe5378babde842ad1842b"
+        }
+      ]
+    },
+    {
+      "name": "@fastify/static",
+      "version": "10.1.8",
+      "path": "node_modules/@fastify/static",
+      "direct": true,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/@fastify/static/-/static-10.1.8.tgz",
+      "repository": "git+https://github.com/fastify/fastify-static.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "ba9677e5a34c2738c26b36bb478f95e0369cac48fbe68a01a91fd5c7972f2043"
+        }
+      ]
+    },
+    {
+      "name": "@fastify/websocket",
+      "version": "11.3.6",
+      "path": "node_modules/@fastify/websocket",
+      "direct": true,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/@fastify/websocket/-/websocket-11.3.6.tgz",
+      "repository": "git+https://github.com/fastify/fastify-websocket.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "ba9677e5a34c2738c26b36bb478f95e0369cac48fbe68a01a91fd5c7972f2043"
+        }
+      ]
+    },
+    {
+      "name": "@fontsource/barlow",
+      "version": "5.3.0",
+      "path": "node_modules/@fontsource/barlow",
+      "direct": true,
+      "license": "OFL-1.1",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/@fontsource/barlow/-/barlow-5.3.0.tgz",
+      "repository": "git+https://github.com/fontsource/font-files.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "4877e0c1b66f0b16cc3ebc4801c4def24c06252f618b9229428b20c7387aa0c0"
+        }
+      ]
+    },
+    {
+      "name": "@fontsource/ibm-plex-mono",
+      "version": "5.3.0",
+      "path": "node_modules/@fontsource/ibm-plex-mono",
+      "direct": true,
+      "license": "OFL-1.1",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/@fontsource/ibm-plex-mono/-/ibm-plex-mono-5.3.0.tgz",
+      "repository": "git+https://github.com/fontsource/font-files.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "23b0a9d0c6d3f140a0b77e483c5cfa6bba574325ef5cb189ed9f2fec4884533f"
+        }
+      ]
+    },
+    {
+      "name": "@fontsource/source-sans-3",
+      "version": "5.3.1",
+      "path": "node_modules/@fontsource/source-sans-3",
+      "direct": true,
+      "license": "OFL-1.1",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/@fontsource/source-sans-3/-/source-sans-3-5.3.1.tgz",
+      "repository": "git+https://github.com/fontsource/font-files.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "18aabf190848725e2576eefb5c29ba06aac1029d02132252a7f312eac2e50cf3"
+        }
+      ]
+    },
+    {
+      "name": "@hocuspocus/common",
+      "version": "3.4.4",
+      "path": "node_modules/@hocuspocus/common",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/@hocuspocus/common/-/common-3.4.4.tgz",
+      "repository": "https://github.com/ueberdosis/hocuspocus",
+      "notices": []
+    },
+    {
+      "name": "@hocuspocus/provider",
+      "version": "3.4.4",
+      "path": "node_modules/@hocuspocus/provider",
+      "direct": true,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/@hocuspocus/provider/-/provider-3.4.4.tgz",
+      "repository": "https://github.com/ueberdosis/hocuspocus",
+      "notices": []
+    },
+    {
+      "name": "@hocuspocus/server",
+      "version": "3.4.4",
+      "path": "node_modules/@hocuspocus/server",
+      "direct": true,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/@hocuspocus/server/-/server-3.4.4.tgz",
+      "repository": "https://github.com/ueberdosis/hocuspocus",
+      "notices": []
+    },
+    {
+      "name": "@isaacs/nonrecursive-glob-match",
+      "version": "1.0.3",
+      "path": "node_modules/@isaacs/nonrecursive-glob-match",
+      "direct": false,
+      "license": "BlueOak-1.0.0",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/@isaacs/nonrecursive-glob-match/-/nonrecursive-glob-match-1.0.3.tgz",
+      "repository": null,
+      "notices": [
+        {
+          "path": "LICENSE.md",
+          "sha256": "8a1af140fdfbf5afd3df27f7e662f989c5b963a300020dfafce42033cae9e004"
+        }
+      ]
+    },
+    {
+      "name": "@lifeomic/attempt",
+      "version": "3.1.0",
+      "path": "node_modules/@lifeomic/attempt",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/@lifeomic/attempt/-/attempt-3.1.0.tgz",
+      "repository": "https://github.com/lifeomic/attempt.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "2bfbec382a4ebcc15fb6ac11412672437313d9d9ca70a6f44d899e5db0b84711"
+        }
+      ]
+    },
+    {
+      "name": "@lukeed/ms",
+      "version": "2.0.2",
+      "path": "node_modules/@lukeed/ms",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/@lukeed/ms/-/ms-2.0.2.tgz",
+      "repository": "lukeed/ms",
+      "notices": [
+        {
+          "path": "license",
+          "sha256": "9a9edad7baae52622bddf3c15b2ef8a33d2c89f2d25408ad13e8a7481c6b0c97"
+        }
+      ]
+    },
+    {
+      "name": "@mediapipe/tasks-vision",
+      "version": "0.10.17",
+      "path": "node_modules/@mediapipe/tasks-vision",
+      "direct": false,
+      "license": "Apache-2.0",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/@mediapipe/tasks-vision/-/tasks-vision-0.10.17.tgz",
+      "repository": null,
+      "notices": []
+    },
+    {
+      "name": "@monogrid/gainmap-js",
+      "version": "3.7.2",
+      "path": "node_modules/@monogrid/gainmap-js",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/@monogrid/gainmap-js/-/gainmap-js-3.7.2.tgz",
+      "repository": "git+ssh://git@github.com/MONOGRID/gainmap-js.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "7fb8f722609c6669a9c9a4865e2a86205c7760e7dc7a039b0fb9913c3e62c6cc"
+        }
+      ]
+    },
+    {
+      "name": "@pinojs/redact",
+      "version": "0.4.0",
+      "path": "node_modules/@pinojs/redact",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/@pinojs/redact/-/redact-0.4.0.tgz",
+      "repository": "git+https://github.com/pinojs/redact.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "58d4023bfbed5fb530c5bb8d44641299eac62c850267415ec939cc42dea87e4f"
+        }
+      ]
+    },
+    {
+      "name": "@react-three/drei",
+      "version": "10.7.9",
+      "path": "node_modules/@react-three/drei",
+      "direct": true,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/@react-three/drei/-/drei-10.7.9.tgz",
+      "repository": "git+https://github.com/pmndrs/drei.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "2e36b208b403882158daf95cae207087bbb830db4d434a79ebafffca177244c8"
+        }
+      ]
+    },
+    {
+      "name": "@react-three/fiber",
+      "version": "9.8.2",
+      "path": "node_modules/@react-three/fiber",
+      "direct": true,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/@react-three/fiber/-/fiber-9.8.2.tgz",
+      "repository": "git+https://github.com/pmndrs/react-three-fiber.git",
+      "notices": []
+    },
+    {
+      "name": "@tweenjs/tween.js",
+      "version": "23.1.3",
+      "path": "node_modules/@tweenjs/tween.js",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/@tweenjs/tween.js/-/tween.js-23.1.3.tgz",
+      "repository": "https://github.com/tweenjs/tween.js.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "c95fecd88f2709bfc34e4d1f1ccc36d17048990e6ba26c283cfecdef0432936b"
+        }
+      ]
+    },
+    {
+      "name": "@types/draco3d",
+      "version": "1.4.10",
+      "path": "node_modules/@types/draco3d",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/@types/draco3d/-/draco3d-1.4.10.tgz",
+      "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+        }
+      ]
+    },
+    {
+      "name": "@types/offscreencanvas",
+      "version": "2019.7.3",
+      "path": "node_modules/@types/offscreencanvas",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/@types/offscreencanvas/-/offscreencanvas-2019.7.3.tgz",
+      "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+        }
+      ]
+    },
+    {
+      "name": "@types/react",
+      "version": "19.3.0",
+      "path": "node_modules/@types/react",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/@types/react/-/react-19.3.0.tgz",
+      "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+        }
+      ]
+    },
+    {
+      "name": "@types/react-reconciler",
+      "version": "0.28.9",
+      "path": "node_modules/@types/react-reconciler",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/@types/react-reconciler/-/react-reconciler-0.28.9.tgz",
+      "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+        }
+      ]
+    },
+    {
+      "name": "@types/stats.js",
+      "version": "0.17.4",
+      "path": "node_modules/@types/stats.js",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/@types/stats.js/-/stats.js-0.17.4.tgz",
+      "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+        }
+      ]
+    },
+    {
+      "name": "@types/three",
+      "version": "0.180.0",
+      "path": "node_modules/@types/three",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/@types/three/-/three-0.180.0.tgz",
+      "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+        }
+      ]
+    },
+    {
+      "name": "@types/webxr",
+      "version": "0.5.24",
+      "path": "node_modules/@types/webxr",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/@types/webxr/-/webxr-0.5.24.tgz",
+      "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+        }
+      ]
+    },
+    {
+      "name": "@use-gesture/core",
+      "version": "10.3.1",
+      "path": "node_modules/@use-gesture/core",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/@use-gesture/core/-/core-10.3.1.tgz",
+      "repository": "git+https://github.com/pmndrs/use-gesture.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "b99672ef9af57432e6d025a66d34f8b968564e4e0a1e2005ea9018457a7e38dc"
+        }
+      ]
+    },
+    {
+      "name": "@use-gesture/react",
+      "version": "10.3.1",
+      "path": "node_modules/@use-gesture/react",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/@use-gesture/react/-/react-10.3.1.tgz",
+      "repository": "git+https://github.com/pmndrs/use-gesture.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "b99672ef9af57432e6d025a66d34f8b968564e4e0a1e2005ea9018457a7e38dc"
+        }
+      ]
+    },
+    {
+      "name": "@webgpu/types",
+      "version": "0.1.74",
+      "path": "node_modules/@webgpu/types",
+      "direct": false,
+      "license": "BSD-3-Clause",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/@webgpu/types/-/types-0.1.74.tgz",
+      "repository": "git+https://github.com/gpuweb/types.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "ad88400fc55c2871ba2ed33930dc13001ef01907c2ddcbfa3caa8656e9142f05"
+        }
+      ]
+    },
+    {
+      "name": "abstract-logging",
+      "version": "2.0.1",
+      "path": "node_modules/abstract-logging",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/abstract-logging/-/abstract-logging-2.0.1.tgz",
+      "repository": "git+https://github.com/jsumners/abstract-logging.git",
+      "notices": []
+    },
+    {
+      "name": "ajv",
+      "version": "8.20.0",
+      "path": "node_modules/ajv",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/ajv/-/ajv-8.20.0.tgz",
+      "repository": "ajv-validator/ajv",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "a05350a88e318e4f5f2c2a1ff1e2e88daa4dd38e6e78b71cccae422bdc762cc3"
+        }
+      ]
+    },
+    {
+      "name": "ajv-formats",
+      "version": "3.0.1",
+      "path": "node_modules/ajv-formats",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/ajv-formats/-/ajv-formats-3.0.1.tgz",
+      "repository": "git+https://github.com/ajv-validator/ajv-formats.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "9df3bb69929a3b650ed73b3bfa1756725aaff0ac296461605753547004eafeaf"
+        }
+      ]
+    },
+    {
+      "name": "fast-uri",
+      "version": "3.1.9",
+      "path": "node_modules/ajv/node_modules/fast-uri",
+      "direct": false,
+      "license": "BSD-3-Clause",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/fast-uri/-/fast-uri-3.1.9.tgz",
+      "repository": "git+https://github.com/fastify/fast-uri.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "b010b0dfdfdb23d7396e03b82cd4621fc9bb8f95d6b0aea70b9c24e12074c786"
+        }
+      ]
+    },
+    {
+      "name": "async-lock",
+      "version": "1.4.1",
+      "path": "node_modules/async-lock",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/async-lock/-/async-lock-1.4.1.tgz",
+      "repository": "git+https://github.com/rogierschouten/async-lock.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "11e9f9acdfdfce6caa7b304c6ebb1a3269a61bb03d74bfcce629cc1462c06ddc"
+        }
+      ]
+    },
+    {
+      "name": "async-mutex",
+      "version": "0.5.0",
+      "path": "node_modules/async-mutex",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/async-mutex/-/async-mutex-0.5.0.tgz",
+      "repository": "https://github.com/DirtyHairy/async-mutex",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "afdf40d8e1d2478ab7ee49dfa0e75847033d59ed70c4368ddd4846f1eab2ff9e"
+        }
+      ]
+    },
+    {
+      "name": "atomic-sleep",
+      "version": "1.0.0",
+      "path": "node_modules/atomic-sleep",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/atomic-sleep/-/atomic-sleep-1.0.0.tgz",
+      "repository": "git+https://github.com/davidmarkclements/atomic-sleep.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "8d58741278b289a7f4b6dde2d6273fca7711b9849452c477933d1cccd03db1e7"
+        }
+      ]
+    },
+    {
+      "name": "avvio",
+      "version": "9.3.1",
+      "path": "node_modules/avvio",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/avvio/-/avvio-9.3.1.tgz",
+      "repository": "git+https://github.com/fastify/avvio.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "0dae13c0bb4d8c6dc73d7d49ddecdba7f56075975ffb2ee17050c63f3f3666f0"
+        }
+      ]
+    },
+    {
+      "name": "balanced-match",
+      "version": "4.0.4",
+      "path": "node_modules/balanced-match",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/balanced-match/-/balanced-match-4.0.4.tgz",
+      "repository": "git://github.com/juliangruber/balanced-match.git",
+      "notices": [
+        {
+          "path": "LICENSE.md",
+          "sha256": "d408f38ffa3355c5faec517153295338892eb0f1ea43f57874bb23c6075979b5"
+        }
+      ]
+    },
+    {
+      "name": "base64-js",
+      "version": "1.5.1",
+      "path": "node_modules/base64-js",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/base64-js/-/base64-js-1.5.1.tgz",
+      "repository": "git://github.com/beatgammit/base64-js.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "5b37224c080cdcc97c871ada971c224e9926370fe74f11b539aa1cf9f3b1aca1"
+        }
+      ]
+    },
+    {
+      "name": "better-sqlite3",
+      "version": "12.11.1",
+      "path": "node_modules/better-sqlite3",
+      "direct": true,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/better-sqlite3/-/better-sqlite3-12.11.1.tgz",
+      "repository": "git://github.com/WiseLibs/better-sqlite3.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "09856b52897c91ab67e7456ef43067019f31dfd3b87fda72e655736b1ebdee55"
+        }
+      ]
+    },
+    {
+      "name": "bidi-js",
+      "version": "1.1.0",
+      "path": "node_modules/bidi-js",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/bidi-js/-/bidi-js-1.1.0.tgz",
+      "repository": "https://github.com/lojjic/bidi-js.git",
+      "notices": [
+        {
+          "path": "LICENSE.txt",
+          "sha256": "49d4d143fed599deb502a0fe6e02f49832f87e9a3a4cd0502e469596d50faa6d"
+        }
+      ]
+    },
+    {
+      "name": "bindings",
+      "version": "1.5.0",
+      "path": "node_modules/bindings",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/bindings/-/bindings-1.5.0.tgz",
+      "repository": "git://github.com/TooTallNate/node-bindings.git",
+      "notices": [
+        {
+          "path": "LICENSE.md",
+          "sha256": "85fde19744c84cfacb04aed732c0392ba221231b26090d3271d2ed865bfc0792"
+        }
+      ]
+    },
+    {
+      "name": "bl",
+      "version": "4.1.0",
+      "path": "node_modules/bl",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/bl/-/bl-4.1.0.tgz",
+      "repository": "https://github.com/rvagg/bl.git",
+      "notices": [
+        {
+          "path": "LICENSE.md",
+          "sha256": "9377db95383c8befacf05c6e465d969d756edf178487ca1344fdf3ba147c596f"
+        }
+      ]
+    },
+    {
+      "name": "buffer",
+      "version": "5.7.1",
+      "path": "node_modules/bl/node_modules/buffer",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/buffer/-/buffer-5.7.1.tgz",
+      "repository": "git://github.com/feross/buffer.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "06bafa45fdad2579ba0e43b0c9b2c6290287c99c4203c300254a462b38a307f6"
+        }
+      ]
+    },
+    {
+      "name": "readable-stream",
+      "version": "3.6.2",
+      "path": "node_modules/bl/node_modules/readable-stream",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/readable-stream/-/readable-stream-3.6.2.tgz",
+      "repository": "git://github.com/nodejs/readable-stream",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "ec62dc96da0099b87f4511736c87309335527fb7031639493e06c95728dc8c54"
+        }
+      ]
+    },
+    {
+      "name": "brace-expansion",
+      "version": "5.0.12",
+      "path": "node_modules/brace-expansion",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/brace-expansion/-/brace-expansion-5.0.12.tgz",
+      "repository": "git+https://github.com/juliangruber/brace-expansion.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "9c63a23124d68cd30cd316a94a1a0bca34f032786df6df69fc4b5f136bac8d2e"
+        }
+      ]
+    },
+    {
+      "name": "buffer",
+      "version": "6.0.3",
+      "path": "node_modules/buffer",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/buffer/-/buffer-6.0.3.tgz",
+      "repository": "git://github.com/feross/buffer.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "06bafa45fdad2579ba0e43b0c9b2c6290287c99c4203c300254a462b38a307f6"
+        }
+      ]
+    },
+    {
+      "name": "camera-controls",
+      "version": "3.1.2",
+      "path": "node_modules/camera-controls",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/camera-controls/-/camera-controls-3.1.2.tgz",
+      "repository": "yomotsu/camera-controls",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "d175c34ca3b4fb17d0568627ef8fd9363ae6f63f9ffdc97d4da71f0d7f3473ee"
+        }
+      ]
+    },
+    {
+      "name": "chownr",
+      "version": "1.1.4",
+      "path": "node_modules/chownr",
+      "direct": false,
+      "license": "ISC",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/chownr/-/chownr-1.1.4.tgz",
+      "repository": "git://github.com/isaacs/chownr.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "4ec3d4c66cd87f5c8d8ad911b10f99bf27cb00cdfcff82621956e379186b016b"
+        }
+      ]
+    },
+    {
+      "name": "content-disposition",
+      "version": "3.0.0",
+      "path": "node_modules/content-disposition",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/content-disposition/-/content-disposition-3.0.0.tgz",
+      "repository": "jshttp/content-disposition",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "bd47ce7b88c7759630d1e2b9fcfa170a0f1fde522be09e13fb1581a79d090400"
+        }
+      ]
+    },
+    {
+      "name": "cookie",
+      "version": "2.0.1",
+      "path": "node_modules/cookie",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/cookie/-/cookie-2.0.1.tgz",
+      "repository": "jshttp/cookie",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "c02110eedc16c7114f1a9bdc026c65626ce1d9c7e27fd51a8e0feee8a48a6858"
+        }
+      ]
+    },
+    {
+      "name": "cross-env",
+      "version": "7.0.3",
+      "path": "node_modules/cross-env",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/cross-env/-/cross-env-7.0.3.tgz",
+      "repository": "https://github.com/kentcdodds/cross-env.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "bf8fd38056b7606deccfcadb4d8ca1c210082d8ef5513426d2650daedc30bed3"
+        }
+      ]
+    },
+    {
+      "name": "cross-spawn",
+      "version": "7.0.6",
+      "path": "node_modules/cross-spawn",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/cross-spawn/-/cross-spawn-7.0.6.tgz",
+      "repository": "git@github.com:moxystudio/node-cross-spawn.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "aaa78451b6fecd1b9c4594c796c133c0e90cad100372ff8bc6de615e9ef9adf1"
+        }
+      ]
+    },
+    {
+      "name": "csstype",
+      "version": "3.2.3",
+      "path": "node_modules/csstype",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/csstype/-/csstype-3.2.3.tgz",
+      "repository": "https://github.com/frenic/csstype",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "11d55bd4541c75ee7879547ac49089c489163dae49551389713c3d026cab383e"
+        }
+      ]
+    },
+    {
+      "name": "decompress-response",
+      "version": "6.0.0",
+      "path": "node_modules/decompress-response",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/decompress-response/-/decompress-response-6.0.0.tgz",
+      "repository": "sindresorhus/decompress-response",
+      "notices": [
+        {
+          "path": "license",
+          "sha256": "5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3"
+        }
+      ]
+    },
+    {
+      "name": "deep-extend",
+      "version": "0.6.0",
+      "path": "node_modules/deep-extend",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/deep-extend/-/deep-extend-0.6.0.tgz",
+      "repository": "git://github.com/unclechu/node-deep-extend.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "e17120ad3deff741c2ca5cbe511971ca33971a1ba6e49694c6498309bb2680b9"
+        }
+      ]
+    },
+    {
+      "name": "depd",
+      "version": "2.0.0",
+      "path": "node_modules/depd",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/depd/-/depd-2.0.0.tgz",
+      "repository": "dougwilson/nodejs-depd",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "bd134b41da59e452fb5a1d366b660886f741c87c2bf9428e93764c419fbc40f5"
+        }
+      ]
+    },
+    {
+      "name": "dequal",
+      "version": "2.0.3",
+      "path": "node_modules/dequal",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/dequal/-/dequal-2.0.3.tgz",
+      "repository": "lukeed/dequal",
+      "notices": [
+        {
+          "path": "license",
+          "sha256": "306fa513e39b23a6e8747520de761809d206b99800ef41907b530226574c59ae"
+        }
+      ]
+    },
+    {
+      "name": "detect-gpu",
+      "version": "5.0.70",
+      "path": "node_modules/detect-gpu",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/detect-gpu/-/detect-gpu-5.0.70.tgz",
+      "repository": "https://github.com/pmndrs/detect-gpu.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "b7ec746220d05b353b6f05196599c50d0a8bf7b75eaf90de439d2152452d298e"
+        }
+      ]
+    },
+    {
+      "name": "detect-libc",
+      "version": "2.1.2",
+      "path": "node_modules/detect-libc",
+      "direct": false,
+      "license": "Apache-2.0",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/detect-libc/-/detect-libc-2.1.2.tgz",
+      "repository": "git://github.com/lovell/detect-libc.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1"
+        }
+      ]
+    },
+    {
+      "name": "dotenv",
+      "version": "17.4.2",
+      "path": "node_modules/dotenv",
+      "direct": true,
+      "license": "BSD-2-Clause",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/dotenv/-/dotenv-17.4.2.tgz",
+      "repository": "git://github.com/motdotla/dotenv.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "74b629b24865e1e83c5277ee84590b7937644d6fd959d0c7bdce758676cd2ced"
+        }
+      ]
+    },
+    {
+      "name": "draco3d",
+      "version": "1.5.9",
+      "path": "node_modules/draco3d",
+      "direct": false,
+      "license": "Apache-2.0",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/draco3d/-/draco3d-1.5.9.tgz",
+      "repository": "git+https://github.com/google/draco.git",
+      "notices": []
+    },
+    {
+      "name": "duplexify",
+      "version": "4.1.3",
+      "path": "node_modules/duplexify",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/duplexify/-/duplexify-4.1.3.tgz",
+      "repository": "git://github.com/mafintosh/duplexify",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "3fe8d55a98dbf260eace67c00cf9bc53edb46234e840098a0b93df3096b97fb6"
+        }
+      ]
+    },
+    {
+      "name": "readable-stream",
+      "version": "3.6.2",
+      "path": "node_modules/duplexify/node_modules/readable-stream",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/readable-stream/-/readable-stream-3.6.2.tgz",
+      "repository": "git://github.com/nodejs/readable-stream",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "ec62dc96da0099b87f4511736c87309335527fb7031639493e06c95728dc8c54"
+        }
+      ]
+    },
+    {
+      "name": "end-of-stream",
+      "version": "1.4.5",
+      "path": "node_modules/end-of-stream",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/end-of-stream/-/end-of-stream-1.4.5.tgz",
+      "repository": "git://github.com/mafintosh/end-of-stream.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "3fe8d55a98dbf260eace67c00cf9bc53edb46234e840098a0b93df3096b97fb6"
+        }
+      ]
+    },
+    {
+      "name": "esbuild",
+      "version": "0.28.2",
+      "path": "node_modules/esbuild",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.2.tgz",
+      "repository": "git+https://github.com/evanw/esbuild.git",
+      "notices": [
+        {
+          "path": "LICENSE.md",
+          "sha256": "b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681"
+        }
+      ]
+    },
+    {
+      "name": "escape-html",
+      "version": "1.0.3",
+      "path": "node_modules/escape-html",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/escape-html/-/escape-html-1.0.3.tgz",
+      "repository": "component/escape-html",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "255aa557a1f55224ce522f311629c0bf20854740a67955cefd798fbd1d3d1ded"
+        }
+      ]
+    },
+    {
+      "name": "expand-template",
+      "version": "2.0.3",
+      "path": "node_modules/expand-template",
+      "direct": false,
+      "license": "(MIT OR WTFPL)",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/expand-template/-/expand-template-2.0.3.tgz",
+      "repository": "https://github.com/ralphtheninja/expand-template.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "0967624813244bf47da346449804af853437433cbdeb8c977f1e0d4bd14e0a3b"
+        }
+      ]
+    },
+    {
+      "name": "fast-decode-uri-component",
+      "version": "1.0.1",
+      "path": "node_modules/fast-decode-uri-component",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/fast-decode-uri-component/-/fast-decode-uri-component-1.0.1.tgz",
+      "repository": "git+https://github.com/delvedor/fast-decode-uri-component.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "27384b39baee4b476fb876670a75f282286fa55658bf0db14639621dd3801c9a"
+        }
+      ]
+    },
+    {
+      "name": "fast-deep-equal",
+      "version": "3.1.3",
+      "path": "node_modules/fast-deep-equal",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/fast-deep-equal/-/fast-deep-equal-3.1.3.tgz",
+      "repository": "git+https://github.com/epoberezkin/fast-deep-equal.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "7bf9b2de73a6b356761c948d0e9eeb4be6c1270bd04c79cd489c1e400ffdfc1a"
+        }
+      ]
+    },
+    {
+      "name": "fast-json-stringify",
+      "version": "7.2.1",
+      "path": "node_modules/fast-json-stringify",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/fast-json-stringify/-/fast-json-stringify-7.2.1.tgz",
+      "repository": "git+https://github.com/fastify/fast-json-stringify.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "b08de5bb7b21f44a8358edf74febe50c75ef2a1e5470e06c8919eb934cba067c"
+        }
+      ]
+    },
+    {
+      "name": "fast-querystring",
+      "version": "1.1.2",
+      "path": "node_modules/fast-querystring",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/fast-querystring/-/fast-querystring-1.1.2.tgz",
+      "repository": "git+https://github.com/anonrig/fast-querystring.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "4f8cf48502224399442f7eadd8620d96ef18125f9beb4949c53084ab3b05a4d4"
+        }
+      ]
+    },
+    {
+      "name": "fast-uri",
+      "version": "4.2.3",
+      "path": "node_modules/fast-uri",
+      "direct": false,
+      "license": "BSD-3-Clause",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/fast-uri/-/fast-uri-4.2.3.tgz",
+      "repository": "git+https://github.com/fastify/fast-uri.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "b010b0dfdfdb23d7396e03b82cd4621fc9bb8f95d6b0aea70b9c24e12074c786"
+        }
+      ]
+    },
+    {
+      "name": "fastify",
+      "version": "5.12.8",
+      "path": "node_modules/fastify",
+      "direct": true,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/fastify/-/fastify-5.12.8.tgz",
+      "repository": "git+https://github.com/fastify/fastify.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "23c91863859171455a536380991b4160fee4e19e2d8dc353ecf7143cc4e53ca2"
+        }
+      ]
+    },
+    {
+      "name": "fastify-plugin",
+      "version": "6.0.1",
+      "path": "node_modules/fastify-plugin",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/fastify-plugin/-/fastify-plugin-6.0.1.tgz",
+      "repository": "git+https://github.com/fastify/fastify-plugin.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "ba9677e5a34c2738c26b36bb478f95e0369cac48fbe68a01a91fd5c7972f2043"
+        }
+      ]
+    },
+    {
+      "name": "semver",
+      "version": "7.8.6",
+      "path": "node_modules/fastify/node_modules/semver",
+      "direct": false,
+      "license": "ISC",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/semver/-/semver-7.8.6.tgz",
+      "repository": "git+https://github.com/npm/node-semver.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "4ec3d4c66cd87f5c8d8ad911b10f99bf27cb00cdfcff82621956e379186b016b"
+        }
+      ]
+    },
+    {
+      "name": "fastq",
+      "version": "1.20.3",
+      "path": "node_modules/fastq",
+      "direct": false,
+      "license": "ISC",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/fastq/-/fastq-1.20.3.tgz",
+      "repository": "git+https://github.com/mcollina/fastq.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "c3367f6d01a79d368fc4fbb41b3615fcd92f243d6597ab96742f6f976f9325af"
+        }
+      ]
+    },
+    {
+      "name": "fflate",
+      "version": "0.8.3",
+      "path": "node_modules/fflate",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/fflate/-/fflate-0.8.3.tgz",
+      "repository": "https://github.com/101arrowz/fflate",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "0a1df3a083d0c010560aa342e87959c8c1070e6fd54545741f083f22d0c8b551"
+        }
+      ]
+    },
+    {
+      "name": "file-uri-to-path",
+      "version": "1.0.0",
+      "path": "node_modules/file-uri-to-path",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/file-uri-to-path/-/file-uri-to-path-1.0.0.tgz",
+      "repository": "git://github.com/TooTallNate/file-uri-to-path.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "75070206e4ee2a749be52444cecc05101ca8d314c9d6d335ff914046cbf086a0"
+        }
+      ]
+    },
+    {
+      "name": "find-my-way",
+      "version": "9.10.0",
+      "path": "node_modules/find-my-way",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/find-my-way/-/find-my-way-9.10.0.tgz",
+      "repository": "git+https://github.com/delvedor/find-my-way.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "693f9539655acc1847add1ccd364312ba570bf8ce84706b6059e7e0b5ceb90e6"
+        }
+      ]
+    },
+    {
+      "name": "fs-constants",
+      "version": "1.0.0",
+      "path": "node_modules/fs-constants",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/fs-constants/-/fs-constants-1.0.0.tgz",
+      "repository": "https://github.com/mafintosh/fs-constants.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "2281f2db407bdbb54f069eec38128b2dee2c0c952f52b786ef1faecb81767b3c"
+        }
+      ]
+    },
+    {
+      "name": "fsevents",
+      "version": "2.3.3",
+      "path": "node_modules/fsevents",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/fsevents/-/fsevents-2.3.3.tgz",
+      "repository": "https://github.com/fsevents/fsevents.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "2a8a5d6197bb97a018b8a190dd3ed853d750ca87c8e80c17aad41d6c6ff448e1"
+        }
+      ]
+    },
+    {
+      "name": "github-from-package",
+      "version": "0.0.0",
+      "path": "node_modules/github-from-package",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/github-from-package/-/github-from-package-0.0.0.tgz",
+      "repository": "git://github.com/substack/github-from-package.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "435a6722c786b0a56fbe7387028f1d9d3f3a2d0fb615bb8fee118727c3f59b7b"
+        }
+      ]
+    },
+    {
+      "name": "glob",
+      "version": "14.0.3",
+      "path": "node_modules/glob",
+      "direct": false,
+      "license": "BlueOak-1.0.0",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/glob/-/glob-14.0.3.tgz",
+      "repository": "git@github.com:isaacs/node-glob.git",
+      "notices": [
+        {
+          "path": "LICENSE.md",
+          "sha256": "a49c9ba464796f65b59fca3f1e6ca40912df1e859f575383223f7ec6c5baae09"
+        }
+      ]
+    },
+    {
+      "name": "glsl-noise",
+      "version": "0.0.0",
+      "path": "node_modules/glsl-noise",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/glsl-noise/-/glsl-noise-0.0.0.tgz",
+      "repository": "git://github.com/hughsk/glsl-noise.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "bce6c887104eda776ad5e3a2c0b249d1ef5adca91573b350e7147a59d65757f1"
+        }
+      ]
+    },
+    {
+      "name": "hls.js",
+      "version": "1.7.4",
+      "path": "node_modules/hls.js",
+      "direct": false,
+      "license": "Apache-2.0",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/hls.js/-/hls.js-1.7.4.tgz",
+      "repository": "https://github.com/video-dev/hls.js",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "ca8773cf798c7ed997d4dd7c8e23c348699f8d5b7462636694cc14de6cda12db"
+        }
+      ]
+    },
+    {
+      "name": "http-errors",
+      "version": "2.0.1",
+      "path": "node_modules/http-errors",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/http-errors/-/http-errors-2.0.1.tgz",
+      "repository": "jshttp/http-errors",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "dcb94ff9b1e037a847bc20589dc81a1066d041fd4c16deb18b0fa968c66cf395"
+        }
+      ]
+    },
+    {
+      "name": "ieee754",
+      "version": "1.2.1",
+      "path": "node_modules/ieee754",
+      "direct": false,
+      "license": "BSD-3-Clause",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/ieee754/-/ieee754-1.2.1.tgz",
+      "repository": "git://github.com/feross/ieee754.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "18d45466ba3253deae04667e267a91ea8de8548f18c1125264d1c9db28194cc1"
+        }
+      ]
+    },
+    {
+      "name": "immediate",
+      "version": "3.0.6",
+      "path": "node_modules/immediate",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/immediate/-/immediate-3.0.6.tgz",
+      "repository": "git://github.com/calvinmetcalf/immediate.git",
+      "notices": [
+        {
+          "path": "LICENSE.txt",
+          "sha256": "809e66de579fb7d92503848bbe6d1f348f4f6521a71e5d294fe7cc0c87a3b4ff"
+        }
+      ]
+    },
+    {
+      "name": "inherits",
+      "version": "2.0.4",
+      "path": "node_modules/inherits",
+      "direct": false,
+      "license": "ISC",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/inherits/-/inherits-2.0.4.tgz",
+      "repository": "git://github.com/isaacs/inherits",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "5ffe28e7ade7d8f10d85d5337a73fd793dac5c462fb9a28fbf8c5046c7fbca3b"
+        }
+      ]
+    },
+    {
+      "name": "ini",
+      "version": "1.3.8",
+      "path": "node_modules/ini",
+      "direct": false,
+      "license": "ISC",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/ini/-/ini-1.3.8.tgz",
+      "repository": "git://github.com/isaacs/ini.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "4ec3d4c66cd87f5c8d8ad911b10f99bf27cb00cdfcff82621956e379186b016b"
+        }
+      ]
+    },
+    {
+      "name": "ipaddr.js",
+      "version": "2.5.0",
+      "path": "node_modules/ipaddr.js",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/ipaddr.js/-/ipaddr.js-2.5.0.tgz",
+      "repository": "git+https://github.com/whitequark/ipaddr.js.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "62568a2d1337b77171ecca9db10579163446de1ba6151678e81f06cdc199971b"
+        }
+      ]
+    },
+    {
+      "name": "is-promise",
+      "version": "2.2.2",
+      "path": "node_modules/is-promise",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/is-promise/-/is-promise-2.2.2.tgz",
+      "repository": "https://github.com/then/is-promise.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "44191656d296391e0ec97e32f5385f0d02b6f2992694082d22ea04ba0f66f9e4"
+        }
+      ]
+    },
+    {
+      "name": "isexe",
+      "version": "2.0.0",
+      "path": "node_modules/isexe",
+      "direct": false,
+      "license": "ISC",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/isexe/-/isexe-2.0.0.tgz",
+      "repository": "git+https://github.com/isaacs/isexe.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "4ec3d4c66cd87f5c8d8ad911b10f99bf27cb00cdfcff82621956e379186b016b"
+        }
+      ]
+    },
+    {
+      "name": "isomorphic.js",
+      "version": "0.2.5",
+      "path": "node_modules/isomorphic.js",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/isomorphic.js/-/isomorphic.js-0.2.5.tgz",
+      "repository": "git+https://github.com/dmonad/isomorphic.js.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "dd6488c9c1a4ce2dc978ecee067e5b6a725b52e6057a450b24f1a23bc373b057"
+        }
+      ]
+    },
+    {
+      "name": "its-fine",
+      "version": "2.1.1",
+      "path": "node_modules/its-fine",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/its-fine/-/its-fine-2.1.1.tgz",
+      "repository": "https://github.com/pmndrs/its-fine",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "643123eeb38f154d93cb8323e1289a648d3f343b411a9340453c010e325d0c82"
+        }
+      ]
+    },
+    {
+      "name": "json-schema-ref-resolver",
+      "version": "3.0.1",
+      "path": "node_modules/json-schema-ref-resolver",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/json-schema-ref-resolver/-/json-schema-ref-resolver-3.0.1.tgz",
+      "repository": "git+https://github.com/fastify/json-schema-ref-resolver.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "8550e7875f553e746be4b2ab732c1574bae2c5bb01cbdbd7423665fcf1c10076"
+        }
+      ]
+    },
+    {
+      "name": "json-schema-traverse",
+      "version": "1.0.0",
+      "path": "node_modules/json-schema-traverse",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/json-schema-traverse/-/json-schema-traverse-1.0.0.tgz",
+      "repository": "git+https://github.com/epoberezkin/json-schema-traverse.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "7bf9b2de73a6b356761c948d0e9eeb4be6c1270bd04c79cd489c1e400ffdfc1a"
+        }
+      ]
+    },
+    {
+      "name": "kleur",
+      "version": "4.1.5",
+      "path": "node_modules/kleur",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/kleur/-/kleur-4.1.5.tgz",
+      "repository": "lukeed/kleur",
+      "notices": [
+        {
+          "path": "license",
+          "sha256": "306fa513e39b23a6e8747520de761809d206b99800ef41907b530226574c59ae"
+        }
+      ]
+    },
+    {
+      "name": "lib0",
+      "version": "0.2.119",
+      "path": "node_modules/lib0",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/lib0/-/lib0-0.2.119.tgz",
+      "repository": "git+https://github.com/dmonad/lib0.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "5446db1e43fe52faf3faab7e9959fe3762ac11bdc61c0945934c498affd52d73"
+        }
+      ]
+    },
+    {
+      "name": "lie",
+      "version": "3.3.0",
+      "path": "node_modules/lie",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/lie/-/lie-3.3.0.tgz",
+      "repository": "https://github.com/calvinmetcalf/lie.git",
+      "notices": [
+        {
+          "path": "license.md",
+          "sha256": "5c81b0caa98593408b03125efa25efe622341ed87ae55561968828cd887d64a4"
+        }
+      ]
+    },
+    {
+      "name": "light-my-request",
+      "version": "6.8.0",
+      "path": "node_modules/light-my-request",
+      "direct": false,
+      "license": "BSD-3-Clause",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/light-my-request/-/light-my-request-6.8.0.tgz",
+      "repository": "git+https://github.com/fastify/light-my-request.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "a46f56efbbd8ee5b8f80c8e60b3340f253714e010803b2671180f860222e1317"
+        }
+      ]
+    },
+    {
+      "name": "lucide-react",
+      "version": "0.468.0",
+      "path": "node_modules/lucide-react",
+      "direct": true,
+      "license": "ISC",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/lucide-react/-/lucide-react-0.468.0.tgz",
+      "repository": "https://github.com/lucide-icons/lucide.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "1e7290b35280a048667bbf0ebabac1c7fd52a75300e8b2946ac165715997f2bc"
+        }
+      ]
+    },
+    {
+      "name": "maath",
+      "version": "0.10.8",
+      "path": "node_modules/maath",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/maath/-/maath-0.10.8.tgz",
+      "repository": null,
+      "notices": []
+    },
+    {
+      "name": "meshline",
+      "version": "3.3.1",
+      "path": "node_modules/meshline",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/meshline/-/meshline-3.3.1.tgz",
+      "repository": null,
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "60616aab1af71f2603d9d4ab3c29b5d80cc43cd9a62e2e8b3fa68c1c5597103f"
+        }
+      ]
+    },
+    {
+      "name": "meshoptimizer",
+      "version": "0.22.0",
+      "path": "node_modules/meshoptimizer",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/meshoptimizer/-/meshoptimizer-0.22.0.tgz",
+      "repository": "https://github.com/zeux/meshoptimizer",
+      "notices": [
+        {
+          "path": "LICENSE.md",
+          "sha256": "d1bc307ff896c7fc65e3ff4823cc478194f7a5bc6436f99534ebede4d9e2017a"
+        }
+      ]
+    },
+    {
+      "name": "mime",
+      "version": "3.0.0",
+      "path": "node_modules/mime",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/mime/-/mime-3.0.0.tgz",
+      "repository": "https://github.com/broofa/mime",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "8f2658c03422c408b2b2ce4d151decc3b1a6fd3d86e5ca9433777bccdcdf75a2"
+        }
+      ]
+    },
+    {
+      "name": "mimic-response",
+      "version": "3.1.0",
+      "path": "node_modules/mimic-response",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/mimic-response/-/mimic-response-3.1.0.tgz",
+      "repository": "sindresorhus/mimic-response",
+      "notices": [
+        {
+          "path": "license",
+          "sha256": "5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3"
+        }
+      ]
+    },
+    {
+      "name": "minimatch",
+      "version": "11.0.4",
+      "path": "node_modules/minimatch",
+      "direct": false,
+      "license": "BlueOak-1.0.0",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/minimatch/-/minimatch-11.0.4.tgz",
+      "repository": "git@github.com:isaacs/minimatch",
+      "notices": [
+        {
+          "path": "LICENSE.md",
+          "sha256": "2c7c5d22ed5a8ee968c64757710979afcd77438c48b4a265b94e615babd8a901"
+        }
+      ]
+    },
+    {
+      "name": "minimist",
+      "version": "1.2.8",
+      "path": "node_modules/minimist",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/minimist/-/minimist-1.2.8.tgz",
+      "repository": "git://github.com/minimistjs/minimist.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "435a6722c786b0a56fbe7387028f1d9d3f3a2d0fb615bb8fee118727c3f59b7b"
+        }
+      ]
+    },
+    {
+      "name": "minipass",
+      "version": "7.1.3",
+      "path": "node_modules/minipass",
+      "direct": false,
+      "license": "BlueOak-1.0.0",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/minipass/-/minipass-7.1.3.tgz",
+      "repository": "https://github.com/isaacs/minipass",
+      "notices": [
+        {
+          "path": "LICENSE.md",
+          "sha256": "8a1af140fdfbf5afd3df27f7e662f989c5b963a300020dfafce42033cae9e004"
+        }
+      ]
+    },
+    {
+      "name": "mkdirp-classic",
+      "version": "0.5.3",
+      "path": "node_modules/mkdirp-classic",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/mkdirp-classic/-/mkdirp-classic-0.5.3.tgz",
+      "repository": "https://github.com/mafintosh/mkdirp-classic.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "a255b85c1a510ecfe660c4d442ecdbc1e9d07f4b4d3d7f90443f7e5570591e0a"
+        }
+      ]
+    },
+    {
+      "name": "napi-build-utils",
+      "version": "2.0.0",
+      "path": "node_modules/napi-build-utils",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/napi-build-utils/-/napi-build-utils-2.0.0.tgz",
+      "repository": "git+https://github.com/inspiredware/napi-build-utils.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "9c6a91d2847bd9bfd493c1ca87b9c3f96302cfd069667e6dd4a6278e69a33a31"
+        }
+      ]
+    },
+    {
+      "name": "node-abi",
+      "version": "3.101.0",
+      "path": "node_modules/node-abi",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/node-abi/-/node-abi-3.101.0.tgz",
+      "repository": "git+https://github.com/electron/node-abi.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "9a508cd4122f2dc1cc39f8ab0b6950efbc49fb087a581c7177a4b8c9d5d0d6a1"
+        }
+      ]
+    },
+    {
+      "name": "semver",
+      "version": "7.8.6",
+      "path": "node_modules/node-abi/node_modules/semver",
+      "direct": false,
+      "license": "ISC",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/semver/-/semver-7.8.6.tgz",
+      "repository": "git+https://github.com/npm/node-semver.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "4ec3d4c66cd87f5c8d8ad911b10f99bf27cb00cdfcff82621956e379186b016b"
+        }
+      ]
+    },
+    {
+      "name": "on-exit-leak-free",
+      "version": "2.1.2",
+      "path": "node_modules/on-exit-leak-free",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/on-exit-leak-free/-/on-exit-leak-free-2.1.2.tgz",
+      "repository": "git+https://github.com/mcollina/on-exit-or-gc.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "47404ffc18f1267832bc0623857871de5a3a93ebb19693f5e1b963af91fab54b"
+        }
+      ]
+    },
+    {
+      "name": "once",
+      "version": "1.4.0",
+      "path": "node_modules/once",
+      "direct": false,
+      "license": "ISC",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/once/-/once-1.4.0.tgz",
+      "repository": "git://github.com/isaacs/once",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "4ec3d4c66cd87f5c8d8ad911b10f99bf27cb00cdfcff82621956e379186b016b"
+        }
+      ]
+    },
+    {
+      "name": "path-key",
+      "version": "3.1.1",
+      "path": "node_modules/path-key",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/path-key/-/path-key-3.1.1.tgz",
+      "repository": "sindresorhus/path-key",
+      "notices": [
+        {
+          "path": "license",
+          "sha256": "48da2f39e100d4085767e94966b43f4fa95ff6a0698fba57ed460914e35f94a0"
+        }
+      ]
+    },
+    {
+      "name": "path-scurry",
+      "version": "3.0.0",
+      "path": "node_modules/path-scurry",
+      "direct": false,
+      "license": "BlueOak-1.0.0",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/path-scurry/-/path-scurry-3.0.0.tgz",
+      "repository": "git+https://github.com/isaacs/path-scurry",
+      "notices": [
+        {
+          "path": "LICENSE.md",
+          "sha256": "8a1af140fdfbf5afd3df27f7e662f989c5b963a300020dfafce42033cae9e004"
+        }
+      ]
+    },
+    {
+      "name": "lru-cache",
+      "version": "11.5.3",
+      "path": "node_modules/path-scurry/node_modules/lru-cache",
+      "direct": false,
+      "license": "BlueOak-1.0.0",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/lru-cache/-/lru-cache-11.5.3.tgz",
+      "repository": "git+ssh://git@github.com/isaacs/node-lru-cache.git",
+      "notices": [
+        {
+          "path": "LICENSE.md",
+          "sha256": "8a1af140fdfbf5afd3df27f7e662f989c5b963a300020dfafce42033cae9e004"
+        }
+      ]
+    },
+    {
+      "name": "pino",
+      "version": "10.4.0",
+      "path": "node_modules/pino",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/pino/-/pino-10.4.0.tgz",
+      "repository": "git+https://github.com/pinojs/pino.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "03ebd87bfc3fde763e4d698939097903a202163f3365d92d2031a4e63e0c5487"
+        }
+      ]
+    },
+    {
+      "name": "pino-abstract-transport",
+      "version": "3.0.0",
+      "path": "node_modules/pino-abstract-transport",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/pino-abstract-transport/-/pino-abstract-transport-3.0.0.tgz",
+      "repository": "git+https://github.com/pinojs/pino-abstract-transport.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "31f005ecff86a12a1351f4c2cb1133267c0b152546b08cd6fa4bdeb1943e00cd"
+        }
+      ]
+    },
+    {
+      "name": "pino-std-serializers",
+      "version": "7.1.0",
+      "path": "node_modules/pino-std-serializers",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/pino-std-serializers/-/pino-std-serializers-7.1.0.tgz",
+      "repository": "git+ssh://git@github.com/pinojs/pino-std-serializers.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "6206673d24786f09656f7a480b7c50af289e9690963aaa135af5b626de5250df"
+        }
+      ]
+    },
+    {
+      "name": "potpack",
+      "version": "1.0.2",
+      "path": "node_modules/potpack",
+      "direct": false,
+      "license": "ISC",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/potpack/-/potpack-1.0.2.tgz",
+      "repository": "git+https://github.com/mapbox/potpack.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "2c620eaf6c3ee3e33b07f3b6ef0dfd0a9e0a52c93a46aa4ccf7773dbb562daec"
+        }
+      ]
+    },
+    {
+      "name": "prebuild-install",
+      "version": "7.1.3",
+      "path": "node_modules/prebuild-install",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/prebuild-install/-/prebuild-install-7.1.3.tgz",
+      "repository": "https://github.com/prebuild/prebuild-install.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "0aa9add6a9158efad3e6649e3affd607c7e2629f6677af19f9988c8fbb0757b0"
+        }
+      ]
+    },
+    {
+      "name": "process-warning",
+      "version": "5.1.1",
+      "path": "node_modules/process-warning",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/process-warning/-/process-warning-5.1.1.tgz",
+      "repository": "git+https://github.com/fastify/process-warning.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "8d3c1dd501e056405ab56f4ad87b987070d55d1fe814616584ec2360045f9017"
+        }
+      ]
+    },
+    {
+      "name": "promise-worker-transferable",
+      "version": "1.0.4",
+      "path": "node_modules/promise-worker-transferable",
+      "direct": false,
+      "license": "Apache-2.0",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/promise-worker-transferable/-/promise-worker-transferable-1.0.4.tgz",
+      "repository": "git+https://github.com/terikon/promise-worker-transferable.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "0f0ba7a9d825b6cac29a3c949860dcfc0b87f2f0f57a078199520a3cd03896f6"
+        }
+      ]
+    },
+    {
+      "name": "pump",
+      "version": "3.0.4",
+      "path": "node_modules/pump",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/pump/-/pump-3.0.4.tgz",
+      "repository": "git://github.com/mafintosh/pump.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "3fe8d55a98dbf260eace67c00cf9bc53edb46234e840098a0b93df3096b97fb6"
+        }
+      ]
+    },
+    {
+      "name": "quick-format-unescaped",
+      "version": "4.0.4",
+      "path": "node_modules/quick-format-unescaped",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/quick-format-unescaped/-/quick-format-unescaped-4.0.4.tgz",
+      "repository": "git+https://github.com/davidmarkclements/quick-format.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "5ac141bfc70bec8f40838502436bfcb85e3f4c24377e41b9ddef07bdd6aa51bc"
+        }
+      ]
+    },
+    {
+      "name": "rc",
+      "version": "1.2.8",
+      "path": "node_modules/rc",
+      "direct": false,
+      "license": "(BSD-2-Clause OR MIT OR Apache-2.0)",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/rc/-/rc-1.2.8.tgz",
+      "repository": "https://github.com/dominictarr/rc.git",
+      "notices": [
+        {
+          "path": "LICENSE.APACHE2",
+          "sha256": "e8734448285a2dd773d40136ed5d5e8163a70701dd540cdc796cfca232f67d55"
+        },
+        {
+          "path": "LICENSE.BSD",
+          "sha256": "65e7e4d223688c601f42959defde380f8c4aa677fa4706da3b4a53f129bd78a3"
+        },
+        {
+          "path": "LICENSE.MIT",
+          "sha256": "d72dea1a8cdf3f4dfa2f594253d0c5b37baefc76e806f5ecb0e426393edcd505"
+        }
+      ]
+    },
+    {
+      "name": "react",
+      "version": "19.3.1",
+      "path": "node_modules/react",
+      "direct": true,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/react/-/react-19.3.1.tgz",
+      "repository": "https://github.com/react/react.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93"
+        }
+      ]
+    },
+    {
+      "name": "react-dom",
+      "version": "19.3.1",
+      "path": "node_modules/react-dom",
+      "direct": true,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/react-dom/-/react-dom-19.3.1.tgz",
+      "repository": "https://github.com/react/react.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93"
+        }
+      ]
+    },
+    {
+      "name": "react-use-measure",
+      "version": "2.1.7",
+      "path": "node_modules/react-use-measure",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/react-use-measure/-/react-use-measure-2.1.7.tgz",
+      "repository": "https://github.com/pmndrs/react-use-measure",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "1f9038eff8dbd6505a26f9d6830cc6da2b87ab1a9305d1100884986e9c11a31a"
+        }
+      ]
+    },
+    {
+      "name": "real-require",
+      "version": "1.0.0",
+      "path": "node_modules/real-require",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/real-require/-/real-require-1.0.0.tgz",
+      "repository": "git+https://github.com/pinojs/real-require.git",
+      "notices": [
+        {
+          "path": "LICENSE.md",
+          "sha256": "cbf263504e800cf09f99962cce8497b76eef79c3526bca434b90c3ef4c17220d"
+        }
+      ]
+    },
+    {
+      "name": "require-from-string",
+      "version": "2.0.2",
+      "path": "node_modules/require-from-string",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/require-from-string/-/require-from-string-2.0.2.tgz",
+      "repository": "floatdrop/require-from-string",
+      "notices": [
+        {
+          "path": "license",
+          "sha256": "6ee0feb1f6ef996ff5a68600f8cf98909cf412d39ef3cdceaefd87d636fa1b7f"
+        }
+      ]
+    },
+    {
+      "name": "ret",
+      "version": "0.5.1",
+      "path": "node_modules/ret",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/ret/-/ret-0.5.1.tgz",
+      "repository": "git://github.com/fent/ret.js.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "bfc2c678db20d806b3787956f607a1509da5fca45b4d40a97c671cbee737159d"
+        }
+      ]
+    },
+    {
+      "name": "reusify",
+      "version": "1.1.0",
+      "path": "node_modules/reusify",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/reusify/-/reusify-1.1.0.tgz",
+      "repository": "git+https://github.com/mcollina/reusify.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "93a1506953b08ad4874e1cc0971a1d2ac387ca510da91e4d05e460a6c4966fa3"
+        }
+      ]
+    },
+    {
+      "name": "rfdc",
+      "version": "1.4.1",
+      "path": "node_modules/rfdc",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/rfdc/-/rfdc-1.4.1.tgz",
+      "repository": "git+https://github.com/davidmarkclements/rfdc.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "1ce941682a96c7b898ecd125d0f2e22319758ea6f3adbf498a65d649b0f3f7dd"
+        }
+      ]
+    },
+    {
+      "name": "safe-buffer",
+      "version": "5.2.1",
+      "path": "node_modules/safe-buffer",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/safe-buffer/-/safe-buffer-5.2.1.tgz",
+      "repository": "git://github.com/feross/safe-buffer.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "c7cc929b57080f4b9d0c6cf57669f0463fc5b39906344dfc8d3bc43426b30eac"
+        }
+      ]
+    },
+    {
+      "name": "safe-regex2",
+      "version": "5.1.2",
+      "path": "node_modules/safe-regex2",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/safe-regex2/-/safe-regex2-5.1.2.tgz",
+      "repository": "git+https://github.com/fastify/safe-regex2.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "3871c31d0cc373951d836b8bb97275a2227f8af7464df7c51bc3f98769b87653"
+        }
+      ]
+    },
+    {
+      "name": "safe-stable-stringify",
+      "version": "2.5.0",
+      "path": "node_modules/safe-stable-stringify",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/safe-stable-stringify/-/safe-stable-stringify-2.5.0.tgz",
+      "repository": "git+https://github.com/BridgeAR/safe-stable-stringify.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "3a6d6de49d284a36c5d271ef0e62eca1838cc460dd7630e3f2c347c8f5b2232a"
+        }
+      ]
+    },
+    {
+      "name": "scheduler",
+      "version": "0.28.0",
+      "path": "node_modules/scheduler",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/scheduler/-/scheduler-0.28.0.tgz",
+      "repository": "https://github.com/react/react.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93"
+        }
+      ]
+    },
+    {
+      "name": "secure-json-parse",
+      "version": "4.1.1",
+      "path": "node_modules/secure-json-parse",
+      "direct": false,
+      "license": "BSD-3-Clause",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/secure-json-parse/-/secure-json-parse-4.1.1.tgz",
+      "repository": "git+https://github.com/fastify/secure-json-parse.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "354dacd69de5070d69b2e4c5598bd1f51d980775422c3ee663160f9da88ebf63"
+        }
+      ]
+    },
+    {
+      "name": "set-cookie-parser",
+      "version": "3.2.2",
+      "path": "node_modules/set-cookie-parser",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/set-cookie-parser/-/set-cookie-parser-3.2.2.tgz",
+      "repository": "nfriedly/set-cookie-parser",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "c5c6c5183a789d122f267c405f685037efb87e27fcde28ab1dd7378a2d2f5962"
+        }
+      ]
+    },
+    {
+      "name": "setprototypeof",
+      "version": "1.2.0",
+      "path": "node_modules/setprototypeof",
+      "direct": false,
+      "license": "ISC",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/setprototypeof/-/setprototypeof-1.2.0.tgz",
+      "repository": "https://github.com/wesleytodd/setprototypeof.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "76d6d1ea0c268da37dd3c961b4fcfb23dee8417fff9e8786d4d44c585b781b69"
+        }
+      ]
+    },
+    {
+      "name": "shebang-command",
+      "version": "2.0.0",
+      "path": "node_modules/shebang-command",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/shebang-command/-/shebang-command-2.0.0.tgz",
+      "repository": "kevva/shebang-command",
+      "notices": [
+        {
+          "path": "license",
+          "sha256": "69dee148a2cc470554dfa7142e830662062394d0fe67cddd379aba90dc60d6b3"
+        }
+      ]
+    },
+    {
+      "name": "shebang-regex",
+      "version": "3.0.0",
+      "path": "node_modules/shebang-regex",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/shebang-regex/-/shebang-regex-3.0.0.tgz",
+      "repository": "sindresorhus/shebang-regex",
+      "notices": [
+        {
+          "path": "license",
+          "sha256": "48da2f39e100d4085767e94966b43f4fa95ff6a0698fba57ed460914e35f94a0"
+        }
+      ]
+    },
+    {
+      "name": "simple-concat",
+      "version": "1.0.1",
+      "path": "node_modules/simple-concat",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/simple-concat/-/simple-concat-1.0.1.tgz",
+      "repository": "git://github.com/feross/simple-concat.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "d4c2065e2b936e62a4eb400efb4576edec9ca1388a9f78aa288e147275e7bc8b"
+        }
+      ]
+    },
+    {
+      "name": "simple-get",
+      "version": "4.0.1",
+      "path": "node_modules/simple-get",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/simple-get/-/simple-get-4.0.1.tgz",
+      "repository": "git://github.com/feross/simple-get.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "d4c2065e2b936e62a4eb400efb4576edec9ca1388a9f78aa288e147275e7bc8b"
+        }
+      ]
+    },
+    {
+      "name": "sonic-boom",
+      "version": "4.2.1",
+      "path": "node_modules/sonic-boom",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/sonic-boom/-/sonic-boom-4.2.1.tgz",
+      "repository": "git+https://github.com/pinojs/sonic-boom.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "db5c3795cb080810fed0380bf4d6adef3f81579e8ae3a867d3c2abab2329db9d"
+        }
+      ]
+    },
+    {
+      "name": "split2",
+      "version": "4.2.0",
+      "path": "node_modules/split2",
+      "direct": false,
+      "license": "ISC",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/split2/-/split2-4.2.0.tgz",
+      "repository": "https://github.com/mcollina/split2.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "c372ef2fa1dfcb124ed807609751e75e3a009f108c5724916b489288fcb88a0c"
+        }
+      ]
+    },
+    {
+      "name": "stats-gl",
+      "version": "2.4.2",
+      "path": "node_modules/stats-gl",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/stats-gl/-/stats-gl-2.4.2.tgz",
+      "repository": "https://github.com/RenaudRohlinger/stats-gl",
+      "notices": []
+    },
+    {
+      "name": "three",
+      "version": "0.170.0",
+      "path": "node_modules/stats-gl/node_modules/three",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/three/-/three-0.170.0.tgz",
+      "repository": "https://github.com/mrdoob/three.js",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "4c40a1ef62450b857c3b2aaf294936304cd552d965fbcd9d32d4c5bcf4ba4454"
+        }
+      ]
+    },
+    {
+      "name": "stats.js",
+      "version": "0.17.0",
+      "path": "node_modules/stats.js",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/stats.js/-/stats.js-0.17.0.tgz",
+      "repository": "https://github.com/mrdoob/stats.js.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "9d23ed2d037cc4b97860dc61dc3787ca2c1faac8b11402064a6fa90e91360adc"
+        }
+      ]
+    },
+    {
+      "name": "statuses",
+      "version": "2.0.2",
+      "path": "node_modules/statuses",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/statuses/-/statuses-2.0.2.tgz",
+      "repository": "jshttp/statuses",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "512cfa4d5e7a7569c7ae4dd95241cb6ae2aaf648ef9ebd080c01bd24868d26e9"
+        }
+      ]
+    },
+    {
+      "name": "stream-shift",
+      "version": "1.0.3",
+      "path": "node_modules/stream-shift",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/stream-shift/-/stream-shift-1.0.3.tgz",
+      "repository": "https://github.com/mafintosh/stream-shift.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "6a134e51aa31496c15a741592fc5d782b2dbf8d8b6b8524e15c8520ae0cd6374"
+        }
+      ]
+    },
+    {
+      "name": "string_decoder",
+      "version": "1.3.0",
+      "path": "node_modules/string_decoder",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/string_decoder/-/string_decoder-1.3.0.tgz",
+      "repository": "git://github.com/nodejs/string_decoder.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "11f2aafb37d06b3ee5bdaf06e9811141d0da05263c316f3d627f45c20d43261b"
+        }
+      ]
+    },
+    {
+      "name": "strip-json-comments",
+      "version": "2.0.1",
+      "path": "node_modules/strip-json-comments",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/strip-json-comments/-/strip-json-comments-2.0.1.tgz",
+      "repository": "sindresorhus/strip-json-comments",
+      "notices": [
+        {
+          "path": "license",
+          "sha256": "6fb9754611c20f6649f68805e8c990e83261f29316e29de9e6cedae607b8634c"
+        }
+      ]
+    },
+    {
+      "name": "suspend-react",
+      "version": "0.1.3",
+      "path": "node_modules/suspend-react",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/suspend-react/-/suspend-react-0.1.3.tgz",
+      "repository": "pmndrs/suspend-react",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "997e79b828d8b85d6f18730c8dbf58074811360a199506bd84e1263e17c227a2"
+        }
+      ]
+    },
+    {
+      "name": "tar-fs",
+      "version": "2.1.5",
+      "path": "node_modules/tar-fs",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/tar-fs/-/tar-fs-2.1.5.tgz",
+      "repository": "https://github.com/mafintosh/tar-fs.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "3fe8d55a98dbf260eace67c00cf9bc53edb46234e840098a0b93df3096b97fb6"
+        }
+      ]
+    },
+    {
+      "name": "readable-stream",
+      "version": "3.6.2",
+      "path": "node_modules/tar-fs/node_modules/readable-stream",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/readable-stream/-/readable-stream-3.6.2.tgz",
+      "repository": "git://github.com/nodejs/readable-stream",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "ec62dc96da0099b87f4511736c87309335527fb7031639493e06c95728dc8c54"
+        }
+      ]
+    },
+    {
+      "name": "tar-stream",
+      "version": "2.2.0",
+      "path": "node_modules/tar-fs/node_modules/tar-stream",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/tar-stream/-/tar-stream-2.2.0.tgz",
+      "repository": "git+https://github.com/mafintosh/tar-stream.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "3fe8d55a98dbf260eace67c00cf9bc53edb46234e840098a0b93df3096b97fb6"
+        }
+      ]
+    },
+    {
+      "name": "thread-stream",
+      "version": "4.2.1",
+      "path": "node_modules/thread-stream",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/thread-stream/-/thread-stream-4.2.1.tgz",
+      "repository": "git+https://github.com/mcollina/thread-stream.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "47404ffc18f1267832bc0623857871de5a3a93ebb19693f5e1b963af91fab54b"
+        }
+      ]
+    },
+    {
+      "name": "three",
+      "version": "0.180.0",
+      "path": "node_modules/three",
+      "direct": true,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/three/-/three-0.180.0.tgz",
+      "repository": "https://github.com/mrdoob/three.js",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "bfe119ea4fd413f5f7ca3fcd63adb0c4a073ed39daa2fe7d3e6b769e21272601"
+        }
+      ]
+    },
+    {
+      "name": "three-mesh-bvh",
+      "version": "0.8.3",
+      "path": "node_modules/three-mesh-bvh",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/three-mesh-bvh/-/three-mesh-bvh-0.8.3.tgz",
+      "repository": "git+https://github.com/gkjohnson/three-mesh-bvh.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "b106ef6198a9862ed2b5b873e944ecf3583c631a84a7462d400ecc1910ce7fee"
+        }
+      ]
+    },
+    {
+      "name": "three-stdlib",
+      "version": "2.36.1",
+      "path": "node_modules/three-stdlib",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/three-stdlib/-/three-stdlib-2.36.1.tgz",
+      "repository": "https://github.com/pmndrs/three-stdlib",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "28eb7edf059a39094aa3d169db1fec46ac4a6279c921a90f965828d92ec86e79"
+        }
+      ]
+    },
+    {
+      "name": "fflate",
+      "version": "0.6.11",
+      "path": "node_modules/three-stdlib/node_modules/fflate",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/fflate/-/fflate-0.6.11.tgz",
+      "repository": "https://github.com/101arrowz/fflate",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "62249119bb7df6e54300f37a37145c26a6d4420410aac8881a119c5b427cf751"
+        }
+      ]
+    },
+    {
+      "name": "toad-cache",
+      "version": "3.7.4",
+      "path": "node_modules/toad-cache",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/toad-cache/-/toad-cache-3.7.4.tgz",
+      "repository": "git+https://github.com/kibertoad/toad-cache.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "644304c533dee96438937c0bdcbb49897d80fd8df3be4573f3c57b9c2ca22587"
+        }
+      ]
+    },
+    {
+      "name": "toidentifier",
+      "version": "1.0.1",
+      "path": "node_modules/toidentifier",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/toidentifier/-/toidentifier-1.0.1.tgz",
+      "repository": "component/toidentifier",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "a832d679750e49ab433626ab196350b89964b60eb0d3edd3341887c7d5f4c128"
+        }
+      ]
+    },
+    {
+      "name": "troika-three-text",
+      "version": "0.52.5",
+      "path": "node_modules/troika-three-text",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/troika-three-text/-/troika-three-text-0.52.5.tgz",
+      "repository": "https://github.com/protectwise/troika.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "c514829145810d3bf5730a78b5054250bd1b711b2823f2fc58c2ba89930bce5c"
+        }
+      ]
+    },
+    {
+      "name": "troika-three-utils",
+      "version": "0.52.5",
+      "path": "node_modules/troika-three-utils",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/troika-three-utils/-/troika-three-utils-0.52.5.tgz",
+      "repository": "https://github.com/protectwise/troika.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "c514829145810d3bf5730a78b5054250bd1b711b2823f2fc58c2ba89930bce5c"
+        }
+      ]
+    },
+    {
+      "name": "troika-worker-utils",
+      "version": "0.52.0",
+      "path": "node_modules/troika-worker-utils",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/troika-worker-utils/-/troika-worker-utils-0.52.0.tgz",
+      "repository": "https://github.com/protectwise/troika.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "c514829145810d3bf5730a78b5054250bd1b711b2823f2fc58c2ba89930bce5c"
+        }
+      ]
+    },
+    {
+      "name": "tslib",
+      "version": "2.9.1",
+      "path": "node_modules/tslib",
+      "direct": false,
+      "license": "0BSD",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/tslib/-/tslib-2.9.1.tgz",
+      "repository": "https://github.com/Microsoft/tslib.git",
+      "notices": [
+        {
+          "path": "LICENSE.txt",
+          "sha256": "210b19e543130388c68654b7497e967119ce17145f66ab7d85688fbd70f08751"
+        }
+      ]
+    },
+    {
+      "name": "tsx",
+      "version": "4.23.15",
+      "path": "node_modules/tsx",
+      "direct": true,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/tsx/-/tsx-4.23.15.tgz",
+      "repository": "privatenumber/tsx",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "8dded67841a9261a622c739fb61c81785e93765de852828ceeb9403d20a74581"
+        }
+      ]
+    },
+    {
+      "name": "tunnel-agent",
+      "version": "0.6.0",
+      "path": "node_modules/tunnel-agent",
+      "direct": false,
+      "license": "Apache-2.0",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/tunnel-agent/-/tunnel-agent-0.6.0.tgz",
+      "repository": "https://github.com/mikeal/tunnel-agent",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "d446a8c73d7bbe4872d6524b15ae206f9a2d7eb53f8c9cb6e6c893a43acc5276"
+        }
+      ]
+    },
+    {
+      "name": "tunnel-rat",
+      "version": "0.1.2",
+      "path": "node_modules/tunnel-rat",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/tunnel-rat/-/tunnel-rat-0.1.2.tgz",
+      "repository": "git+https://github.com/pmndrs/tunnel-rat.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "cd14add33d47bcecae9fed5559224ae135c5ec41e1d3a126601f5fbd82291834"
+        }
+      ]
+    },
+    {
+      "name": "zustand",
+      "version": "4.5.7",
+      "path": "node_modules/tunnel-rat/node_modules/zustand",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/zustand/-/zustand-4.5.7.tgz",
+      "repository": "git+https://github.com/pmndrs/zustand.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "c1e6e266563517467b1bf874817d23e426f3149252bd7d42758cd697514b8417"
+        }
+      ]
+    },
+    {
+      "name": "use-sync-external-store",
+      "version": "1.7.0",
+      "path": "node_modules/use-sync-external-store",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/use-sync-external-store/-/use-sync-external-store-1.7.0.tgz",
+      "repository": "https://github.com/react/react.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93"
+        }
+      ]
+    },
+    {
+      "name": "util-deprecate",
+      "version": "1.0.2",
+      "path": "node_modules/util-deprecate",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/util-deprecate/-/util-deprecate-1.0.2.tgz",
+      "repository": "git://github.com/TooTallNate/util-deprecate.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "0154425673db15cdfa80ecba2c9b1f1a867f7197a006764712849bfc3a93cbb7"
+        }
+      ]
+    },
+    {
+      "name": "utility-types",
+      "version": "3.11.0",
+      "path": "node_modules/utility-types",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/utility-types/-/utility-types-3.11.0.tgz",
+      "repository": "https://github.com/piotrwitek/utility-types",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "eba0c3a8b90636744cc57e1a90f2d87767a57cccc86578a8168130f96896c9a9"
+        }
+      ]
+    },
+    {
+      "name": "webgl-constants",
+      "version": "1.1.1",
+      "path": "node_modules/webgl-constants",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "installed LICENSE text",
+      "source": "https://registry.npmjs.org/webgl-constants/-/webgl-constants-1.1.1.tgz",
+      "repository": null,
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "0969fa65680b694452c2c65981df14af5c192da24f2b1f87bdd51d8ed24efcfa"
+        }
+      ]
+    },
+    {
+      "name": "webgl-sdf-generator",
+      "version": "1.1.1",
+      "path": "node_modules/webgl-sdf-generator",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/webgl-sdf-generator/-/webgl-sdf-generator-1.1.1.tgz",
+      "repository": "https://github.com/lojjic/webgl-sdf-generator.git",
+      "notices": [
+        {
+          "path": "LICENSE.txt",
+          "sha256": "49d4d143fed599deb502a0fe6e02f49832f87e9a3a4cd0502e469596d50faa6d"
+        }
+      ]
+    },
+    {
+      "name": "which",
+      "version": "2.0.2",
+      "path": "node_modules/which",
+      "direct": false,
+      "license": "ISC",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/which/-/which-2.0.2.tgz",
+      "repository": "git://github.com/isaacs/node-which.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "4ec3d4c66cd87f5c8d8ad911b10f99bf27cb00cdfcff82621956e379186b016b"
+        }
+      ]
+    },
+    {
+      "name": "wrappy",
+      "version": "1.0.2",
+      "path": "node_modules/wrappy",
+      "direct": false,
+      "license": "ISC",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/wrappy/-/wrappy-1.0.2.tgz",
+      "repository": "https://github.com/npm/wrappy",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "4ec3d4c66cd87f5c8d8ad911b10f99bf27cb00cdfcff82621956e379186b016b"
+        }
+      ]
+    },
+    {
+      "name": "ws",
+      "version": "8.22.1",
+      "path": "node_modules/ws",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/ws/-/ws-8.22.1.tgz",
+      "repository": "git+https://github.com/websockets/ws.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "2b29dcfe0d6471f7e8c92c5fb38c9f93edee10330937055440192f1832b1ecef"
+        }
+      ]
+    },
+    {
+      "name": "y-protocols",
+      "version": "1.0.7",
+      "path": "node_modules/y-protocols",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/y-protocols/-/y-protocols-1.0.7.tgz",
+      "repository": "git+https://github.com/yjs/y-protocols.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "5446db1e43fe52faf3faab7e9959fe3762ac11bdc61c0945934c498affd52d73"
+        }
+      ]
+    },
+    {
+      "name": "yjs",
+      "version": "13.6.33",
+      "path": "node_modules/yjs",
+      "direct": true,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/yjs/-/yjs-13.6.33.tgz",
+      "repository": "https://github.com/yjs/yjs.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "341baa53605ed85d6f95782322854cca56c655ebc7fd4712649b8e7afc6020ff"
+        }
+      ]
+    },
+    {
+      "name": "zod",
+      "version": "4.6.7",
+      "path": "node_modules/zod",
+      "direct": true,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/zod/-/zod-4.6.7.tgz",
+      "repository": "git+https://github.com/colinhacks/zod.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "3f1189b28e3866e0d979968d466b78f813f76827cfdca1fbb124cc0a5c8841f8"
+        }
+      ]
+    },
+    {
+      "name": "zustand",
+      "version": "5.0.16",
+      "path": "node_modules/zustand",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "package-lock.json / package metadata",
+      "source": "https://registry.npmjs.org/zustand/-/zustand-5.0.16.tgz",
+      "repository": "git+https://github.com/pmndrs/zustand.git",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "c1e6e266563517467b1bf874817d23e426f3149252bd7d42758cd697514b8417"
+        }
+      ]
+    }
+  ],
+  "python": [
+    {
+      "name": "aiohappyeyeballs",
+      "version": "2.7.1",
+      "direct": false,
+      "license": "PSF-2.0",
+      "licenseProvenance": "installed metadata and license text; labels are descriptive, not a compatibility determination",
+      "source": "https://pypi.org/project/aiohappyeyeballs/2.7.1/",
+      "projectUrls": [
+        "Bug Tracker, https://github.com/aio-libs/aiohappyeyeballs/issues",
+        "Changelog, https://github.com/aio-libs/aiohappyeyeballs/blob/main/CHANGELOG.md",
+        "Documentation, https://aiohappyeyeballs.readthedocs.io",
+        "Repository, https://github.com/aio-libs/aiohappyeyeballs"
+      ],
+      "notices": [
+        {
+          "path": "aiohappyeyeballs-2.7.1.dist-info/licenses/LICENSE",
+          "sha256": "3b2f81fe21d181c499c59a256c8e1968455d6689d269aa85373bfb6af41da3bf"
+        }
+      ]
+    },
+    {
+      "name": "aiohttp",
+      "version": "3.14.5",
+      "direct": false,
+      "license": "Apache-2.0 AND MIT",
+      "licenseProvenance": "installed metadata and license text; labels are descriptive, not a compatibility determination",
+      "source": "https://pypi.org/project/aiohttp/3.14.5/",
+      "projectUrls": [
+        "Homepage, https://github.com/aio-libs/aiohttp",
+        "Chat: Matrix, https://matrix.to/#/#aio-libs:matrix.org",
+        "Chat: Matrix Space, https://matrix.to/#/#aio-libs-space:matrix.org",
+        "CI: GitHub Actions, https://github.com/aio-libs/aiohttp/actions?query=workflow%3ACI",
+        "Coverage: codecov, https://codecov.io/github/aio-libs/aiohttp",
+        "Docs: Changelog, https://docs.aiohttp.org/en/stable/changes.html",
+        "Docs: RTD, https://docs.aiohttp.org",
+        "GitHub: issues, https://github.com/aio-libs/aiohttp/issues",
+        "GitHub: repo, https://github.com/aio-libs/aiohttp"
+      ],
+      "notices": [
+        {
+          "path": "aiohttp-3.14.5.dist-info/licenses/LICENSE.txt",
+          "sha256": "2e4be5fc6c4c72a466fcb665d726e049a6891981fe536c4f04b6366749461d23"
+        },
+        {
+          "path": "aiohttp-3.14.5.dist-info/licenses/vendor/llhttp/LICENSE",
+          "sha256": "628168d68bb5a8a17e0bbefb3bd74e326e1edc20583d76f52f457c82c921867d"
+        }
+      ]
+    },
+    {
+      "name": "aiosignal",
+      "version": "1.4.0",
+      "direct": false,
+      "license": "Apache 2.0",
+      "licenseProvenance": "installed metadata and license text; labels are descriptive, not a compatibility determination",
+      "source": "https://pypi.org/project/aiosignal/1.4.0/",
+      "projectUrls": [
+        "Chat: Gitter, https://gitter.im/aio-libs/Lobby",
+        "CI: GitHub Actions, https://github.com/aio-libs/aiosignal/actions",
+        "Coverage: codecov, https://codecov.io/github/aio-libs/aiosignal",
+        "Docs: RTD, https://docs.aiosignal.org",
+        "GitHub: issues, https://github.com/aio-libs/aiosignal/issues",
+        "GitHub: repo, https://github.com/aio-libs/aiosignal"
+      ],
+      "notices": [
+        {
+          "path": "aiosignal-1.4.0.dist-info/licenses/LICENSE",
+          "sha256": "6fd5243e92dd7f98ec69c7ac377728e74905709ff527a5bf98d6d0263c04f5b6"
+        }
+      ]
+    },
+    {
+      "name": "attrs",
+      "version": "26.1.0",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "installed metadata and license text; labels are descriptive, not a compatibility determination",
+      "source": "https://pypi.org/project/attrs/26.1.0/",
+      "projectUrls": [
+        "Documentation, https://www.attrs.org/",
+        "Changelog, https://www.attrs.org/en/stable/changelog.html",
+        "GitHub, https://github.com/python-attrs/attrs",
+        "Funding, https://github.com/sponsors/hynek",
+        "Tidelift, https://tidelift.com/subscription/pkg/pypi-attrs?utm_source=pypi-attrs&utm_medium=pypi"
+      ],
+      "notices": [
+        {
+          "path": "attrs-26.1.0.dist-info/licenses/LICENSE",
+          "sha256": "882115c95dfc2af1eeb6714f8ec6d5cbcabf667caff8729f42420da63f714e9f"
+        }
+      ]
+    },
+    {
+      "name": "cadquery",
+      "version": "2.6.1",
+      "direct": true,
+      "license": "Apache-2.0",
+      "licenseProvenance": "installed metadata and license text; labels are descriptive, not a compatibility determination",
+      "source": "https://pypi.org/project/cadquery/2.6.1/",
+      "projectUrls": [],
+      "notices": [
+        {
+          "path": "cadquery-2.6.1.dist-info/licenses/LICENSE",
+          "sha256": "7345486c76eb0160046e06c9c77797294979e15fc7cd1502d5c9cb650931bb84"
+        }
+      ]
+    },
+    {
+      "name": "cadquery-ocp",
+      "version": "7.8.1.1.post1",
+      "direct": false,
+      "license": "Apache-2.0 (wrapper; OCCT separately licensed)",
+      "licenseProvenance": "installed metadata and license text; labels are descriptive, not a compatibility determination",
+      "source": "https://pypi.org/project/cadquery-ocp/7.8.1.1.post1/",
+      "projectUrls": [],
+      "notices": [
+        {
+          "path": "cadquery_ocp/LICENSE",
+          "sha256": "a13caea71627202ad33cc4cafafdd18e667e16716488f8d9c568127121fb89fd"
+        }
+      ]
+    },
+    {
+      "name": "casadi",
+      "version": "3.8.2",
+      "direct": false,
+      "license": "GNU Lesser General Public License v3 or later (LGPLv3+)",
+      "licenseProvenance": "installed metadata and license text; labels are descriptive, not a compatibility determination",
+      "source": "https://pypi.org/project/casadi/3.8.2/",
+      "projectUrls": [
+        "Documentation, http://docs.casadi.org",
+        "Bug Tracker, https://github.com/casadi/casadi/issues",
+        "Source Code, https://github.com/casadi/casadi"
+      ],
+      "notices": [
+        {
+          "path": "casadi/include/licenses/BQPD/LICENSE",
+          "sha256": "29eff7f2afdefd33b3e2d40737c0da07dde3ab7df55becec252670a9d2e13f73"
+        },
+        {
+          "path": "casadi/include/licenses/CSparse/Doc/License.txt",
+          "sha256": "6ae48b5901a40db5952fb9efebf8537288db382314f0d36e9d67f32808efc4c8"
+        },
+        {
+          "path": "casadi/include/licenses/FMI-Standard-2.0.2/LICENSE.txt",
+          "sha256": "556454be7c7e0ae60a03e95615a060fda0b3ca6c64292a84d7c4304941d4330b"
+        },
+        {
+          "path": "casadi/include/licenses/FMI-Standard-3.0/LICENSE.txt",
+          "sha256": "e95981dfdc77107e8bdb475b67ca8cda087e377cc60dde1fa2b213fad65e9dd7"
+        },
+        {
+          "path": "casadi/include/licenses/LICENSE.bzip2.txt",
+          "sha256": "c6dbbf828498be844a89eaa3b84adbab3199e342eb5cb2ed2f0d4ba7ec0f38a3"
+        },
+        {
+          "path": "casadi/include/licenses/blasfeo-external/LICENSE.txt",
+          "sha256": "03bf34700337cb892d143a84398e43319a11cab1494fd78aa047b55972129542"
+        },
+        {
+          "path": "casadi/include/licenses/bonmin-external/Bonmin/LICENSE",
+          "sha256": "29e7b414f74c59a451641f757d830da1d0a4ab62a6f968e6ce9eb68933aa6429"
+        },
+        {
+          "path": "casadi/include/licenses/bonmin-external/LICENSE",
+          "sha256": "75512a9a60082bb4a57923dbc81213faa6f32f4037c8b6d68226ab822fe80380"
+        },
+        {
+          "path": "casadi/include/licenses/casadi-sundials/LICENSE",
+          "sha256": "143af3839b9381a05f790ec83c56736c3da23ca97a017fc57b4fdeb7ac4cdb87"
+        },
+        {
+          "path": "casadi/include/licenses/casadi-sundials/cvodes/LICENSE",
+          "sha256": "4915668a75fa96761bcf2c873a54af37bbb2acef75d77b609c6a800f5b6f11fe"
+        },
+        {
+          "path": "casadi/include/licenses/casadi-sundials/idas/LICENSE",
+          "sha256": "13ff7e5e3ee962e45e92f043bf39df4dc1377967a9101cf1d0686daca0d9be52"
+        },
+        {
+          "path": "casadi/include/licenses/casadi-sundials/kinsol/LICENSE",
+          "sha256": "7efdbd7c966e1a16e87c212addf6a785e7ddb344cfa62a59f3de55ae45cea509"
+        },
+        {
+          "path": "casadi/include/licenses/casadi-sundials/sundials/LICENSE",
+          "sha256": "e370e97c66d151eeb23b4f2c5042a6ca2064b16d10aafcec627a674c3aa64ec1"
+        },
+        {
+          "path": "casadi/include/licenses/casadi/LICENSE/LICENSE.txt",
+          "sha256": "da7eabb7bafdf7d3ae5e9f223aa5bdc1eece45ac569dc21b3b037520b4464768"
+        },
+        {
+          "path": "casadi/include/licenses/cbc-external/Cbc/LICENSE",
+          "sha256": "0076749b626931ea5aaee25ddd5019fbfd96da78243cc0d5bd24fe246500981f"
+        },
+        {
+          "path": "casadi/include/licenses/cbc-external/LICENSE",
+          "sha256": "5af94e656b0a51f0694901e8ee715dfb738ab65b88e8e2b9c52fa80340fa1500"
+        },
+        {
+          "path": "casadi/include/licenses/cgl-external/Cgl/LICENSE",
+          "sha256": "0076749b626931ea5aaee25ddd5019fbfd96da78243cc0d5bd24fe246500981f"
+        },
+        {
+          "path": "casadi/include/licenses/cgl-external/LICENSE",
+          "sha256": "5af94e656b0a51f0694901e8ee715dfb738ab65b88e8e2b9c52fa80340fa1500"
+        },
+        {
+          "path": "casadi/include/licenses/clp-external/Clp/LICENSE",
+          "sha256": "0076749b626931ea5aaee25ddd5019fbfd96da78243cc0d5bd24fe246500981f"
+        },
+        {
+          "path": "casadi/include/licenses/clp-external/LICENSE",
+          "sha256": "5af94e656b0a51f0694901e8ee715dfb738ab65b88e8e2b9c52fa80340fa1500"
+        },
+        {
+          "path": "casadi/include/licenses/coinutils-external/CoinUtils/LICENSE",
+          "sha256": "0076749b626931ea5aaee25ddd5019fbfd96da78243cc0d5bd24fe246500981f"
+        },
+        {
+          "path": "casadi/include/licenses/coinutils-external/LICENSE",
+          "sha256": "5af94e656b0a51f0694901e8ee715dfb738ab65b88e8e2b9c52fa80340fa1500"
+        },
+        {
+          "path": "casadi/include/licenses/daqp-external/LICENSE",
+          "sha256": "7cdcdca1aa7718d09d527371aadc387d5685e8460b9f9b7827a54118efbb2d1e"
+        },
+        {
+          "path": "casadi/include/licenses/fatrop-external/LICENSE-EPL-2.0.txt",
+          "sha256": "0becf16567beb77fa252b7664631dd177c8f9a1889e48995b45379c7130e5303"
+        },
+        {
+          "path": "casadi/include/licenses/fatrop-external/LICENSE.txt",
+          "sha256": "6c40b88c44716a23c3218303d90203a1dadfd012b1be1b3321be0c4dc2369e25"
+        },
+        {
+          "path": "casadi/include/licenses/ghc-external/LICENSE",
+          "sha256": "1b265537c97cfb422ffb52492c96979943f54fab8746a6dd38d8329953d487cc"
+        },
+        {
+          "path": "casadi/include/licenses/highs-external/LICENSE.txt",
+          "sha256": "795e6090936bcf2e1a0bfb339053de0c5bb6f3102035ead0ecc0ed4a7c41f1b7"
+        },
+        {
+          "path": "casadi/include/licenses/highs-external/extern/amd/License.txt",
+          "sha256": "e50fdd9a587f4860ce1d503b94576bfff47bccc421f758d1bdc8706c8cd36108"
+        },
+        {
+          "path": "casadi/include/licenses/highs-external/extern/metis/LICENSE.txt",
+          "sha256": "64ab947d7b289ad76e935adff51b31e4ac160df7dfad24480dbaa452e39bbe79"
+        },
+        {
+          "path": "casadi/include/licenses/highs-external/extern/pdqsort/license.txt",
+          "sha256": "323fc18e35fcf058d69d684022ef844f206cb8fefb2bac1298fa1767e0b9ae38"
+        },
+        {
+          "path": "casadi/include/licenses/highs-external/extern/rcm/LICENSE",
+          "sha256": "0d706fbfd83795f271c730a679ce8a84c2f922aade7d9fe0af518e7e6b5de3e5"
+        },
+        {
+          "path": "casadi/include/licenses/highs-external/extern/zstr/LICENSE",
+          "sha256": "bd61d5fb15992f4c188a0f96dd836b20d449cd080b4e949ab89f9eda3f61c59a"
+        },
+        {
+          "path": "casadi/include/licenses/highs-external/highs/io/filereaderlp/LICENSE",
+          "sha256": "4374bb8064e5302f5ac6b82fd3e153a36670f04d0a6ee1bc55b3dc3faee923cc"
+        },
+        {
+          "path": "casadi/include/licenses/hpipm-external/LICENSE.txt",
+          "sha256": "9d35e846dd1c2f122c7edf1512cf2952c14574c3b773be76c3d1e4ad749d9d07"
+        },
+        {
+          "path": "casadi/include/licenses/hpipm-external/experimental/andrea/prototype/code/plotregion/license.txt",
+          "sha256": "b43fc94d4c7d17d38364001daccc9c20661fa90138478a61d10be2fa2c54787e"
+        },
+        {
+          "path": "casadi/include/licenses/ipopt-external/LICENSE",
+          "sha256": "0becf16567beb77fa252b7664631dd177c8f9a1889e48995b45379c7130e5303"
+        },
+        {
+          "path": "casadi/include/licenses/lacemodelica-external-build/_deps/antlr4_runtime-src/LICENSE.txt",
+          "sha256": "3db1fb3ee79a4b4f9918fc4d0f6133bf18a3cf787f126cd22f8aa9b862281c0c"
+        },
+        {
+          "path": "casadi/include/licenses/lacemodelica-external-build/_deps/antlr4_runtime-src/runtime/Dart/LICENSE",
+          "sha256": "b1b379fcaf3219593a4c433feb1b35c780bed23fafaae440b1ae2771a9521e3a"
+        },
+        {
+          "path": "casadi/include/licenses/lacemodelica-external-build/_deps/antlr4_runtime-src/runtime/Go/antlr/v4/LICENSE",
+          "sha256": "683fcd416d83b64781e229a3c2a598462fbf55c5c9fea54be244766b22c033cf"
+        },
+        {
+          "path": "casadi/include/licenses/lacemodelica-external-build/_deps/tinyxml2-src/LICENSE.txt",
+          "sha256": "9332252e9b9e46db8285d4a3f0bf25f139bf1dca6781b956d57f2302efca6432"
+        },
+        {
+          "path": "casadi/include/licenses/lacemodelica-external/LICENSE",
+          "sha256": "9a7c1fcc8af68418ba0e388f14efca4ae3e2a17200a32753b828695d14df68ee"
+        },
+        {
+          "path": "casadi/include/licenses/libz-external/LICENSE",
+          "sha256": "845efc77857d485d91fb3e0b884aaa929368c717ae8186b66fe1ed2495753243"
+        },
+        {
+          "path": "casadi/include/licenses/libz-external/contrib/dotzlib/LICENSE_1_0.txt",
+          "sha256": "36266a8fd073568394cb81cdb2b124f7fdae2c64c1a7ed09db34b4d22efa2951"
+        },
+        {
+          "path": "casadi/include/licenses/libzip-external/LICENSE",
+          "sha256": "01c022eca6d566e2e8792fd0f091a28653b2a608319922bcd4de91c49d1438e1"
+        },
+        {
+          "path": "casadi/include/licenses/metis-external/LICENSE",
+          "sha256": "29e7b414f74c59a451641f757d830da1d0a4ab62a6f968e6ce9eb68933aa6429"
+        },
+        {
+          "path": "casadi/include/licenses/metis-external/metis-4.0/LICENSE",
+          "sha256": "2ecd4c415834a03b26950118da215aded2698b10836ea0e8235ed557a380dc1e"
+        },
+        {
+          "path": "casadi/include/licenses/mockups-external/LICENSE",
+          "sha256": "bd6747c8f97941c4f1eb581caf7d1eeced95d2fc42bf7594cfa318265bc1ef07"
+        },
+        {
+          "path": "casadi/include/licenses/mumps-external/LICENSE",
+          "sha256": "0becf16567beb77fa252b7664631dd177c8f9a1889e48995b45379c7130e5303"
+        },
+        {
+          "path": "casadi/include/licenses/mumps-external/MUMPS/LICENSE",
+          "sha256": "5813fefd30a36fd7550cd2b62274be6586a0db51c11c3f2d4b852283e22ccc42"
+        },
+        {
+          "path": "casadi/include/licenses/onnx-external/LICENSE",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        },
+        {
+          "path": "casadi/include/licenses/onnx-external/third_party/pybind11/LICENSE",
+          "sha256": "83965b843b98f670d3a85bd041ed4b372c8ec50d7b4a5995a83ac697ba675dcb"
+        },
+        {
+          "path": "casadi/include/licenses/osi-external/LICENSE",
+          "sha256": "5af94e656b0a51f0694901e8ee715dfb738ab65b88e8e2b9c52fa80340fa1500"
+        },
+        {
+          "path": "casadi/include/licenses/osi-external/Osi/LICENSE",
+          "sha256": "0076749b626931ea5aaee25ddd5019fbfd96da78243cc0d5bd24fe246500981f"
+        },
+        {
+          "path": "casadi/include/licenses/osqp-external-build/_deps/qdldl-src/LICENSE",
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+        },
+        {
+          "path": "casadi/include/licenses/osqp-external/LICENSE",
+          "sha256": "ae5e69b1fea4c316b80e4bc2cb49ac82c0e9b34785415e128e00c975bd10f687"
+        },
+        {
+          "path": "casadi/include/licenses/osqp-external/algebra/_common/lin_sys/qdldl/amd/LICENSE",
+          "sha256": "09d5c2e5ee64fd5fd338ca8d0fce940385ef61bb0d36b855531a675a46176f00"
+        },
+        {
+          "path": "casadi/include/licenses/piqp-external/LICENSE",
+          "sha256": "425d165ce5ac62bc3fd1cef83734fa6780bc844658bfc5e904ca45a011dfec70"
+        },
+        {
+          "path": "casadi/include/licenses/piqp-external/docs/LICENSE",
+          "sha256": "f52ad0b0a841afa7cc929a48c3ea8d430cdb1380ddf8cafef45dce8e12770539"
+        },
+        {
+          "path": "casadi/include/licenses/piqp-external/tests/data/maros_meszaros/LICENSE",
+          "sha256": "1ba4b493de3d310787fa8e6d092eab2ea9c27cc2e649754e0ce1cecf93a96a78"
+        },
+        {
+          "path": "casadi/include/licenses/protobuf-external-build/_deps/absl-src/LICENSE",
+          "sha256": "c79a7fea0e3cac04cd43f20e7b648e5a0ff8fa5344e644b0ee09ca1162b62747"
+        },
+        {
+          "path": "casadi/include/licenses/protobuf-external/LICENSE",
+          "sha256": "6e5e117324afd944dcf67f36cf329843bc1a92229a8cd9bb573d7a83130fea7d"
+        },
+        {
+          "path": "casadi/include/licenses/protobuf-external/third_party/utf8_range/LICENSE",
+          "sha256": "02de69b64fc36d9e938f418e52723e42f0b2b226d58a9cb3c8dcbdf7059f5074"
+        },
+        {
+          "path": "casadi/include/licenses/proxqp-external/LICENSE",
+          "sha256": "1ee924b875b4d9804a934792fc1a312977d833bb5a710bbd2c40909b17eb30cf"
+        },
+        {
+          "path": "casadi/include/licenses/proxqp-external/bindings/python/external/nanobind/LICENSE",
+          "sha256": "f305091a4e57805870b217a28ea4b1f16610eece8457d2370f822a9696b75836"
+        },
+        {
+          "path": "casadi/include/licenses/proxqp-external/bindings/python/external/nanobind/ext/robin_map/LICENSE",
+          "sha256": "11f2c685ba565a31aef1219f63a7a8845602c97bff70016b9e3278dfe51a2ec5"
+        },
+        {
+          "path": "casadi/include/licenses/proxqp-external/cmake-module/LICENSE",
+          "sha256": "12ff64a7549f77bd49e99bcda4651ed31c7d58560f88bb9796c9141b0d665ebd"
+        },
+        {
+          "path": "casadi/include/licenses/proxqp-external/cmake-module/doxygen/MathJax/LICENSE",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        },
+        {
+          "path": "casadi/include/licenses/proxqp-external/external/cereal/LICENSE",
+          "sha256": "58604a126af6a671ea390ee3d5b3e42228aa59b2858fb7af1d5b20b31739ccbb"
+        },
+        {
+          "path": "casadi/include/licenses/proxqp-external/external/cereal/include/cereal/external/LICENSE",
+          "sha256": "642e7003561473f4f1f3dd09e053ee2a6ecfb0563e961a3392e914295f9d350c"
+        },
+        {
+          "path": "casadi/include/licenses/proxqp-external/external/cereal/include/cereal/external/rapidjson/LICENSE",
+          "sha256": "dc2ef044e52a4c0ea784f9b54229775ce5275505cc09f21283dfa301e9c962fa"
+        },
+        {
+          "path": "casadi/include/licenses/proxqp-external/external/cereal/include/cereal/external/rapidjson/msinttypes/LICENSE",
+          "sha256": "bf3c9bf6a176c890c7387c71f9ae5bcaf9d33324b9d4a5f8524a6f8bf3063097"
+        },
+        {
+          "path": "casadi/include/licenses/proxqp-external/external/cereal/include/cereal/external/rapidxml/license.txt",
+          "sha256": "794bf3b2ecf5cf0c740ac6c524d66ce6284c4b1de1f983d21a242b8abbeb9720"
+        },
+        {
+          "path": "casadi/include/licenses/qpOASES/LICENSE.txt",
+          "sha256": "b673293d21e887eaa9b971696b33f0f9141839900c65c83e560afa469d291ba6"
+        },
+        {
+          "path": "casadi/include/licenses/sleqp-external/LICENSE",
+          "sha256": "e3a994d82e644b03a792a930f574002658412f62407f5fee083f2555c5f23118"
+        },
+        {
+          "path": "casadi/include/licenses/superscs-external/LICENSE.txt",
+          "sha256": "08f771ceb0ecb7222247379ba8d2f415cbdaa34cefcb4fe46c010187c8e49e59"
+        },
+        {
+          "path": "casadi/include/licenses/tinyxml2-9.0.0/LICENSE.txt",
+          "sha256": "9332252e9b9e46db8285d4a3f0bf25f139bf1dca6781b956d57f2302efca6432"
+        },
+        {
+          "path": "casadi/include/licenses/trlib-external/LICENSE",
+          "sha256": "3652a54dc588bf6a9dda7323b1dfd17381e8f703d9da44f06877b16549784b6d"
+        },
+        {
+          "path": "casadi/include/licenses/uno-external/LICENSE",
+          "sha256": "94c14b50808a18e384fe79f1b3d43513a5a04a903af42fa2a889bfcfa7ed9947"
+        },
+        {
+          "path": "casadi/include/licenses/uno-external/interfaces/Julia/LICENSE",
+          "sha256": "1829891fcd71319f7a5644beba526fe196dfc48a2668a14b02d3aad1da1dd24f"
+        }
+      ]
+    },
+    {
+      "name": "contourpy",
+      "version": "1.4.0",
+      "direct": false,
+      "license": "BSD-3-Clause",
+      "licenseProvenance": "installed metadata and license text; labels are descriptive, not a compatibility determination",
+      "source": "https://pypi.org/project/contourpy/1.4.0/",
+      "projectUrls": [
+        "Homepage, https://github.com/contourpy/contourpy",
+        "Changelog, https://contourpy.readthedocs.io/en/latest/changelog.html",
+        "Documentation, https://contourpy.readthedocs.io",
+        "Repository, https://github.com/contourpy/contourpy"
+      ],
+      "notices": [
+        {
+          "path": "contourpy-1.4.0.dist-info/licenses/LICENSE",
+          "sha256": "11401c428c7014a75728e8679f9c000aacf262015aaba65a760d41aa1130b3af"
+        }
+      ]
+    },
+    {
+      "name": "cycler",
+      "version": "0.12.1",
+      "direct": false,
+      "license": "BSD-3-Clause",
+      "licenseProvenance": "installed metadata and license text; labels are descriptive, not a compatibility determination",
+      "source": "https://pypi.org/project/cycler/0.12.1/",
+      "projectUrls": [
+        "homepage, https://matplotlib.org/cycler/",
+        "repository, https://github.com/matplotlib/cycler"
+      ],
+      "notices": [
+        {
+          "path": "cycler-0.12.1.dist-info/LICENSE",
+          "sha256": "f1218143d766da3fea66f13396b7f15df46a83303f29bf96ba6e98eb4d42f408"
+        }
+      ]
+    },
+    {
+      "name": "ezdxf",
+      "version": "1.4.5",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "installed metadata and license text; labels are descriptive, not a compatibility determination",
+      "source": "https://pypi.org/project/ezdxf/1.4.5/",
+      "projectUrls": [
+        "Repository, https://github.com/mozman/ezdxf",
+        "Documentation, https://ezdxf.readthedocs.io",
+        "Changelog, https://ezdxf.mozman.at/notes/#/page/changelog",
+        "Forum, https://github.com/mozman/ezdxf/discussions",
+        "Issues, https://github.com/mozman/ezdxf/issues",
+        "Website, https://ezdxf.mozman.at",
+        "Download, https://pypi.org/project/ezdxf"
+      ],
+      "notices": [
+        {
+          "path": "ezdxf-1.4.5.dist-info/licenses/LICENSE",
+          "sha256": "db97ca426fc0d2b8124145de0f36181db73e6e713ce642d42fed2efc442edf19"
+        }
+      ]
+    },
+    {
+      "name": "fonttools",
+      "version": "4.68.0",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "installed metadata and license text; labels are descriptive, not a compatibility determination",
+      "source": "https://pypi.org/project/fonttools/4.68.0/",
+      "projectUrls": [],
+      "notices": [
+        {
+          "path": "fonttools-4.68.0.dist-info/licenses/LICENSE",
+          "sha256": "6787208f83f659ccbc2223b2fde952ffa6f7e8aca62f1a8a2bf5bc51bb1b2383"
+        },
+        {
+          "path": "fonttools-4.68.0.dist-info/licenses/LICENSE.external",
+          "sha256": "94a83aaee0729a0f302d34acc4acecbd9d58366f262429075fe557e4a54b2e69"
+        }
+      ]
+    },
+    {
+      "name": "frozenlist",
+      "version": "1.8.0",
+      "direct": false,
+      "license": "Apache-2.0",
+      "licenseProvenance": "installed metadata and license text; labels are descriptive, not a compatibility determination",
+      "source": "https://pypi.org/project/frozenlist/1.8.0/",
+      "projectUrls": [
+        "Chat: Matrix, https://matrix.to/#/#aio-libs:matrix.org",
+        "Chat: Matrix Space, https://matrix.to/#/#aio-libs-space:matrix.org",
+        "CI: Github Actions, https://github.com/aio-libs/frozenlist/actions",
+        "Code of Conduct, https://github.com/aio-libs/.github/blob/master/CODE_OF_CONDUCT.md",
+        "Coverage: codecov, https://codecov.io/github/aio-libs/frozenlist",
+        "Docs: Changelog, https://github.com/aio-libs/frozenlist/blob/master/CHANGES.rst#changelog",
+        "Docs: RTD, https://frozenlist.aio-libs.org",
+        "GitHub: issues, https://github.com/aio-libs/frozenlist/issues",
+        "GitHub: repo, https://github.com/aio-libs/frozenlist"
+      ],
+      "notices": [
+        {
+          "path": "frozenlist-1.8.0.dist-info/licenses/LICENSE",
+          "sha256": "6fd5243e92dd7f98ec69c7ac377728e74905709ff527a5bf98d6d0263c04f5b6"
+        }
+      ]
+    },
+    {
+      "name": "idna",
+      "version": "3.20",
+      "direct": false,
+      "license": "BSD-3-Clause",
+      "licenseProvenance": "installed metadata and license text; labels are descriptive, not a compatibility determination",
+      "source": "https://pypi.org/project/idna/3.20/",
+      "projectUrls": [
+        "Changelog, https://github.com/kjd/idna/blob/master/HISTORY.md",
+        "Issue tracker, https://github.com/kjd/idna/issues",
+        "Source, https://github.com/kjd/idna"
+      ],
+      "notices": [
+        {
+          "path": "idna-3.20.dist-info/licenses/LICENSE.md",
+          "sha256": "1a9a4f0e3d479a27240ddd59a9137a66ab4a0f9dfdc8ca6188cc0bfd85187f04"
+        }
+      ]
+    },
+    {
+      "name": "kiwisolver",
+      "version": "1.5.1",
+      "direct": false,
+      "license": "BSD-3-Clause",
+      "licenseProvenance": "installed metadata and license text; labels are descriptive, not a compatibility determination",
+      "source": "https://pypi.org/project/kiwisolver/1.5.1/",
+      "projectUrls": [
+        "homepage, https://github.com/nucleic/kiwi",
+        "documentation, https://kiwisolver.readthedocs.io/en/latest/",
+        "repository, https://github.com/nucleic/kiwi",
+        "changelog, https://github.com/nucleic/kiwi/blob/main/releasenotes.rst"
+      ],
+      "notices": [
+        {
+          "path": "kiwisolver-1.5.1.dist-info/licenses/LICENSE",
+          "sha256": "529c40e5f67f2f88904657a9f7879ae2f8dc76bc9bfef9cb10d988b48804ed61"
+        }
+      ]
+    },
+    {
+      "name": "matplotlib",
+      "version": "3.11.2",
+      "direct": false,
+      "license": "Matplotlib license (see installed LICENSE)",
+      "licenseProvenance": "installed metadata and license text; labels are descriptive, not a compatibility determination",
+      "source": "https://pypi.org/project/matplotlib/3.11.2/",
+      "projectUrls": [
+        "Homepage, https://matplotlib.org",
+        "Download, https://matplotlib.org/stable/install/index.html",
+        "Documentation, https://matplotlib.org",
+        "Source Code, https://github.com/matplotlib/matplotlib",
+        "Bug Tracker, https://github.com/matplotlib/matplotlib/issues",
+        "Forum, https://discourse.matplotlib.org/",
+        "Donate, https://numfocus.org/donate-to-matplotlib"
+      ],
+      "notices": [
+        {
+          "path": "matplotlib-3.11.2.dist-info/LICENSE",
+          "sha256": "822e8e528147569a41975592aee19c11992ab667ba50451cd929031d5fc74491"
+        },
+        {
+          "path": "matplotlib/mpl-data/fonts/ttf/LICENSE_DEJAVU",
+          "sha256": "d75938dec098f06f0ac3c00853065d94f020be1c3c62ef1dc2975ba15b4d9b0e"
+        },
+        {
+          "path": "matplotlib/mpl-data/fonts/ttf/LICENSE_STIX",
+          "sha256": "bab3d31dfef07f483624f2f65f2711e76065b8e7273278b1c071ede1041c9959"
+        }
+      ]
+    },
+    {
+      "name": "more-itertools",
+      "version": "11.2.1",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "installed metadata and license text; labels are descriptive, not a compatibility determination",
+      "source": "https://pypi.org/project/more-itertools/11.2.1/",
+      "projectUrls": [
+        "Documentation, https://more-itertools.readthedocs.io/en/stable/",
+        "Homepage, https://github.com/more-itertools/more-itertools"
+      ],
+      "notices": [
+        {
+          "path": "more_itertools-11.2.1.dist-info/licenses/LICENSE",
+          "sha256": "09f1c8c9e941af3e584d59641ea9b87d83c0cb0fd007eb5ef391a7e2643c1a46"
+        }
+      ]
+    },
+    {
+      "name": "msgpack",
+      "version": "1.2.4",
+      "direct": false,
+      "license": "Apache-2.0",
+      "licenseProvenance": "installed metadata and license text; labels are descriptive, not a compatibility determination",
+      "source": "https://pypi.org/project/msgpack/1.2.4/",
+      "projectUrls": [
+        "Homepage, https://msgpack.org/",
+        "Documentation, https://msgpack-python.readthedocs.io/",
+        "Repository, https://github.com/msgpack/msgpack-python/",
+        "Tracker, https://github.com/msgpack/msgpack-python/issues",
+        "Changelog, https://github.com/msgpack/msgpack-python/blob/main/CHANGELOG.md"
+      ],
+      "notices": [
+        {
+          "path": "msgpack-1.2.4.dist-info/licenses/COPYING",
+          "sha256": "492dedba85da5872f78e6091bcd1fea474d660d35acb4dee964b8aab3f007427"
+        }
+      ]
+    },
+    {
+      "name": "multidict",
+      "version": "7.2.1",
+      "direct": false,
+      "license": "Apache-2.0",
+      "licenseProvenance": "installed metadata and license text; labels are descriptive, not a compatibility determination",
+      "source": "https://pypi.org/project/multidict/7.2.1/",
+      "projectUrls": [
+        "Homepage, https://github.com/aio-libs/multidict",
+        "Chat: Matrix, https://matrix.to/#/#aio-libs:matrix.org",
+        "Chat: Matrix Space, https://matrix.to/#/#aio-libs-space:matrix.org",
+        "CI: GitHub, https://github.com/aio-libs/multidict/actions",
+        "Code of Conduct, https://github.com/aio-libs/.github/blob/master/CODE_OF_CONDUCT.md",
+        "Coverage: codecov, https://codecov.io/github/aio-libs/multidict",
+        "Docs: Changelog, https://multidict.aio-libs.org/en/latest/changes/",
+        "Docs: RTD, https://multidict.aio-libs.org",
+        "GitHub: issues, https://github.com/aio-libs/multidict/issues",
+        "GitHub: repo, https://github.com/aio-libs/multidict"
+      ],
+      "notices": [
+        {
+          "path": "multidict-7.2.1.dist-info/licenses/LICENSE",
+          "sha256": "2e4be5fc6c4c72a466fcb665d726e049a6891981fe536c4f04b6366749461d23"
+        }
+      ]
+    },
+    {
+      "name": "multimethod",
+      "version": "1.12",
+      "direct": false,
+      "license": "Apache-2.0",
+      "licenseProvenance": "installed metadata and license text; labels are descriptive, not a compatibility determination",
+      "source": "https://pypi.org/project/multimethod/1.12/",
+      "projectUrls": [
+        "Homepage, https://github.com/coady/multimethod",
+        "Documentation, https://coady.github.io/multimethod",
+        "Changelog, https://github.com/coady/multimethod/blob/main/CHANGELOG.md",
+        "Issues, https://github.com/coady/multimethod/issues"
+      ],
+      "notices": [
+        {
+          "path": "multimethod-1.12.dist-info/LICENSE.txt",
+          "sha256": "50477e9b01163e9f1754d3318cc38059278cc6586316c4e627de3076691c8bea"
+        }
+      ]
+    },
+    {
+      "name": "nlopt",
+      "version": "2.11.0",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "installed metadata and license text; labels are descriptive, not a compatibility determination",
+      "source": "https://pypi.org/project/nlopt/2.11.0/",
+      "projectUrls": [
+        "Documentation, https://nlopt.readthedocs.io/en/latest/",
+        "Code, https://github.com/DanielBok/nlopt-python",
+        "Issue tracker, https://github.com/DanielBok/nlopt-python/issues"
+      ],
+      "notices": [
+        {
+          "path": "nlopt-2.11.0.dist-info/licenses/LICENSE",
+          "sha256": "50a32dafa8ba44e6e68dd59466d7a8d7e90c06294f672c9ab55c32b60fe4a8e6"
+        }
+      ]
+    },
+    {
+      "name": "numpy",
+      "version": "2.5.4",
+      "direct": false,
+      "license": "BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0",
+      "licenseProvenance": "installed metadata and license text; labels are descriptive, not a compatibility determination",
+      "source": "https://pypi.org/project/numpy/2.5.4/",
+      "projectUrls": [
+        "homepage, https://numpy.org",
+        "documentation, https://numpy.org/doc/",
+        "source, https://github.com/numpy/numpy",
+        "download, https://pypi.org/project/numpy/#files",
+        "tracker, https://github.com/numpy/numpy/issues",
+        "release notes, https://numpy.org/doc/stable/release"
+      ],
+      "notices": [
+        {
+          "path": "numpy-2.5.4.dist-info/licenses/LICENSE.txt",
+          "sha256": "649a589ab31076e79e9ce62ba24eae9959598124176640dbc95f87bd10f34fcf"
+        },
+        {
+          "path": "numpy-2.5.4.dist-info/licenses/numpy/_core/include/numpy/libdivide/LICENSE.txt",
+          "sha256": "fbc539f47d0cf83bc61378080fb873d5c14630126cacbfe754035c3926daa5ec"
+        },
+        {
+          "path": "numpy-2.5.4.dist-info/licenses/numpy/_core/src/common/pythoncapi-compat/COPYING",
+          "sha256": "3f2c1ffa76383a55ae0aac01c9737cd70050dff63e1f026694fbe9d662573c98"
+        },
+        {
+          "path": "numpy-2.5.4.dist-info/licenses/numpy/_core/src/highway/LICENSE",
+          "sha256": "e340270d4f64384569a91d546acb5b094d69ce47f0c015db77abb74dc6f815af"
+        },
+        {
+          "path": "numpy-2.5.4.dist-info/licenses/numpy/_core/src/npysort/x86-simd-sort/LICENSE.md",
+          "sha256": "211e7d737d6179a08f791ebb0a99897ce7cd2457410c542876d125576edfe910"
+        },
+        {
+          "path": "numpy-2.5.4.dist-info/licenses/numpy/_core/src/umath/svml/LICENSE",
+          "sha256": "c17011467b4fe6e20fbfbeda4df09e58c2bca5480a063e55735a4000a379aad9"
+        },
+        {
+          "path": "numpy-2.5.4.dist-info/licenses/numpy/fft/pocketfft/LICENSE.md",
+          "sha256": "a85ca13fdf90160b64a0698215868c13b74d835ad0a4e2ba44713b8c5058a056"
+        },
+        {
+          "path": "numpy-2.5.4.dist-info/licenses/numpy/linalg/lapack_lite/LICENSE.txt",
+          "sha256": "a14cc25e10d40a3aa705b7de2fb764a6535d8ee9b2db4e1724900585457dfd55"
+        },
+        {
+          "path": "numpy-2.5.4.dist-info/licenses/numpy/ma/LICENSE",
+          "sha256": "05f3b88351988ecfad10abe92c0c50e5875c6452d5009a0084cc291551ffcca6"
+        },
+        {
+          "path": "numpy-2.5.4.dist-info/licenses/numpy/random/LICENSE.md",
+          "sha256": "103166b62b80443afb9eb3488e052ea06be0cff566b908f199e561fde49af19f"
+        },
+        {
+          "path": "numpy-2.5.4.dist-info/licenses/numpy/random/src/distributions/LICENSE.md",
+          "sha256": "469778be8f33d54e1bcaab28c281cc472916d2d273f835e55bc487d30503face"
+        },
+        {
+          "path": "numpy-2.5.4.dist-info/licenses/numpy/random/src/mt19937/LICENSE.md",
+          "sha256": "0e111337b25494a773106695f0e799f642b8567aaacca4f116a74a8177179156"
+        },
+        {
+          "path": "numpy-2.5.4.dist-info/licenses/numpy/random/src/pcg64/LICENSE.md",
+          "sha256": "e7d4f4fb20358f314210a892ae17351e04993813646f697ec387385ca2a36918"
+        },
+        {
+          "path": "numpy-2.5.4.dist-info/licenses/numpy/random/src/philox/LICENSE.md",
+          "sha256": "6f5828a57223d4cc7f8ea505a2623e7b978b242752c1515e355f46ba2cec1800"
+        },
+        {
+          "path": "numpy-2.5.4.dist-info/licenses/numpy/random/src/sfc64/LICENSE.md",
+          "sha256": "9d4098846018319cd68e228ee6220361787f73bccbf00237a85e4fc9621b998f"
+        },
+        {
+          "path": "numpy-2.5.4.dist-info/licenses/numpy/random/src/splitmix64/LICENSE.md",
+          "sha256": "268b0ca06759d31ea3ca68dd35f20e877916e927b1c2a835e4592a3c4354b1f9"
+        },
+        {
+          "path": "numpy/_core/include/numpy/random/LICENSE.txt",
+          "sha256": "fbc539f47d0cf83bc61378080fb873d5c14630126cacbfe754035c3926daa5ec"
+        },
+        {
+          "path": "numpy/ma/LICENSE",
+          "sha256": "05f3b88351988ecfad10abe92c0c50e5875c6452d5009a0084cc291551ffcca6"
+        },
+        {
+          "path": "numpy/random/LICENSE.md",
+          "sha256": "103166b62b80443afb9eb3488e052ea06be0cff566b908f199e561fde49af19f"
+        }
+      ]
+    },
+    {
+      "name": "packaging",
+      "version": "26.3",
+      "direct": false,
+      "license": "Apache-2.0 OR BSD-2-Clause",
+      "licenseProvenance": "installed metadata and license text; labels are descriptive, not a compatibility determination",
+      "source": "https://pypi.org/project/packaging/26.3/",
+      "projectUrls": [
+        "Documentation, https://packaging.pypa.io/",
+        "Source, https://github.com/pypa/packaging"
+      ],
+      "notices": [
+        {
+          "path": "packaging-26.3.dist-info/licenses/LICENSE",
+          "sha256": "cad1ef5bd340d73e074ba614d26f7deaca5c7940c3d8c34852e65c4909686c48"
+        },
+        {
+          "path": "packaging-26.3.dist-info/licenses/LICENSE.APACHE",
+          "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
+        },
+        {
+          "path": "packaging-26.3.dist-info/licenses/LICENSE.BSD",
+          "sha256": "b70e7e9b742f1cc6f948b34c16aa39ffece94196364bc88ff0d2180f0028fac5"
+        }
+      ]
+    },
+    {
+      "name": "path",
+      "version": "17.1.1",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "installed metadata and license text; labels are descriptive, not a compatibility determination",
+      "source": "https://pypi.org/project/path/17.1.1/",
+      "projectUrls": [
+        "Source, https://github.com/jaraco/path"
+      ],
+      "notices": [
+        {
+          "path": "path-17.1.1.dist-info/licenses/LICENSE",
+          "sha256": "5a57cb4db85e2a2dd88c290628908add57e3451449e0a9a71fdfb38776fd759d"
+        }
+      ]
+    },
+    {
+      "name": "pillow",
+      "version": "13.0.0",
+      "direct": false,
+      "license": "MIT-CMU",
+      "licenseProvenance": "installed metadata and license text; labels are descriptive, not a compatibility determination",
+      "source": "https://pypi.org/project/pillow/13.0.0/",
+      "projectUrls": [
+        "Release notes, https://pillow.readthedocs.io/en/stable/releasenotes/index.html",
+        "Changelog, https://github.com/python-pillow/Pillow/releases",
+        "Documentation, https://pillow.readthedocs.io",
+        "Funding, https://tidelift.com/lifter/search/pypi/pillow",
+        "Homepage, https://python-pillow.org",
+        "Mastodon, https://fosstodon.org/@pillow",
+        "Security, https://pillow.readthedocs.io/en/stable/handbook/security.html",
+        "Source, https://github.com/python-pillow/Pillow"
+      ],
+      "notices": [
+        {
+          "path": "pillow-13.0.0.dist-info/licenses/LICENSE",
+          "sha256": "dda12a98c1979cf3d94df1cff45d27a4cb3f04a60c76f76902ac54cac03ec0ce"
+        }
+      ]
+    },
+    {
+      "name": "propcache",
+      "version": "0.5.4",
+      "direct": false,
+      "license": "Apache-2.0",
+      "licenseProvenance": "installed metadata and license text; labels are descriptive, not a compatibility determination",
+      "source": "https://pypi.org/project/propcache/0.5.4/",
+      "projectUrls": [
+        "Chat: Matrix, https://matrix.to/#/#aio-libs:matrix.org",
+        "Chat: Matrix Space, https://matrix.to/#/#aio-libs-space:matrix.org",
+        "CI: GitHub Workflows, https://github.com/aio-libs/propcache/actions?query=branch:master",
+        "Code of Conduct, https://github.com/aio-libs/.github/blob/master/CODE_OF_CONDUCT.md",
+        "Coverage: codecov, https://codecov.io/github/aio-libs/propcache",
+        "Docs: Changelog, https://propcache.readthedocs.io/en/latest/changes/",
+        "Docs: RTD, https://propcache.readthedocs.io",
+        "GitHub: issues, https://github.com/aio-libs/propcache/issues",
+        "GitHub: repo, https://github.com/aio-libs/propcache"
+      ],
+      "notices": [
+        {
+          "path": "propcache-0.5.4.dist-info/licenses/LICENSE",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        },
+        {
+          "path": "propcache-0.5.4.dist-info/licenses/NOTICE",
+          "sha256": "56d6ac6c8105c0a51304c21db060e361af9a8ea0af9a75c239c28b5d13693838"
+        }
+      ]
+    },
+    {
+      "name": "pyparsing",
+      "version": "3.3.3",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "installed metadata and license text; labels are descriptive, not a compatibility determination",
+      "source": "https://pypi.org/project/pyparsing/3.3.3/",
+      "projectUrls": [
+        "Documentation, https://pyparsing-docs.readthedocs.io/en/latest/",
+        "Homepage, https://github.com/pyparsing/pyparsing/",
+        "Source, https://github.com/pyparsing/pyparsing.git"
+      ],
+      "notices": [
+        {
+          "path": "pyparsing-3.3.3.dist-info/licenses/LICENSE",
+          "sha256": "a5425f9dc14ac74d4c5f0b679e941f2442e32cca7452a4418d5b1a49893ebe4e"
+        }
+      ]
+    },
+    {
+      "name": "python-dateutil",
+      "version": "4.0.0",
+      "direct": false,
+      "license": "BSD-3-Clause",
+      "licenseProvenance": "installed metadata and license text; labels are descriptive, not a compatibility determination",
+      "source": "https://pypi.org/project/python-dateutil/4.0.0/",
+      "projectUrls": [
+        "Homepage, https://github.com/dateutil/dateutil",
+        "Documentation, https://dateutil.readthedocs.io/en/stable/",
+        "Source, https://github.com/dateutil/dateutil"
+      ],
+      "notices": [
+        {
+          "path": "python_dateutil-4.0.0.dist-info/licenses/LICENSE",
+          "sha256": "ba00f51a0d92823b5a1cde27d8b5b9d2321e67ed8da9bc163eff96d5e17e577e"
+        }
+      ]
+    },
+    {
+      "name": "pyyaml",
+      "version": "6.0.3",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "installed metadata and license text; labels are descriptive, not a compatibility determination",
+      "source": "https://pypi.org/project/pyyaml/6.0.3/",
+      "projectUrls": [
+        "Bug Tracker, https://github.com/yaml/pyyaml/issues",
+        "CI, https://github.com/yaml/pyyaml/actions",
+        "Documentation, https://pyyaml.org/wiki/PyYAMLDocumentation",
+        "Mailing lists, http://lists.sourceforge.net/lists/listinfo/yaml-core",
+        "Source Code, https://github.com/yaml/pyyaml"
+      ],
+      "notices": [
+        {
+          "path": "pyyaml-6.0.3.dist-info/licenses/LICENSE",
+          "sha256": "8d3928f9dc4490fd635707cb88eb26bd764102a7282954307d3e5167a577e8a4"
+        }
+      ]
+    },
+    {
+      "name": "trame",
+      "version": "4.0.0",
+      "direct": false,
+      "license": "Apache License 2.0",
+      "licenseProvenance": "installed metadata and license text; labels are descriptive, not a compatibility determination",
+      "source": "https://pypi.org/project/trame/4.0.0/",
+      "projectUrls": [],
+      "notices": [
+        {
+          "path": "trame-4.0.0.dist-info/licenses/LICENSE",
+          "sha256": "a0e8a7cd61a4e04aee1cad9718f5afbaac4341059fb4c3f0b9223e93750b858e"
+        }
+      ]
+    },
+    {
+      "name": "trame-client",
+      "version": "4.1.4",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "installed metadata and license text; labels are descriptive, not a compatibility determination",
+      "source": "https://pypi.org/project/trame-client/4.1.4/",
+      "projectUrls": [],
+      "notices": [
+        {
+          "path": "trame_client-4.1.4.dist-info/licenses/LICENSE",
+          "sha256": "dc7bd3fd126419153790338e50a1ebb314a014c8f1798009ff50441fa424909a"
+        }
+      ]
+    },
+    {
+      "name": "trame-common",
+      "version": "1.2.9",
+      "direct": false,
+      "license": "Apache-2.0",
+      "licenseProvenance": "installed metadata and license text; labels are descriptive, not a compatibility determination",
+      "source": "https://pypi.org/project/trame-common/1.2.9/",
+      "projectUrls": [],
+      "notices": [
+        {
+          "path": "trame_common-1.2.9.dist-info/licenses/LICENSE",
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+        }
+      ]
+    },
+    {
+      "name": "trame-server",
+      "version": "4.1.0",
+      "direct": false,
+      "license": "Apache License 2.0",
+      "licenseProvenance": "installed metadata and license text; labels are descriptive, not a compatibility determination",
+      "source": "https://pypi.org/project/trame-server/4.1.0/",
+      "projectUrls": [],
+      "notices": [
+        {
+          "path": "trame_server-4.1.0.dist-info/licenses/LICENSE",
+          "sha256": "5a6ba2e198e96e1ee6c17b17e6c614812f0271eff28f2b6c8215ab6d51afdf7e"
+        }
+      ]
+    },
+    {
+      "name": "trame-vtk",
+      "version": "2.11.17",
+      "direct": false,
+      "license": "BSD License",
+      "licenseProvenance": "installed metadata and license text; labels are descriptive, not a compatibility determination",
+      "source": "https://pypi.org/project/trame-vtk/2.11.17/",
+      "projectUrls": [],
+      "notices": [
+        {
+          "path": "trame_vtk-2.11.17.dist-info/licenses/LICENSE",
+          "sha256": "27198113c2a9a21461dbdba5a9a22639ba4e65f97c15203fbc701a15d6f4d600"
+        }
+      ]
+    },
+    {
+      "name": "typing-extensions",
+      "version": "4.16.0",
+      "direct": false,
+      "license": "PSF-2.0",
+      "licenseProvenance": "installed metadata and license text; labels are descriptive, not a compatibility determination",
+      "source": "https://pypi.org/project/typing-extensions/4.16.0/",
+      "projectUrls": [
+        "Bug Tracker, https://github.com/python/typing_extensions/issues",
+        "Changes, https://github.com/python/typing_extensions/blob/main/CHANGELOG.md",
+        "Documentation, https://typing-extensions.readthedocs.io/",
+        "Home, https://github.com/python/typing_extensions",
+        "Q & A, https://github.com/python/typing/discussions",
+        "Repository, https://github.com/python/typing_extensions"
+      ],
+      "notices": [
+        {
+          "path": "typing_extensions-4.16.0.dist-info/licenses/LICENSE",
+          "sha256": "3b2f81fe21d181c499c59a256c8e1968455d6689d269aa85373bfb6af41da3bf"
+        }
+      ]
+    },
+    {
+      "name": "typish",
+      "version": "1.9.3",
+      "direct": false,
+      "license": "MIT",
+      "licenseProvenance": "installed metadata and license text; labels are descriptive, not a compatibility determination",
+      "source": "https://pypi.org/project/typish/1.9.3/",
+      "projectUrls": [],
+      "notices": [
+        {
+          "path": "typish-1.9.3.dist-info/LICENSE",
+          "sha256": "9459e7884420dbea6a752b7401ef7bf7edc84680b4155cbb9d82b50070435acb"
+        }
+      ]
+    },
+    {
+      "name": "tzdata",
+      "version": "2026.6",
+      "direct": false,
+      "license": "Apache-2.0",
+      "licenseProvenance": "installed metadata and license text; labels are descriptive, not a compatibility determination",
+      "source": "https://pypi.org/project/tzdata/2026.6/",
+      "projectUrls": [
+        "Bug Reports, https://github.com/python/tzdata/issues",
+        "Source, https://github.com/python/tzdata",
+        "Documentation, https://tzdata.python.org"
+      ],
+      "notices": [
+        {
+          "path": "tzdata-2026.6.dist-info/licenses/LICENSE",
+          "sha256": "df58f69ea88683035d720b5375bcef0cf5aeaa98a1d098d572e0992c378deb46"
+        },
+        {
+          "path": "tzdata-2026.6.dist-info/licenses/licenses/LICENSE_APACHE",
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+        }
+      ]
+    },
+    {
+      "name": "vtk",
+      "version": "9.3.1",
+      "direct": false,
+      "license": "BSD-3-Clause (additional bundled notices apply)",
+      "licenseProvenance": "installed metadata and license text; labels are descriptive, not a compatibility determination",
+      "source": "https://pypi.org/project/vtk/9.3.1/",
+      "projectUrls": [],
+      "notices": [
+        {
+          "path": "vtk-9.3.1.dist-info/LICENSE",
+          "sha256": "11232448be82e0ea2c2c66219c2e36389f42249894070ee10c549ff182fc08b6"
+        }
+      ]
+    },
+    {
+      "name": "wslink",
+      "version": "2.6.0",
+      "direct": false,
+      "license": "BSD-3-Clause",
+      "licenseProvenance": "installed metadata and license text; labels are descriptive, not a compatibility determination",
+      "source": "https://pypi.org/project/wslink/2.6.0/",
+      "projectUrls": [],
+      "notices": [
+        {
+          "path": "wslink-2.6.0.dist-info/licenses/LICENSE",
+          "sha256": "28e401d582c42ba0d2904c99118b457c6595030fd4235d24f0a82e44e463edb3"
+        }
+      ]
+    },
+    {
+      "name": "yarl",
+      "version": "1.25.1",
+      "direct": false,
+      "license": "Apache-2.0",
+      "licenseProvenance": "installed metadata and license text; labels are descriptive, not a compatibility determination",
+      "source": "https://pypi.org/project/yarl/1.25.1/",
+      "projectUrls": [
+        "Chat: Matrix, https://matrix.to/#/#aio-libs:matrix.org",
+        "Chat: Matrix Space, https://matrix.to/#/#aio-libs-space:matrix.org",
+        "CI: GitHub Workflows, https://github.com/aio-libs/yarl/actions?query=branch:master",
+        "Code of Conduct, https://github.com/aio-libs/.github/blob/master/CODE_OF_CONDUCT.md",
+        "Coverage: codecov, https://codecov.io/github/aio-libs/yarl",
+        "Docs: Changelog, https://yarl.aio-libs.org/en/latest/changes/",
+        "Docs: RTD, https://yarl.aio-libs.org",
+        "GitHub: issues, https://github.com/aio-libs/yarl/issues",
+        "GitHub: repo, https://github.com/aio-libs/yarl"
+      ],
+      "notices": [
+        {
+          "path": "yarl-1.25.1.dist-info/licenses/LICENSE",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        },
+        {
+          "path": "yarl-1.25.1.dist-info/licenses/NOTICE",
+          "sha256": "56d6ac6c8105c0a51304c21db060e361af9a8ea0af9a75c239c28b5d13693838"
+        }
+      ]
+    }
+  ],
+  "vendoredFonts": [
+    {
+      "path": "public/fonts/karla-latin-400-normal.woff2",
+      "sha256": "250bb48fdea5ba354fa85161f3877121ef679c6f7a1ef3d8f173fb8979628906",
+      "license": "OFL-1.1",
+      "source": "https://cdn.jsdelivr.net/npm/@fontsource/karla/files/karla-latin-400-normal.woff2",
+      "notice": "public/fonts/licenses/karla-OFL.txt"
+    },
+    {
+      "path": "public/fonts/karla-latin-600-normal.woff2",
+      "sha256": "2ca9205edf2d9bf34e433d00c966ee63b07c965c01290271df8fc1180d1dd99b",
+      "license": "OFL-1.1",
+      "source": "https://cdn.jsdelivr.net/npm/@fontsource/karla/files/karla-latin-600-normal.woff2",
+      "notice": "public/fonts/licenses/karla-OFL.txt"
+    },
+    {
+      "path": "public/fonts/sora-latin-600-normal.woff2",
+      "sha256": "fa9ab76f30510ad92153c6d6d72d0508884b85e9f0148abdfa963231b2a4845a",
+      "license": "OFL-1.1",
+      "source": "https://cdn.jsdelivr.net/npm/@fontsource/sora/files/sora-latin-600-normal.woff2",
+      "notice": "public/fonts/licenses/sora-OFL.txt"
+    }
+  ]
+}
