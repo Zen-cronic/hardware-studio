@@ -854,6 +854,7 @@ export default function Studio({
           </div>
           <ModelCanvas
             parts={visibleParts}
+            framingKey={`${design.id}:${design.revision}:${exploded}`}
             activePartIds={
               tab === "assemble" ? currentStep?.partIds : undefined
             }

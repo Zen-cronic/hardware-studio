@@ -26,6 +26,7 @@ type Props = {
   compact?: boolean;
   dimensions?: boolean;
   reset?: number;
+  framingKey?: string;
   camera?: { position: Vec3; target: Vec3 };
   onCamera?: (camera: { position: Vec3; target: Vec3 }) => void;
   ariaLabel?: string;
@@ -79,7 +80,18 @@ function FeaturedGeometry({
 }) {
   const geometry = useMemo(() => {
     return featuredGeometry(part, compact);
-  }, [JSON.stringify(part), compact]);
+  }, [
+    JSON.stringify([
+      part.shape,
+      part.size,
+      part.holeDiameter,
+      part.holes,
+      part.sections,
+      part.channel,
+      part.loopSpan,
+    ]),
+    compact,
+  ]);
   useEffect(() => () => geometry.dispose(), [geometry]);
   return <primitive object={geometry} attach="geometry" />;
 }
@@ -257,7 +269,9 @@ function Camera({
   onCamera,
   box,
   parts,
+  framingKey,
 }: {
+  framingKey?: string;
   reset?: number;
   remote?: Props["camera"];
   onCamera?: Props["onCamera"];
@@ -265,7 +279,7 @@ function Camera({
   parts: Part[];
 }) {
   const ref = useRef<any>(null);
-  const { camera, invalidate, size } = useThree();
+  const { camera, invalidate, size, gl } = useThree();
   const center = box.getCenter(new THREE.Vector3());
   const extent = Math.max(...box.getSize(new THREE.Vector3()).toArray(), 80);
   useEffect(() => {
@@ -328,8 +342,7 @@ function Camera({
     invalidate();
   }, [
     reset,
-    box.min.toArray().join(),
-    box.max.toArray().join(),
+    framingKey ?? `${box.min.toArray().join()}:${box.max.toArray().join()}`,
     size.width,
     size.height,
     camera,
@@ -351,6 +364,13 @@ function Camera({
       maxDistance={extent * 6}
       enableDamping={false}
       maxPolarAngle={Math.PI * 0.49}
+      onChange={() => {
+        if (ref.current)
+          gl.domElement.dataset.view = JSON.stringify({
+            position: camera.position.toArray(),
+            target: ref.current.target.toArray(),
+          });
+      }}
       onEnd={() => {
         if (onCamera && ref.current)
           onCamera({
@@ -365,9 +385,8 @@ export default function ModelCanvas(props: Props) {
   const { compact, playing = false, dimensions = false } = props;
   const [ready, setReady] = useState(false),
     [failed, setFailed] = useState(false);
-  useEffect(() => {
-    setReady(false);
-  }, [props.parts]);
+  // Once mounted, synchronous part/pose updates retain the rendered view.
+  // FrameSignal still requests frames; only the initial canvas needs a loading overlay.
   const originalBox = useMemo(() => partBounds(props.parts), [props.parts]);
   const parts = useMemo(() => {
     if (!props.exploded) return props.parts;
@@ -482,6 +501,7 @@ export default function ModelCanvas(props: Props) {
             )}
             <Camera
               reset={props.reset}
+              framingKey={props.framingKey}
               remote={props.camera}
               onCamera={props.onCamera}
               box={box}
