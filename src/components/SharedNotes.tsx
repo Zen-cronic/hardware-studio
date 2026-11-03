@@ -4,6 +4,7 @@ import * as Y from "yjs";
 import { MessageSquare, Send, Pencil, Undo2, ImagePlus } from "lucide-react";
 import { uid } from "../lib/api";
 import { colors } from "../lib/tokens";
+import { collaborationUrl } from "../lib/collaboration-url";
 type Note = { id: string; author: string; body: string; at: string };
 type Stroke = {
   id: string;
@@ -51,11 +52,7 @@ export default function SharedNotes({
     setArray(a);
     setDrawingArray(sketch);
     const p = new HocuspocusProvider({
-      url:
-        (location.protocol === "https:" ? "wss:" : "ws:") +
-        "//" +
-        location.hostname +
-        ":4175",
+      url: collaborationUrl(location.href, import.meta.env.VITE_COLLAB_PATH),
       name: id,
       document: doc,
       token,

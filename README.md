@@ -31,7 +31,7 @@ Open /judge for the guided path. Try the turntable, make a copy, change a dimens
 npm test
 npm run measure
 npm run build
-poetry run pytest
+poetry run python -m pytest
 npm run test:e2e
 ```
 
@@ -59,3 +59,7 @@ When no AI key is available, explicit local dimension commands remain available 
 - Yjs/Hocuspocus: collaborative annotations and presence.
 
 Local data lives in .data and stays out of Git. Do not expose this local preview to the internet without deployment access controls and operational review.
+
+## Hosting preparation
+
+See [hosting configuration](docs/HOSTING.md) for persistent storage, listener settings and same-origin HTTPS collaboration. Public hosting and access controls must be configured separately from the local preview.

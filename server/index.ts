@@ -1,23 +1,26 @@
 import "dotenv/config";
 import { createApp, createCollaborationServer } from "./app";
+import { serverConfig } from "./config";
+const config = serverConfig(process.env);
 const { app, store } = await createApp();
 const collaboration = createCollaborationServer(
   store,
-  Number(process.env.COLLAB_PORT || 4175),
+  config.collabPort,
+  config.collabHost,
 );
 try {
   await collaboration.listen();
   await app.listen({
-    port: Number(process.env.PORT || 4174),
-    host: "127.0.0.1",
+    port: config.port,
+    host: config.host,
   });
-  console.log(
-    "Hardware Studio: http://127.0.0.1:" + String(process.env.PORT || 4174),
-  );
+  console.log(`Hardware Studio listening on ${config.host}:${config.port}`);
 } catch (error) {
   console.error(
     error instanceof Error ? error.message : "Server could not start.",
   );
+  await collaboration.destroy();
+  await app.close();
   process.exitCode = 1;
 }
 let closing = false;

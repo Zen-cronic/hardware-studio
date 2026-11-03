@@ -175,30 +175,24 @@ export async function createApp(options: Options = {}) {
   }
   app.setErrorHandler((error, request, reply) => {
     if (error instanceof HttpError)
-      return reply
-        .code(error.status)
-        .send({
-          error: error.message,
-          code: error.code,
-          conflicts: error.conflicts,
-        });
+      return reply.code(error.status).send({
+        error: error.message,
+        code: error.code,
+        conflicts: error.conflicts,
+      });
     if (error instanceof DesignError)
-      return reply
-        .code(422)
-        .send({
-          error: error.message,
-          code: error.code,
-          conflicts: error.conflicts,
-        });
+      return reply.code(422).send({
+        error: error.message,
+        code: error.code,
+        conflicts: error.conflicts,
+      });
     const e = error as any;
     if (e.statusCode && e.statusCode < 500)
       return reply.code(e.statusCode).send({ error: e.message });
-    return reply
-      .code(500)
-      .send({
-        error:
-          "The request could not be completed. Your last saved design is unchanged.",
-      });
+    return reply.code(500).send({
+      error:
+        "The request could not be completed. Your last saved design is unchanged.",
+    });
   });
   await app.register(websocket, { options: { maxPayload: 65536 } });
   app.get("/api/health", async () => ({
@@ -384,10 +378,14 @@ export async function createApp(options: Options = {}) {
   });
   return { app, store, broadcast, python };
 }
-export function createCollaborationServer(store: Store, port = 4175) {
+export function createCollaborationServer(
+  store: Store,
+  port = 4175,
+  address = "127.0.0.1",
+) {
   return new CollaborationServer({
     port,
-    address: "127.0.0.1",
+    address,
     quiet: true,
     debounce: 500,
     maxDebounce: 1500,
