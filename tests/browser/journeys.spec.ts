@@ -56,7 +56,7 @@ for (const kind of kinds)
       await page
         .getByRole("button", { name: "Mark step reviewed", exact: true })
         .click();
-      await expect(page.getByText("1 of 4 steps reviewed")).toBeVisible();
+      await expect(page.getByText(`1 of ${r.snapshot.derived.steps.length} steps reviewed`)).toBeVisible();
       await page.getByRole("tab", { name: "Build", exact: true }).click();
       await page.getByTestId("generate-build").click();
       await expect(
@@ -86,13 +86,13 @@ test("two editors merge independent edits, detect collision and share notes", as
   try {
     await Promise.all([p.goto(url(r)), q.goto(url(r))]);
     await expect(p.getByTestId("param-diameter")).toHaveValue("220");
-    await expect(q.getByTestId("param-height")).toHaveValue("55");
+    await expect(q.getByTestId("param-height")).toHaveValue("180");
     await p.getByTestId("param-diameter").fill("280");
-    await q.getByTestId("param-height").fill("65");
+    await q.getByTestId("param-height").fill("200");
     await p.getByTestId("apply-dimensions").click();
     await expect(q.getByTestId("param-diameter")).toHaveValue("280");
     await q.getByTestId("apply-dimensions").click();
-    await expect(p.getByTestId("param-height")).toHaveValue("65");
+    await expect(p.getByTestId("param-height")).toHaveValue("200");
     await p.getByTestId("param-diameter").fill("300");
     await q.getByTestId("param-diameter").fill("320");
     await p.getByTestId("apply-dimensions").click();

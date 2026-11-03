@@ -45,7 +45,7 @@ import type {
   Snapshot,
   Vec3,
 } from "./shared/types";
-import { CATALOG, getProduct } from "./shared/catalog";
+import { CATALOG, productForDesign } from "./shared/catalog";
 import { readSetFor } from "./shared/engine";
 import {
   api,
@@ -113,7 +113,7 @@ export default function Studio({
   const ws = useRef<WebSocket | null>(null);
   const clientId = useRef(uid());
   const mounted = useRef(true);
-  const product = snapshot ? getProduct(snapshot.design.kind) : undefined;
+  const product = snapshot ? productForDesign(snapshot.design) : undefined;
   const readOnly = snapshot?.role === "viewer";
   function acceptSnapshot(incoming: Snapshot) {
     setSnapshot((previous) =>
@@ -981,7 +981,7 @@ export default function Studio({
                         step={spec.step}
                         aria-label={spec.label + " slider"}
                         value={draft[spec.key] ?? design.params[spec.key]}
-                        disabled={readOnly || busy}
+                        disabled={readOnly || busy || spec.min === spec.max}
                         onChange={(e) => edit(spec.key, Number(e.target.value))}
                       />
                       <input
@@ -992,7 +992,7 @@ export default function Studio({
                         aria-label={spec.label}
                         data-testid={"param-" + spec.key}
                         value={draft[spec.key] ?? design.params[spec.key]}
-                        disabled={readOnly || busy}
+                        disabled={readOnly || busy || spec.min === spec.max}
                         onChange={(e) => edit(spec.key, Number(e.target.value))}
                       />
                     </div>

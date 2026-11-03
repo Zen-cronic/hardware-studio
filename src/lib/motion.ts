@@ -1,5 +1,6 @@
+import { Vector3, Quaternion, Euler } from "three";
 import type { Part, Vec3 } from "../shared/types";
-export function motionPose(
+function ownPose(
   part: Part,
   parts: Part[],
   seconds: number,
@@ -46,4 +47,34 @@ export function motionPose(
   if (motion.type === "flow")
     position[axis] += (Math.sin(seconds * motion.speed) * distance) / 2;
   return { position, rotation };
+}
+
+export function motionPose(
+  part: Part,
+  parts: Part[],
+  seconds: number,
+): { position: Vec3; rotation: Vec3 } {
+  const pose = ownPose(part, parts, seconds);
+  const parent = part.parentId
+    ? parts.find((p) => p.id === part.parentId)
+    : undefined;
+  if (!parent) return pose;
+  const parentPose = motionPose(parent, parts, seconds);
+  const original = new Quaternion().setFromEuler(
+    new Euler(...(parent.rotation || [0, 0, 0])),
+  );
+  const delta = new Quaternion()
+    .setFromEuler(new Euler(...parentPose.rotation))
+    .multiply(original.invert());
+  const position = new Vector3(...pose.position)
+    .sub(new Vector3(...parent.position))
+    .applyQuaternion(delta)
+    .add(new Vector3(...parentPose.position));
+  const rotation = new Euler().setFromQuaternion(
+    delta.multiply(new Quaternion().setFromEuler(new Euler(...pose.rotation))),
+  );
+  return {
+    position: position.toArray() as Vec3,
+    rotation: [rotation.x, rotation.y, rotation.z],
+  };
 }

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { getProduct } from "../src/shared/catalog";
+import { productForDesign } from "../src/shared/catalog";
 import { deriveDesign, readSetFor, validateDesign } from "../src/shared/engine";
 import type { Snapshot, Proposal, Part } from "../src/shared/types";
 import { Store, HttpError } from "./store";
@@ -12,7 +12,7 @@ function localProposal(
     changes: Record<string, number> = {};
   const questions: string[] = [];
   const text = prompt.toLowerCase();
-  for (const p of getProduct(d.kind).parameters) {
+  for (const p of productForDesign(d).parameters) {
     const names = [
       p.key.replace(/[A-Z]/g, (m) => " " + m.toLowerCase()),
       p.label.toLowerCase(),
@@ -128,7 +128,7 @@ export async function propose(
       kind: d.kind,
       params: d.params,
       customParts: d.customParts,
-      parameters: getProduct(d.kind).parameters,
+      parameters: productForDesign(d).parameters,
     }) +
     ". Return no payment, procurement or fabrication claims.";
   let charged = false;

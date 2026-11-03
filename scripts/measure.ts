@@ -25,9 +25,9 @@ const cases: Case[] = [
   },
   {
     kind: "turntable",
-    change: { shaftDiameter: 12 },
-    check: (d) => Math.abs(part(d, "hub").holeDiameter! - 12.2) < 0.001,
-    reason: "Hub clearance follows new shaft",
+    change: { height: 200 },
+    check: (d) => part(d, "motor-plate").position[1] === 105 && part(d, "post-lower-0").size[1] === 99,
+    reason: "Motor plate and frame spacers follow base height",
   },
   {
     kind: "slider",
@@ -154,12 +154,12 @@ const custom = createDesign("custom", "Phone stand", [
 ]);
 assert.equal(deriveDesign(custom).parts.length, 2);
 const baseline = deriveDesign(createDesign("turntable"));
-assert.equal(part(baseline, "hub").holeDiameter, 8.2);
+assert.equal(part(baseline, "motor-plate").position[1], 85);
 const disconnected = structuredClone(baseline);
-part(disconnected, "hub").holeDiameter = 8.2;
+part(disconnected, "motor-plate").position[1] = 105; // plate moves but spacer does not
 assert(
   !cases[1].check(disconnected),
-  "Negative control must detect disconnected hub after requested 12 mm shaft",
+  "Negative control must detect an unchanged spacer after requested 200 mm base",
 );
 const report = {
   generatedAt: new Date().toISOString(),

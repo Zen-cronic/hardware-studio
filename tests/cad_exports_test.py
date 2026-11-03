@@ -24,7 +24,7 @@ KINDS = ["turntable", "slider", "conveyor", "lamp", "planter", "holder"]
 def snapshots():
     code = """
 import {createDesign, deriveDesign} from './src/shared/engine.ts';
-const edits={turntable:[['diameter',240],['shaftDiameter',9]],slider:[['travel',550],['railSpacing',110]],conveyor:[['length',550],['sensorPosition',210]],lamp:[['reach',325],['angle',50]],planter:[['pots',4],['reservoirHeight',80]],holder:[['opening',90],['jawWidth',100]]};
+const edits={turntable:[['diameter',240],['height',200]],slider:[['travel',550],['railSpacing',110]],conveyor:[['length',550],['sensorPosition',210]],lamp:[['reach',325],['angle',50]],planter:[['pots',4],['reservoirHeight',80]],holder:[['opening',90],['jawWidth',100]]};
 const out={};
 for(const [kind,changes] of Object.entries(edits)){
  const base=createDesign(kind); out[kind]=[{design:base,derived:deriveDesign(base),history:[]}];
@@ -193,6 +193,8 @@ def test_exported_parameter_engine_recalculates_without_original_source(snapshot
     output = tmp_path / "portable"
     build_package(snapshot, output)
     exported = json.loads((output / "design.json").read_text())
+    assert exported["design"]["mechanismVersion"] == 2
+    assert (output / "parametric" / "turntable.ts").is_file()
     exported["design"]["params"]["diameter"] = 260
     exported["design"]["revision"] += 1
     (output / "design.json").write_text(json.dumps(exported))

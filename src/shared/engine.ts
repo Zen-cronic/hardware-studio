@@ -1,4 +1,5 @@
-import { defaultParams, getProduct } from "./catalog";
+import { standardTurntable } from "./turntable";
+import { defaultParams, getProduct, productForDesign } from "./catalog";
 import type {
   Design,
   ProductKind,
@@ -30,6 +31,7 @@ export function createDesign(
     kind,
     name: name?.trim().slice(0, 120) || getProduct(kind).name,
     revision: 0,
+    ...(kind === "turntable" ? { mechanismVersion: 2 as const } : {}),
     params: defaultParams(kind),
     createdAt: now,
     updatedAt: now,
@@ -137,6 +139,85 @@ export function validateParts(parts: Part[]): void {
         part.holeDiameter! >= part.size[0] - 0.5)
     )
       throw new DesignError("A tube needs a smaller, positive bore.");
+    if (part.sections !== undefined) {
+      if (
+        part.shape === "box" ||
+        !Array.isArray(part.sections) ||
+        !part.sections.length ||
+        part.sections.length > 16 ||
+        part.sections.some(
+          (s) =>
+            !s ||
+            !Number.isFinite(s.height) ||
+            s.height < 0.5 ||
+            !Number.isFinite(s.diameter) ||
+            s.diameter < 0.5 ||
+            s.diameter > part.size[0] ||
+            !Number.isFinite(s.bore) ||
+            s.bore < 0 ||
+            s.bore >= s.diameter - 0.5,
+        ) ||
+        Math.abs(
+          part.sections.reduce((n, s) => n + s.height, 0) - part.size[1],
+        ) > 1e-6 ||
+        Math.abs(
+          Math.max(...part.sections.map((s) => s.diameter)) - part.size[0],
+        ) > 1e-6 ||
+        part.sections.some(
+          (s, i, a) =>
+            i > 0 &&
+            Math.min(s.diameter, a[i - 1].diameter) <=
+              Math.max(s.bore, a[i - 1].bore) + 0.5,
+        )
+      )
+        throw new DesignError(
+          "Axial sections must form one connected solid within the part dimensions.",
+        );
+    }
+    if (part.holes !== undefined) {
+      if (!Array.isArray(part.holes) || part.holes.length > 32)
+        throw new DesignError("Too many through holes.");
+      const sections = part.sections || [
+        {
+          diameter: part.size[0],
+          bore: part.shape === "tube" ? part.holeDiameter! : 0,
+        },
+      ];
+      for (const [i, h] of part.holes.entries()) {
+        if (
+          !h ||
+          ![h.x, h.z, h.diameter].every(Number.isFinite) ||
+          h.diameter < 0.5
+        )
+          throw new DesignError("Invalid through hole.");
+        const radius = Math.hypot(h.x, h.z),
+          hr = h.diameter / 2;
+        if (
+          part.shape === "box"
+            ? Math.abs(h.x) + hr > part.size[0] / 2 - 0.25 ||
+              Math.abs(h.z) + hr > part.size[2] / 2 - 0.25
+            : sections.some(
+                (s) =>
+                  radius - hr < s.diameter / 2 + 0.25 &&
+                  (radius + hr > s.diameter / 2 - 0.25 ||
+                    (s.bore > 0 && radius - hr < s.bore / 2 + 0.25)),
+              ) || !sections.some((s) => radius + hr < s.diameter / 2)
+        )
+          throw new DesignError(
+            "Through holes must stay inside every section wall.",
+          );
+        if (
+          part.holes
+            .slice(0, i)
+            .some(
+              (j) =>
+                Math.hypot(h.x - j.x, h.z - j.z) <
+                (h.diameter + j.diameter) / 2 + 0.25,
+            )
+        )
+          throw new DesignError("Through holes must not overlap.");
+      }
+    }
     if (
       !/^#[0-9a-f]{6}$/i.test(part.color) ||
       !["print", "machine", "buy", "cut"].includes(part.process) ||
@@ -172,7 +253,12 @@ export function validateParts(parts: Part[]): void {
     }
 }
 export function validateDesign(d: Design): void {
-  const def = getProduct(d.kind);
+  if (
+    d.mechanismVersion !== undefined &&
+    (d.kind !== "turntable" || d.mechanismVersion !== 2)
+  )
+    throw new DesignError("Unsupported mechanism version.");
+  const def = productForDesign(d);
   if (!d.params || typeof d.params !== "object" || Array.isArray(d.params))
     throw new DesignError("Parameters must be an object.");
   for (const k of Object.keys(d.params))
@@ -223,6 +309,16 @@ export function validateDesign(d: Design): void {
         ...part,
         size: part.size.map((v) => v * p.scale) as Vec3,
         position: part.position.map((v) => v * p.scale) as Vec3,
+        sections: part.sections?.map((s) => ({
+          height: s.height * p.scale,
+          diameter: s.diameter * p.scale,
+          bore: s.bore * p.scale,
+        })),
+        holes: part.holes?.map((h) => ({
+          x: h.x * p.scale,
+          z: h.z * p.scale,
+          diameter: h.diameter * p.scale,
+        })),
         holeDiameter:
           part.holeDiameter === undefined
             ? undefined
@@ -343,6 +439,18 @@ function bom(parts: Part[]): BomItem[] {
             (p.holeDiameter
               ? " · bore " + round(p.holeDiameter) + " mm"
               : "")) +
+        (p.sections
+          ? " · axial sections bottom→top: " +
+            p.sections
+              .map((s) => `${s.height} high / Ø${s.diameter} / bore ${s.bore}`)
+              .join("; ")
+          : "") +
+        (p.holes?.length
+          ? " · through holes X/Z/Ø: " +
+            p.holes
+              .map((h) => `${round(h.x)}/${round(h.z)}/${h.diameter}`)
+              .join("; ")
+          : "") +
         (p.process === "buy"
           ? " · selection envelope; confirm actual fit and ratings"
           : ""),
@@ -362,6 +470,18 @@ export function deriveDesign(d: Design): DerivedDesign {
   ];
   switch (d.kind) {
     case "turntable": {
+      if (d.mechanismVersion === 2) {
+        const standard = standardTurntable(p);
+        parts = standard.parts;
+        steps = standard.steps;
+        metrics = standard.metrics;
+        connections = standard.connections;
+        warnings.push(...standard.warnings);
+        break;
+      }
+      warnings.push(
+        "Legacy conceptual drive: arbitrary motor and bearing envelopes. Create a new turntable for the supported 8 mm spindle assembly.",
+      );
       const radius = p.diameter / 2,
         baseD = p.diameter * 0.78;
       parts = [
@@ -1314,6 +1434,16 @@ export function deriveDesign(d: Design): DerivedDesign {
         ...part,
         size: part.size.map((v) => v * p.scale) as Vec3,
         position: part.position.map((v) => v * p.scale) as Vec3,
+        sections: part.sections?.map((s) => ({
+          height: s.height * p.scale,
+          diameter: s.diameter * p.scale,
+          bore: s.bore * p.scale,
+        })),
+        holes: part.holes?.map((h) => ({
+          x: h.x * p.scale,
+          z: h.z * p.scale,
+          diameter: h.diameter * p.scale,
+        })),
         holeDiameter:
           part.holeDiameter === undefined
             ? undefined
@@ -1345,5 +1475,35 @@ export function deriveDesign(d: Design): DerivedDesign {
   for (const part of parts)
     if (part.material === "Reference envelope") part.role = "reference";
     else part.role = part.role || "component";
-  return { parts, bom: bom(parts), steps, connections, metrics, warnings };
+  let rows = bom(parts);
+  if (d.kind === "turntable" && d.mechanismVersion === 2) {
+    rows = rows.filter(
+      (row) =>
+        !row.id.endsWith("-head") &&
+        !["motor-pilot", "motor-shaft"].includes(row.id),
+    );
+    for (const row of rows) {
+      if (row.id.includes("screw"))
+        row.name = row.name.replace(
+          "screw shank envelope",
+          "screw (head included)",
+        );
+      if (row.id === "motor")
+        row.sourceUrl = "https://www.pololu.com/product/4756";
+      if (row.id === "coupling") {
+        row.sourceUrl = "https://www.ruland.com/pcmr25-8-6-ss.html";
+        row.specification +=
+          " · body Ø25.4; model reserves Ø31.8 for clamp hardware; verify engagement";
+      }
+      if (row.id === "collar") {
+        row.sourceUrl = "https://www.ruland.com/mcl-8-a.html";
+        row.specification +=
+          " · body Ø18; model reserves Ø22.4 for clamp hardware";
+      }
+      if (row.id.endsWith("-bearing"))
+        row.sourceUrl =
+          "https://www.nsk.com/content/dam/nsk-marketing/projects-completed/literature/service/guides/bearing-replacement-guide-brg/en_bearing-replacement-guide-brg/preview-pdf_bearing-replacement-guide-brg_en/NSK_Bro_BRG_E_preview.pdf";
+    }
+  }
+  return { parts, bom: rows, steps, connections, metrics, warnings };
 }

@@ -22,21 +22,17 @@ import type {
   ProductKind,
   Snapshot,
 } from "./shared/types";
-import { CATALOG, defaultParams } from "./shared/catalog";
-import { deriveDesign } from "./shared/engine";
+import { CATALOG } from "./shared/catalog";
+import { createDesign, deriveDesign } from "./shared/engine";
 import ModelCanvas from "./components/ModelCanvas";
 import Studio from "./Studio";
 import { create, pathFor, recent, type Recent } from "./lib/api";
 import { colors } from "./lib/tokens";
 export type Navigate = (path: string) => void;
 export function preview(kind: ProductKind): Snapshot {
-  const p = CATALOG.find((p) => p.kind === kind)!;
   const design: Design = {
+    ...createDesign(kind),
     id: "preview-" + kind,
-    kind,
-    name: p?.name || "New design",
-    revision: 0,
-    params: defaultParams(kind),
     createdAt: "",
     updatedAt: "",
   };

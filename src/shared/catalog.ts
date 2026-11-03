@@ -1,4 +1,9 @@
-import type { ProductDefinition, ProductKind, ParameterSpec } from "./types";
+import type {
+  ProductDefinition,
+  ProductKind,
+  ParameterSpec,
+  Design,
+} from "./types";
 const p = (
   key: string,
   label: string,
@@ -42,21 +47,21 @@ export const CATALOG: ProductDefinition[] = [
         "height",
         "Base height",
         "mm",
-        35,
-        100,
+        180,
+        220,
         5,
-        55,
-        "Enclosure height around the drive.",
+        180,
+        "Height of the open support frame around the drive.",
       ),
       p(
         "shaftDiameter",
         "Drive shaft",
         "mm",
-        5,
-        20,
+        8,
+        8,
         1,
         8,
-        "Updates the hub bore and motor coupling.",
+        "Fixed 8 mm supported spindle for two 608 bearings.",
       ),
       p(
         "rpm",
@@ -359,4 +364,26 @@ export function defaultParams(kind: ProductKind): Record<string, number> {
   return Object.fromEntries(
     getProduct(kind).parameters.map((p) => [p.key, p.default]),
   );
+}
+
+// Unversioned saved designs retain their original parameter and geometry contract.
+export function productForDesign(d: Design): ProductDefinition {
+  const current = getProduct(d.kind);
+  if (d.kind !== "turntable" || d.mechanismVersion === 2) return current;
+  return {
+    ...current,
+    parameters: current.parameters.map((p) =>
+      p.key === "height"
+        ? { ...p, min: 35, max: 100, default: 55 }
+        : p.key === "shaftDiameter"
+          ? {
+              ...p,
+              min: 5,
+              max: 20,
+              default: 8,
+              description: "Legacy conceptual shaft and hub.",
+            }
+          : p,
+    ),
+  };
 }

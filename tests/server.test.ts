@@ -66,7 +66,7 @@ describe("authoritative revisions", () => {
   it("guards an AI proposal with its entire read set", () => {
     const s = memory(),
       { snapshot } = s.create("turntable");
-    s.apply(snapshot.design.id, cmd(snapshot, { shaftDiameter: 12 }));
+    s.apply(snapshot.design.id, cmd(snapshot, { height: 200 }));
     const ai = {
       ...cmd(snapshot, { diameter: 280 }),
       readSet: { ...snapshot.design.params },
@@ -120,7 +120,7 @@ describe("authoritative revisions", () => {
     expect(() =>
       s.undo(snapshot.design.id, "Bea", c.id, crypto.randomUUID()),
     ).toThrow(/own/);
-    s.apply(snapshot.design.id, cmd(r, { shaftDiameter: 12 }, "Bea"));
+    s.apply(snapshot.design.id, cmd(r, { diameter: 280 }, "Bea"));
     expect(() =>
       s.undo(snapshot.design.id, "Alex", c.id, crypto.randomUUID()),
     ).toThrow(/depends/);

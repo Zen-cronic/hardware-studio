@@ -25,7 +25,7 @@ import OCP
 from .geometry import DesignError, bounds, local_shape, safe_stem, validate_snapshot, world_shape
 from .documents import write_documents
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 KERNEL_VERSION = "OCCT " + getattr(OCP, "__version__", "unknown")
 CADQUERY_VERSION = importlib.metadata.version("cadquery")
 
@@ -37,7 +37,7 @@ def manufacturing_parts(snapshot: dict) -> list[dict]:
 def canonical_input(snapshot: dict) -> dict:
     d = snapshot["design"]
     return {
-        "design": {key: d[key] for key in ("id", "kind", "name", "revision", "params")},
+        "design": {key: d[key] for key in ("id", "kind", "name", "revision", "params", "mechanismVersion") if key in d},
         "parts": snapshot["derived"]["parts"],
         "bom": snapshot["derived"]["bom"],
         "steps": snapshot["derived"]["steps"],
@@ -80,7 +80,7 @@ def clean_snapshot(snapshot: dict, parts: list[dict]) -> dict:
     ids = {part["id"] for part in parts}
     derived = dict(snapshot["derived"])
     derived["bom"] = [item for item in derived["bom"] if item.get("id") in ids or item.get("id") not in {p["id"] for p in derived["parts"]}]
-    return {"design": {key: d[key] for key in ("id", "kind", "name", "revision", "params", "createdAt", "updatedAt", "customParts") if key in d}, "derived": derived, "history": []}
+    return {"design": {key: d[key] for key in ("id", "kind", "name", "revision", "params", "createdAt", "updatedAt", "customParts", "mechanismVersion") if key in d}, "derived": derived, "history": []}
 
 
 SOURCE_RUNNER = '''#!/usr/bin/env python3
@@ -124,7 +124,7 @@ def write_source(output: Path) -> None:
     if shared.is_dir():
         parametric = output / "parametric"
         parametric.mkdir()
-        for name in ("engine.ts", "catalog.ts", "types.ts"):
+        for name in ("engine.ts", "catalog.ts", "types.ts", "turntable.ts"):
             if (shared / name).is_file():
                 shutil.copyfile(shared / name, parametric / name)
         (parametric / "recalculate.ts").write_text("""import {readFileSync, writeFileSync} from 'node:fs';

@@ -40,6 +40,10 @@ export interface Part {
   position: Vec3;
   rotation?: Vec3;
   holeDiameter?: number;
+  // Coaxial sections, bottom to top; total height and maximum OD match size.
+  sections?: { height: number; diameter: number; bore: number }[];
+  // Through holes along local Y, with centres in local X/Z.
+  holes?: { x: number; z: number; diameter: number }[];
   color: string;
   material: string;
   role?: "component" | "reference";
@@ -89,6 +93,7 @@ export interface Design {
   kind: ProductKind;
   name: string;
   revision: number;
+  mechanismVersion?: 2;
   params: Record<string, number>;
   customParts?: Part[];
   createdAt: string;

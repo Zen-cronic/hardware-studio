@@ -9,7 +9,7 @@ import {
 } from "../src/shared/engine";
 import type { ProductKind } from "../src/shared/types";
 const heldout: Record<string, Record<string, number>[]> = {
-  turntable: [{ diameter: 280 }, { shaftDiameter: 12 }],
+  turntable: [{ diameter: 280 }, { height: 200 }],
   slider: [{ travel: 725 }, { speed: 85 }],
   conveyor: [{ length: 750 }, { sensorPosition: 300 }],
   lamp: [{ reach: 400 }, { brightness: 25 }],
@@ -53,11 +53,12 @@ describe("canonical hardware engine", () => {
       },
     );
   }
-  it("shaft edit changes hub bore, BOM and connection together", () => {
+  it("legacy shaft edits preserve the original geometry contract", () => {
     const d = createDesign("turntable");
     const a = deriveDesign({
       ...d,
-      params: { ...d.params, shaftDiameter: 12 },
+      mechanismVersion: undefined,
+      params: { ...d.params, height: 55, shaftDiameter: 12 },
     });
     expect(a.parts.find((p) => p.id === "hub")?.holeDiameter).toBe(12.2);
     expect(a.bom.find((b) => b.id === "hub")?.specification).toContain("12.2");

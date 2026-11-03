@@ -56,6 +56,8 @@ def wiring_md(snapshot: dict) -> str:
         "holder": "This is a manual mechanism with no electrical circuit. The clamp screw converts rotation to jaw movement. Verify screw pitch, travel stops, jaw retention and workpiece contact before use. Do not infer holding capacity from the visual model.",
         "custom": "No electrical circuit is inferred for custom primitives. Add a reviewed wiring schematic, device ratings and control requirements if the design uses powered components.",
     }
+    if kind == "turntable" and snapshot["design"].get("mechanismVersion") == 2:
+        controls[kind] = f"Pololu 4756 is a 12 V brushed DC gearmotor with quadrature encoder, not a stepper. Use a separately selected, current-limited H-bridge and protected supply; encoder A/B signals feed a compatible controller. The manufacturer specifies 8400 counts per output revolution with its stated counting convention. Requested {p['rpm']:g} rpm is a visualization/control target only. Verify encoder supply and logic voltage, counting convention, driver sizing, startup/stall response, fuse and stop behavior from datasheets and bench tests. No working controller or achieved speed is supplied."
     text += controls[kind] + "\n\n## Accepted behavior parameters\n\n| Parameter | Value |\n|---|---:|\n" + param_table(snapshot) + "\n\n## Connection map\n\n"
     for connection in snapshot["derived"]["connections"]:
         text += f"- {connection['from']} → {connection['to']}: {connection['description']}\n"
@@ -105,26 +107,51 @@ def drawing_svg(part: dict, revision: int) -> str:
     top_r = x * scale / 2
     front = f'<rect x="{front_x}" y="{front_y}" width="{front_width}" height="{front_height}"/>'
     side = f'<rect x="{side_x}" y="{side_y}" width="{side_width}" height="{side_height}"/>'
-    top = f'<rect x="{210-x*scale/2}" y="{540-z*scale/2}" width="{x*scale}" height="{z*scale}"/>' if part["shape"] == "box" else f'<circle cx="210" cy="540" r="{top_r}"/>'
+    top = f'<rect x="{210-x*scale/2}" y="{580-z*scale/2}" width="{x*scale}" height="{z*scale}"/>' if part["shape"] == "box" else f'<circle cx="210" cy="580" r="{top_r}"/>'
     if part["shape"] == "tube":
-        top += f'<circle cx="210" cy="540" r="{part["holeDiameter"]*scale/2}"/>'
+        top += f'<circle cx="210" cy="580" r="{part["holeDiameter"]*scale/2}"/>'
         for cx in (210, 580):
             inner = part["holeDiameter"] * scale / 2
             front += f'<path stroke-dasharray="6 4" d="M {cx-inner} {front_y} v {front_height} M {cx+inner} {front_y} v {front_height}"/>'
+    details = []
+    if part.get("sections"):
+        front = side = ""
+        offset = 0
+        top = ""
+        for section_index,q in enumerate(part["sections"]):
+            w=q["diameter"]*scale; sh=q["height"]*scale; sy=240+y*scale/2-(offset+q["height"])*scale
+            for cx, target in ((210,"front"),(580,"side")):
+                rect=f'<rect x="{cx-w/2}" y="{sy}" width="{w}" height="{sh}"/>'
+                if q["bore"]:
+                    inner=q["bore"]*scale/2
+                    rect+=f'<path stroke-dasharray="6 4" d="M {cx-inner} {sy} v {sh} M {cx+inner} {sy} v {sh}"/>'
+                if target=="front": front+=rect
+                else: side+=rect
+            hidden = ' stroke-dasharray="6 4"' if section_index < len(part["sections"])-1 else ""
+            top+=f'<circle cx="210" cy="580" r="{w/2}"{hidden}/>'
+            if q["bore"]: top+=f'<circle cx="210" cy="580" r="{q["bore"]*scale/2}"{hidden}/>'
+            details.append(f"Axial Y {offset:g}–{offset+q['height']:g} from bottom: OD {q['diameter']:g}, bore {q['bore']:g} mm")
+            offset+=q["height"]
+    for i,q in enumerate(part.get("holes",[]),1):
+        top+=f'<circle cx="{210+q["x"]*scale}" cy="{580-q["z"]*scale}" r="{q["diameter"]*scale/2}"/>'
+        details.append(f"Hole {i}: X {q['x']:.3f}, Z {q['z']:.3f}, Ø {q['diameter']:g} through material along Y")
+    feature_text="".join(f'<text x="32" y="{800+i*22}" font-size="13">{esc(line)}</text>' for i,line in enumerate(details))
+    sheet_height=800+len(details)*22
     diameter = "Ø " if part["shape"] != "box" else ""
     bore = f' · Bore Ø {part["holeDiameter"]:g} through' if part["shape"] == "tube" else ""
-    return f'''<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="800" viewBox="0 0 1000 800">
-<rect width="1000" height="800" fill="white"/>
+    if part.get("sections"): bore = " · stepped profile: see axial table"
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="{sheet_height}" viewBox="0 0 1000 {sheet_height}">
+<rect width="1000" height="{sheet_height}" fill="white"/>
 <style>text{{font-family:Arial,sans-serif;fill:#202124}} .shape{{fill:none;stroke:#202124;stroke-width:1.5}} .dim{{fill:none;stroke:#52565d;stroke-width:1}}</style>
 <text x="32" y="40" font-size="24">{esc(part["name"])}</text>
 <text x="32" y="68" font-size="14">{esc(part["id"])} · revision {revision} · all dimensions mm · local part axes</text>
 <g class="shape">{front}{side}{top}</g>
 <text x="160" y="105" font-size="16">FRONT (X–Y)</text><text x="530" y="105" font-size="16">RIGHT (Z–Y)</text>
-<text x="160" y="400" font-size="16">TOP (X–Z)</text>
+<text x="160" y="430" font-size="16">TOP (X–Z)</text>
 <g class="dim"><path d="M {front_x} {front_y+front_height+12} v 24 M {front_x+front_width} {front_y+front_height+12} v 24 M {front_x} {front_y+front_height+24} h {front_width}"/>
 <path d="M {front_x+front_width+12} {front_y} h 24 M {front_x+front_width+12} {front_y+front_height} h 24 M {front_x+front_width+24} {front_y} v {front_height}"/></g>
 <text x="210" y="{front_y+front_height+45}" font-size="15" text-anchor="middle">{diameter}{x:g}</text>
-<text x="{front_x+front_width+32}" y="245" font-size="15">{y:g}</text>
+<text x="{front_x+front_width+42}" y="245" font-size="15">{y:g}</text>
 <text x="580" y="{side_y+side_height+45}" font-size="15" text-anchor="middle">{z:g}</text>
 <text x="390" y="470" font-size="16">Material: {esc(part["material"])}</text>
 <text x="390" y="500" font-size="16">Process: {esc(part["process"])}</text>
@@ -132,6 +159,7 @@ def drawing_svg(part: dict, revision: int) -> str:
 <text x="390" y="570" font-size="14">Nominal geometry. Confirm fit tolerances and finish.</text>
 <text x="390" y="595" font-size="14">Purchased components are envelope models.</text>
 <text x="32" y="754" font-size="13">Not to scale when printed. Review process, mating interfaces and required tolerances before fabrication.</text>
+{feature_text}
 </svg>'''
 
 
