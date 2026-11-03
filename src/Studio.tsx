@@ -98,8 +98,8 @@ export default function Studio({
     [share, setShare] = useState(false),
     [notes, setNotes] = useState(false),
     [fit, setFit] = useState(false),
-    [fitWidth, setFitWidth] = useState(100),
-    [fitHeight, setFitHeight] = useState(80);
+    [fitWidth, setFitWidth] = useState("100"),
+    [fitHeight, setFitHeight] = useState("80");
   const [practice, setPractice] = useState(0),
     [mobileEditor, setMobileEditor] = useState<"dimensions" | "prompt">(
       "dimensions",
@@ -117,6 +117,14 @@ export default function Studio({
   const mounted = useRef(true);
   const product = snapshot ? productForDesign(snapshot.design) : undefined;
   const readOnly = snapshot?.role === "viewer";
+  const validFitMeasurement = (value: string) =>
+    value.trim() !== "" &&
+    Number.isFinite(Number(value)) &&
+    Number(value) >= 1 &&
+    Number(value) <= 2000;
+  const fitWidthValid = validFitMeasurement(fitWidth);
+  const fitHeightValid = validFitMeasurement(fitHeight);
+  const fitMeasurementsValid = fitWidthValid && fitHeightValid;
   function acceptSnapshot(incoming: Snapshot) {
     setSnapshot((previous) =>
       !previous || incoming.design.revision >= previous.design.revision
@@ -516,29 +524,48 @@ export default function Studio({
       {rememberFailed && (
         <div className="workspace-alert" role="status">
           <AlertCircle size={18} />
-          <span>This browser couldn’t remember this design. Keep your invitation link to return to it.</span>
+          <span>
+            This browser couldn’t remember this design. Keep your invitation
+            link to return to it.
+          </span>
         </div>
       )}
-      <div className="panel-visibility-controls" role="group" aria-label="Side panels">
+      <div
+        className="panel-visibility-controls"
+        role="group"
+        aria-label="Side panels"
+      >
         <button
           className="button small"
-          aria-label={leftPanelOpen ? "Collapse left panel" : "Expand left panel"}
+          aria-label={
+            leftPanelOpen ? "Collapse left panel" : "Expand left panel"
+          }
           aria-expanded={leftPanelOpen}
           aria-controls="studio-left-panel"
           onClick={() => setLeftPanelOpen((open) => !open)}
         >
-          {leftPanelOpen ? <PanelLeftClose size={17} /> : <PanelLeftOpen size={17} />}
+          {leftPanelOpen ? (
+            <PanelLeftClose size={17} />
+          ) : (
+            <PanelLeftOpen size={17} />
+          )}
           Left panel
         </button>
         <button
           className="button small"
-          aria-label={rightPanelOpen ? "Collapse right panel" : "Expand right panel"}
+          aria-label={
+            rightPanelOpen ? "Collapse right panel" : "Expand right panel"
+          }
           aria-expanded={rightPanelOpen}
           aria-controls="studio-right-panel"
           onClick={() => setRightPanelOpen((open) => !open)}
         >
           Right panel
-          {rightPanelOpen ? <PanelRightClose size={17} /> : <PanelRightOpen size={17} />}
+          {rightPanelOpen ? (
+            <PanelRightClose size={17} />
+          ) : (
+            <PanelRightOpen size={17} />
+          )}
         </button>
       </div>
       <main
@@ -708,8 +735,15 @@ export default function Studio({
                           type="number"
                           min={1}
                           max={2000}
+                          step="any"
                           value={fitWidth}
-                          onChange={(e) => setFitWidth(Number(e.target.value))}
+                          aria-invalid={!fitWidthValid}
+                          aria-describedby={
+                            !fitMeasurementsValid
+                              ? "fit-measurement-error"
+                              : undefined
+                          }
+                          onChange={(e) => setFitWidth(e.target.value)}
                         />
                       </label>
                       <label>
@@ -718,14 +752,28 @@ export default function Studio({
                           type="number"
                           min={1}
                           max={2000}
+                          step="any"
                           value={fitHeight}
-                          onChange={(e) => setFitHeight(Number(e.target.value))}
+                          aria-invalid={!fitHeightValid}
+                          aria-describedby={
+                            !fitMeasurementsValid
+                              ? "fit-measurement-error"
+                              : undefined
+                          }
+                          onChange={(e) => setFitHeight(e.target.value)}
                         />
                       </label>
                     </div>
+                    {!fitMeasurementsValid && (
+                      <p id="fit-measurement-error" role="status">
+                        Enter a width and height from 1 to 2,000 mm.
+                      </p>
+                    )}
                     <button
                       className="button small wide"
-                      onClick={() =>
+                      disabled={!fitMeasurementsValid}
+                      onClick={() => {
+                        if (!fitMeasurementsValid) return;
                         setPrompt(
                           "Help adapt this " +
                             design.name +
@@ -734,8 +782,8 @@ export default function Studio({
                             " mm wide and " +
                             fitHeight +
                             " mm high. Ask for any other measurement you need.",
-                        )
-                      }
+                        );
+                      }}
                     >
                       Use these measurements
                     </button>
