@@ -43,7 +43,14 @@ export interface Part {
   // Coaxial sections, bottom to top; total height and maximum OD match size.
   sections?: { height: number; diameter: number; bore: number }[];
   // Through holes along local Y, with centres in local X/Z.
-  holes?: { x: number; z: number; diameter: number }[];
+  holes?: {
+    x: number;
+    z: number;
+    diameter: number;
+    counterbore?: { diameter: number; depth: number };
+  }[];
+  // Box-only: centered underside relief, full local X length; width along Z.
+  channel?: { width: number; depth: number };
   color: string;
   material: string;
   role?: "component" | "reference";

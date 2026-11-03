@@ -132,9 +132,19 @@ def drawing_svg(part: dict, revision: int) -> str:
             if q["bore"]: top+=f'<circle cx="210" cy="580" r="{q["bore"]*scale/2}"{hidden}/>'
             details.append(f"Axial Y {offset:g}–{offset+q['height']:g} from bottom: OD {q['diameter']:g}, bore {q['bore']:g} mm")
             offset+=q["height"]
+    if part.get("channel"):
+        c=part["channel"]; cw=c["width"]*scale; ch=c["depth"]*scale
+        side=f'<path d="M {side_x} {side_y} h {side_width} v {side_height} H {580+cw/2} v {-ch} H {580-cw/2} v {ch} H {side_x} Z"/>'
+        top+=f'<path stroke-dasharray="6 4" d="M {front_x} {580-cw/2} h {front_width} M {front_x} {580+cw/2} h {front_width}"/>'
+        front+=f'<path stroke-dasharray="6 4" d="M {front_x} {front_y+front_height-ch} h {front_width}"/>'
+        details.append(f"Underside channel: {c['width']:g} wide along Z × {c['depth']:g} deep from −Y; full X length")
     for i,q in enumerate(part.get("holes",[]),1):
         top+=f'<circle cx="{210+q["x"]*scale}" cy="{580-q["z"]*scale}" r="{q["diameter"]*scale/2}"/>'
         details.append(f"Hole {i}: X {q['x']:.3f}, Z {q['z']:.3f}, Ø {q['diameter']:g} through material along Y")
+        if q.get("counterbore"):
+            cb=q["counterbore"]
+            top+=f'<circle cx="{210+q["x"]*scale}" cy="{580-q["z"]*scale}" r="{cb["diameter"]*scale/2}"/>'
+            details.append(f"Counterbore {i}: Ø {cb['diameter']:g} × {cb['depth']:g} deep from +Y face")
     feature_text="".join(f'<text x="32" y="{800+i*22}" font-size="13">{esc(line)}</text>' for i,line in enumerate(details))
     sheet_height=800+len(details)*22
     diameter = "Ø " if part["shape"] != "box" else ""

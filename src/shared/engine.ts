@@ -174,8 +174,24 @@ export function validateParts(parts: Part[]): void {
           "Axial sections must form one connected solid within the part dimensions.",
         );
     }
+    if (part.channel !== undefined) {
+      const c = part.channel;
+      if (
+        part.shape !== "box" ||
+        !c ||
+        !Number.isFinite(c.width) ||
+        !Number.isFinite(c.depth) ||
+        c.width < 0.5 ||
+        c.width > part.size[2] - 1 ||
+        c.depth < 0.5 ||
+        c.depth > part.size[1] - 0.5
+      )
+        throw new DesignError(
+          "An underside channel must leave connected side walls and a roof.",
+        );
+    }
     if (part.holes !== undefined) {
-      if (!Array.isArray(part.holes) || part.holes.length > 32)
+      if (!Array.isArray(part.holes) || part.holes.length > 128)
         throw new DesignError("Too many through holes.");
       const sections = part.sections || [
         {
@@ -190,8 +206,27 @@ export function validateParts(parts: Part[]): void {
           h.diameter < 0.5
         )
           throw new DesignError("Invalid through hole.");
+        if (h.counterbore !== undefined) {
+          const c = h.counterbore;
+          if (
+            part.shape !== "box" ||
+            !c ||
+            !Number.isFinite(c.diameter) ||
+            !Number.isFinite(c.depth) ||
+            c.diameter < h.diameter + 0.5 ||
+            c.depth < 0.5 ||
+            c.depth > part.size[1] - 0.5
+          )
+            throw new DesignError(
+              "A counterbore needs a larger diameter and a positive floor in a box part.",
+            );
+        }
         const radius = Math.hypot(h.x, h.z),
-          hr = h.diameter / 2;
+          hr = (h.counterbore?.diameter ?? h.diameter) / 2;
+        if (part.channel && Math.abs(h.z) - hr < part.channel.width / 2 + 0.25)
+          throw new DesignError(
+            "Holes must stay outside the underside channel.",
+          );
         if (
           part.shape === "box"
             ? Math.abs(h.x) + hr > part.size[0] / 2 - 0.25 ||
@@ -212,7 +247,10 @@ export function validateParts(parts: Part[]): void {
             .some(
               (j) =>
                 Math.hypot(h.x - j.x, h.z - j.z) <
-                (h.diameter + j.diameter) / 2 + 0.25,
+                ((h.counterbore?.diameter ?? h.diameter) +
+                  (j.counterbore?.diameter ?? j.diameter)) /
+                  2 +
+                  0.25,
             )
         )
           throw new DesignError("Through holes must not overlap.");
@@ -314,10 +352,24 @@ export function validateDesign(d: Design): void {
           diameter: s.diameter * p.scale,
           bore: s.bore * p.scale,
         })),
+        channel: part.channel
+          ? {
+              width: part.channel.width * p.scale,
+              depth: part.channel.depth * p.scale,
+            }
+          : undefined,
         holes: part.holes?.map((h) => ({
           x: h.x * p.scale,
           z: h.z * p.scale,
           diameter: h.diameter * p.scale,
+          ...(h.counterbore
+            ? {
+                counterbore: {
+                  diameter: h.counterbore.diameter * p.scale,
+                  depth: h.counterbore.depth * p.scale,
+                },
+              }
+            : {}),
         })),
         holeDiameter:
           part.holeDiameter === undefined
@@ -448,8 +500,14 @@ function bom(parts: Part[]): BomItem[] {
         (p.holes?.length
           ? " · through holes X/Z/Ø: " +
             p.holes
-              .map((h) => `${round(h.x)}/${round(h.z)}/${h.diameter}`)
+              .map(
+                (h) =>
+                  `${round(h.x)}/${round(h.z)}/${h.diameter}${h.counterbore ? `; counterbore Ø${h.counterbore.diameter} × ${h.counterbore.depth} deep from +Y` : ""}`,
+              )
               .join("; ")
+          : "") +
+        (p.channel
+          ? ` · underside channel: ${p.channel.width} wide × ${p.channel.depth} deep, full X length`
           : "") +
         (p.process === "buy"
           ? " · selection envelope; confirm actual fit and ratings"
@@ -1439,10 +1497,24 @@ export function deriveDesign(d: Design): DerivedDesign {
           diameter: s.diameter * p.scale,
           bore: s.bore * p.scale,
         })),
+        channel: part.channel
+          ? {
+              width: part.channel.width * p.scale,
+              depth: part.channel.depth * p.scale,
+            }
+          : undefined,
         holes: part.holes?.map((h) => ({
           x: h.x * p.scale,
           z: h.z * p.scale,
           diameter: h.diameter * p.scale,
+          ...(h.counterbore
+            ? {
+                counterbore: {
+                  diameter: h.counterbore.diameter * p.scale,
+                  depth: h.counterbore.depth * p.scale,
+                },
+              }
+            : {}),
         })),
         holeDiameter:
           part.holeDiameter === undefined

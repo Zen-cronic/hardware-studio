@@ -10,7 +10,7 @@ import type { ReactNode } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { ContactShadows, OrbitControls, Html, Edges } from "@react-three/drei";
 import * as THREE from "three";
-import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
+import { featuredGeometry } from "../lib/partGeometry";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import type { Part, Vec3 } from "../shared/types";
 import { colors } from "../lib/tokens";
@@ -78,48 +78,7 @@ function FeaturedGeometry({
   compact?: boolean;
 }) {
   const geometry = useMemo(() => {
-    let offset = -part.size[1] / 2;
-    const sections = part.sections || [
-      {
-        height: part.size[1],
-        diameter: part.size[0],
-        bore: part.shape === "tube" ? part.holeDiameter! : 0,
-      },
-    ];
-    const chunks = sections.map((section) => {
-      const shape = new THREE.Shape();
-      if (part.shape === "box") {
-        shape.moveTo(-part.size[0] / 2, -part.size[2] / 2);
-        shape.lineTo(part.size[0] / 2, -part.size[2] / 2);
-        shape.lineTo(part.size[0] / 2, part.size[2] / 2);
-        shape.lineTo(-part.size[0] / 2, part.size[2] / 2);
-        shape.closePath();
-      } else shape.absarc(0, 0, section.diameter / 2, 0, Math.PI * 2, false);
-      const hole = (x: number, z: number, diameter: number) => {
-        const path = new THREE.Path();
-        path.absarc(x, -z, diameter / 2, 0, Math.PI * 2, true);
-        shape.holes.push(path);
-      };
-      if (section.bore) hole(0, 0, section.bore);
-      for (const h of part.holes || [])
-        if (
-          part.shape === "box" ||
-          Math.hypot(h.x, h.z) + h.diameter / 2 < section.diameter / 2
-        )
-          hole(h.x, h.z, h.diameter);
-      const g = new THREE.ExtrudeGeometry(shape, {
-        depth: section.height,
-        bevelEnabled: false,
-        curveSegments: compact ? 16 : 40,
-      });
-      g.rotateX(-Math.PI / 2);
-      g.translate(0, offset, 0);
-      offset += section.height;
-      return g;
-    });
-    const merged = mergeGeometries(chunks, false);
-    chunks.forEach((g) => g.dispose());
-    return merged!;
+    return featuredGeometry(part, compact);
   }, [JSON.stringify(part), compact]);
   useEffect(() => () => geometry.dispose(), [geometry]);
   return <primitive object={geometry} attach="geometry" />;
@@ -180,7 +139,10 @@ function PartMesh({
         document.body.style.cursor = "auto";
       }}
     >
-      {part.sections || part.holes?.length || part.shape === "tube" ? (
+      {part.channel ||
+      part.sections ||
+      part.holes?.length ||
+      part.shape === "tube" ? (
         <FeaturedGeometry part={part} compact={compact} />
       ) : part.shape === "box" ? (
         <boxGeometry args={part.size} />
