@@ -124,7 +124,7 @@ def write_source(output: Path) -> None:
     if shared.is_dir():
         parametric = output / "parametric"
         parametric.mkdir()
-        for name in ("engine.ts", "catalog.ts", "types.ts", "turntable.ts", "slider.ts"):
+        for name in ("engine.ts", "catalog.ts", "types.ts", "turntable.ts", "slider.ts", "conveyor.ts"):
             if (shared / name).is_file():
                 shutil.copyfile(shared / name, parametric / name)
         (parametric / "recalculate.ts").write_text("""import {readFileSync, writeFileSync} from 'node:fs';

@@ -183,7 +183,7 @@ export const CATALOG: ProductDefinition[] = [
         780,
         10,
         200,
-        "Distance from the belt entrance.",
+        "Distance from the frame inlet end.",
       ),
     ],
   },

@@ -13,6 +13,7 @@ function ownPose(
   const distance = Math.max(0.001, motion.range || 40),
     travel = Math.max(0, seconds) * Math.abs(motion.speed);
   if (motion.type === "rotate") {
+    let angle = (seconds * motion.speed * 2 * Math.PI) / 60;
     const leader = motion.drivenBy
       ? parts.find((p) => p.id === motion.drivenBy)
       : undefined;
@@ -22,8 +23,25 @@ function ownPose(
       const displacement =
         ownPose(leader, parts, seconds).position[leaderAxis] -
         leader.position[leaderAxis];
-      rotation[axis] -= (displacement * 2 * Math.PI) / motion.travelPerTurn;
-    } else rotation[axis] += (seconds * motion.speed * 2 * Math.PI) / 60;
+      angle = -(displacement * 2 * Math.PI) / motion.travelPerTurn;
+    }
+    if (rotation.every((value, i) => i === axis || value === 0)) {
+      rotation[axis] += angle;
+    } else {
+      const worldAxis = new Vector3(
+        axis === 0 ? 1 : 0,
+        axis === 1 ? 1 : 0,
+        axis === 2 ? 1 : 0,
+      );
+      const pose = new Euler().setFromQuaternion(
+        new Quaternion()
+          .setFromAxisAngle(worldAxis, angle)
+          .multiply(new Quaternion().setFromEuler(new Euler(...rotation))),
+      );
+      rotation[0] = pose.x;
+      rotation[1] = pose.y;
+      rotation[2] = pose.z;
+    }
   }
   if (motion.type === "slide") {
     if (part.id === "parcel") {

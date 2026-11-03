@@ -89,9 +89,9 @@ def test_two_heldout_changes_propagate_into_valid_solids(kind, snapshots):
     for changed in (first, second):
         assert input_hash(changed) != input_hash(baseline)
         assert changed["derived"]["parts"] != baseline["derived"]["parts"]
-        # A pose/sensor placement edit changes geometry and instructions without buying new parts.
-        before_specs = [(p["id"], p["size"], p.get("holeDiameter")) for p in manufacturing_parts(baseline)]
-        after_specs = [(p["id"], p["size"], p.get("holeDiameter")) for p in manufacturing_parts(changed)]
+        # Pose-only edits retain the BOM; mounting-hole or other manufacturing changes must update it.
+        before_specs = [(p["id"], p["size"], p.get("holeDiameter"), p.get("holes"), p.get("sections"), p.get("channel"), p.get("loopSpan")) for p in manufacturing_parts(baseline)]
+        after_specs = [(p["id"], p["size"], p.get("holeDiameter"), p.get("holes"), p.get("sections"), p.get("channel"), p.get("loopSpan")) for p in manufacturing_parts(changed)]
         if before_specs != after_specs:
             assert changed["derived"]["bom"] != baseline["derived"]["bom"]
         else:

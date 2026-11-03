@@ -1,3 +1,4 @@
+import { standardConveyor } from "./conveyor";
 import { standardSlider } from "./slider";
 import { standardTurntable } from "./turntable";
 import { defaultParams, getProduct, productForDesign } from "./catalog";
@@ -32,7 +33,7 @@ export function createDesign(
     kind,
     name: name?.trim().slice(0, 120) || getProduct(kind).name,
     revision: 0,
-    ...(["turntable", "slider"].includes(kind)
+    ...(["turntable", "slider", "conveyor"].includes(kind)
       ? { mechanismVersion: 2 as const }
       : {}),
     params: defaultParams(kind),
@@ -333,7 +334,8 @@ export function validateParts(parts: Part[], maximum = 256): void {
 export function validateDesign(d: Design): void {
   if (
     d.mechanismVersion !== undefined &&
-    (!["turntable", "slider"].includes(d.kind) || d.mechanismVersion !== 2)
+    (!["turntable", "slider", "conveyor"].includes(d.kind) ||
+      d.mechanismVersion !== 2)
   )
     throw new DesignError("Unsupported mechanism version.");
   const def = productForDesign(d);
@@ -998,6 +1000,19 @@ export function deriveDesign(d: Design): DerivedDesign {
       break;
     }
     case "conveyor": {
+      if (d.mechanismVersion === 2) {
+        const standard = standardConveyor(p);
+        parts = standard.parts;
+        steps = standard.steps;
+        metrics = standard.metrics;
+        connections = standard.connections;
+        warnings.push(...standard.warnings);
+        validateParts(parts, 256);
+        break;
+      }
+      warnings.push(
+        "Legacy conceptual conveyor. Create a new conveyor for supported rollers, a continuous belt and attached drive/control interfaces.",
+      );
       const l = p.length,
         w = p.beltWidth;
       parts = [
@@ -1685,6 +1700,33 @@ export function deriveDesign(d: Design): DerivedDesign {
       if (row.id === "tension-plate")
         row.specification +=
           " · 5 mm nominal centre hole indicates M5 thread; 7 mm clearances permit ±2 mm X adjustment";
+    }
+  }
+  if (d.kind === "conveyor" && d.mechanismVersion === 2) {
+    rows = rows.filter(
+      (row) => !["motor-shaft", "motor-pilot", "gate-shaft"].includes(row.id),
+    );
+    for (const row of rows) {
+      row.sourceUrl = undefined;
+      if (row.id === "motor")
+        row.sourceUrl = "https://www.pololu.com/product/4756";
+      if (row.id === "gate-motor")
+        row.sourceUrl = "https://www.pololu.com/product/2267";
+      if (row.id === "coupling")
+        row.sourceUrl = "https://www.ruland.com/pcmr25-8-6-ss.html";
+      if (row.id.endsWith("-collar"))
+        row.sourceUrl = "https://www.ruland.com/mcl-8-a.html";
+      if (row.id === "diverter") {
+        row.sourceUrl = "https://www.pololu.com/product/1998";
+        row.specification +=
+          " · one hub used; supplier sells a two-pack, included set screw omitted from envelope";
+      }
+      if (row.id === "sensor")
+        row.sourceUrl =
+          "https://assets.omron.eu/downloads/latest/datasheet/en/e3z_compact_photoelectric_sensor_with_built-in_amplifier_datasheet_en.pdf";
+      if (row.id === "base")
+        row.specification +=
+          " · nominal Ø4 holes indicate M4 threads; select tap-drill dimensions in fabrication review";
     }
   }
   return { parts, bom: rows, steps, connections, metrics, warnings };
