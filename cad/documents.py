@@ -108,12 +108,25 @@ def drawing_svg(part: dict, revision: int) -> str:
     front = f'<rect x="{front_x}" y="{front_y}" width="{front_width}" height="{front_height}"/>'
     side = f'<rect x="{side_x}" y="{side_y}" width="{side_width}" height="{side_height}"/>'
     top = f'<rect x="{210-x*scale/2}" y="{580-z*scale/2}" width="{x*scale}" height="{z*scale}"/>' if part["shape"] == "box" else f'<circle cx="210" cy="580" r="{top_r}"/>'
-    if part["shape"] == "tube":
+    if part["shape"] == "tube" and "loopSpan" not in part:
         top += f'<circle cx="210" cy="580" r="{part["holeDiameter"]*scale/2}"/>'
         for cx in (210, 580):
             inner = part["holeDiameter"] * scale / 2
             front += f'<path stroke-dasharray="6 4" d="M {cx-inner} {front_y} v {front_height} M {cx+inner} {front_y} v {front_height}"/>'
     details = []
+    if "loopSpan" in part:
+        span=part["loopSpan"]*scale
+        def capsule(diameter):
+            radius=diameter*scale/2
+            left=210-span/2; right=210+span/2
+            return f'<path d="M {left} {580-radius} H {right} A {radius} {radius} 0 0 1 {right} {580+radius} H {left} A {radius} {radius} 0 0 1 {left} {580-radius} Z"/>'
+        top=capsule(z)+capsule(part["holeDiameter"])
+        for cx,inner,target in ((210,(part["loopSpan"]+part["holeDiameter"])*scale/2,"front"),(580,part["holeDiameter"]*scale/2,"side")):
+            hidden=f'<path stroke-dasharray="6 4" d="M {cx-inner} {front_y} v {front_height} M {cx+inner} {front_y} v {front_height}"/>'
+            if target=="front": front+=hidden
+            else: side+=hidden
+        details.append(f"Loop centres: {part['loopSpan']:g} along X; outer bend Ø {z:g}; inner bend Ø {part['holeDiameter']:g}")
+        details.append("Smooth closed-loop clearance envelope. Tooth profile, pitch line and tension are not modeled.")
     if part.get("sections"):
         front = side = ""
         offset = 0
@@ -147,8 +160,9 @@ def drawing_svg(part: dict, revision: int) -> str:
             details.append(f"Counterbore {i}: Ø {cb['diameter']:g} × {cb['depth']:g} deep from +Y face")
     feature_text="".join(f'<text x="32" y="{800+i*22}" font-size="13">{esc(line)}</text>' for i,line in enumerate(details))
     sheet_height=800+len(details)*22
-    diameter = "Ø " if part["shape"] != "box" else ""
+    diameter = "Ø " if part["shape"] != "box" and "loopSpan" not in part else ""
     bore = f' · Bore Ø {part["holeDiameter"]:g} through' if part["shape"] == "tube" else ""
+    if "loopSpan" in part: bore = " · capsule loop: see feature table"
     if part.get("sections"): bore = " · stepped profile: see axial table"
     return f'''<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="{sheet_height}" viewBox="0 0 1000 {sheet_height}">
 <rect width="1000" height="{sheet_height}" fill="white"/>

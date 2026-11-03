@@ -40,6 +40,10 @@ export interface Part {
   position: Vec3;
   rotation?: Vec3;
   holeDiameter?: number;
+  // Tube-only capsule loop in X/Z; end-circle centres separated along local X.
+  // size = [loopSpan + outer bend diameter, axial width, outer bend diameter].
+  // holeDiameter is the inner bend diameter. Smooth clearance envelope, no teeth.
+  loopSpan?: number;
   // Coaxial sections, bottom to top; total height and maximum OD match size.
   sections?: { height: number; diameter: number; bore: number }[];
   // Through holes along local Y, with centres in local X/Z.

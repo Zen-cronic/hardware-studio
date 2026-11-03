@@ -47,12 +47,16 @@ def validate_part(part: Any) -> dict:
         raise DesignError(f"Unknown process for {part['id']}")
     if not re.fullmatch(r"#[0-9A-Fa-f]{6}", part.get("color", "")):
         raise DesignError(f"{part['id']} color must be a six-digit hex color")
+    if "loopSpan" in part:
+        span=finite(part["loopSpan"], "Loop span", .5, MAX_SIZE_MM)
+        if part["shape"] != "tube" or not math.isclose(part["size"][0]-part["size"][2],span,abs_tol=1e-6) or any(k in part for k in ("sections","holes","channel")):
+            raise DesignError("A loop requires tube geometry, matching span and no additional features")
     if part["shape"] != "box":
-        if not math.isclose(part["size"][0], part["size"][2], abs_tol=1e-6):
+        if "loopSpan" not in part and not math.isclose(part["size"][0], part["size"][2], abs_tol=1e-6):
             raise DesignError(f"{part['id']} cylinder X/Z diameter must agree")
         if part["shape"] == "tube":
             bore = finite(part.get("holeDiameter"), f"{part['id']} bore", 0.001, MAX_SIZE_MM)
-            if bore >= part["size"][0] - 0.002:
+            if bore >= part["size"][2] - (0.5 if "loopSpan" in part else 0.002):
                 raise DesignError(f"{part['id']} bore must leave positive wall thickness")
     sections = part.get("sections")
     if sections is not None:
@@ -147,7 +151,15 @@ def validate_snapshot(snapshot: Any) -> dict:
 def local_shape(part: dict) -> cq.Shape:
     validate_part(part)
     x, y, z = part["size"]
-    if part["shape"] == "box":
+    if "loopSpan" in part:
+        span=part["loopSpan"]
+        def capsule(diameter, height):
+            solid=cq.Workplane("XY").box(span,height,diameter).val()
+            for end in (-span/2,span/2):
+                solid=solid.fuse(cq.Solid.makeCylinder(diameter/2,height,cq.Vector(end,-height/2,0),cq.Vector(0,1,0)))
+            return solid.clean()
+        shape=capsule(z,y).cut(capsule(part["holeDiameter"],y+2)).clean()
+    elif part["shape"] == "box":
         shape = cq.Workplane("XY").box(x, y, z, centered=(True, True, True)).val()
     else:
         sections = part.get("sections") or [{"height": y, "diameter": x, "bore": part.get("holeDiameter",0) if part["shape"] == "tube" else 0}]
@@ -180,6 +192,9 @@ def local_shape(part: dict) -> cq.Shape:
 
 def analytic_volume(part: dict) -> float:
     x,y,z=part["size"]
+    if "loopSpan" in part:
+        inner=part["holeDiameter"]
+        return (part["loopSpan"]*(z-inner)+math.pi*(z*z-inner*inner)/4)*y
     if part["shape"] == "box":
         volume=x*y*z-sum(math.pi*h["diameter"]**2*y/4 for h in part.get("holes",[]))
         if part.get("channel"): volume-=x*part["channel"]["width"]*part["channel"]["depth"]

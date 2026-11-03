@@ -6,6 +6,51 @@ export function featuredGeometry(
   part: Part,
   compact = false,
 ): THREE.BufferGeometry {
+  if (part.loopSpan !== undefined) {
+    const span = part.loopSpan;
+    const outline = (radius: number, clockwise: boolean) => {
+      const path = new THREE.Shape();
+      if (clockwise) {
+        path.moveTo(-span / 2, radius);
+        path.lineTo(span / 2, radius);
+        path.absarc(span / 2, 0, radius, Math.PI / 2, -Math.PI / 2, true);
+        path.lineTo(-span / 2, -radius);
+        path.absarc(
+          -span / 2,
+          0,
+          radius,
+          -Math.PI / 2,
+          (-3 * Math.PI) / 2,
+          true,
+        );
+      } else {
+        path.moveTo(span / 2, radius);
+        path.lineTo(-span / 2, radius);
+        path.absarc(
+          -span / 2,
+          0,
+          radius,
+          Math.PI / 2,
+          (3 * Math.PI) / 2,
+          false,
+        );
+        path.lineTo(span / 2, -radius);
+        path.absarc(span / 2, 0, radius, -Math.PI / 2, Math.PI / 2, false);
+      }
+      path.closePath();
+      return path;
+    };
+    const shape = outline(part.size[2] / 2, false);
+    shape.holes.push(outline(part.holeDiameter! / 2, true));
+    const geometry = new THREE.ExtrudeGeometry(shape, {
+      depth: part.size[1],
+      bevelEnabled: false,
+      curveSegments: compact ? 16 : 40,
+    });
+    geometry.rotateX(-Math.PI / 2);
+    geometry.translate(0, -part.size[1] / 2, 0);
+    return geometry;
+  }
   if (
     part.shape === "box" &&
     (part.channel || part.holes?.some((h) => h.counterbore))

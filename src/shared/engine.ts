@@ -123,7 +123,25 @@ export function validateParts(parts: Part[]): void {
         ))
     )
       throw new DesignError("Part rotations must be finite radians.");
-    if (part.shape !== "box" && Math.abs(part.size[0] - part.size[2]) > 1e-8)
+    if (part.loopSpan !== undefined) {
+      if (
+        part.shape !== "tube" ||
+        !Number.isFinite(part.loopSpan) ||
+        part.loopSpan < 0.5 ||
+        Math.abs(part.size[0] - part.size[2] - part.loopSpan) > 1e-6 ||
+        part.sections !== undefined ||
+        part.holes !== undefined ||
+        part.channel !== undefined
+      )
+        throw new DesignError(
+          "A loop requires tube geometry, matching span and no additional features.",
+        );
+    }
+    if (
+      part.shape !== "box" &&
+      part.loopSpan === undefined &&
+      Math.abs(part.size[0] - part.size[2]) > 1e-8
+    )
       throw new DesignError(
         "Cylinder and tube diameters must match on X and Z.",
       );
@@ -136,7 +154,7 @@ export function validateParts(parts: Part[]): void {
       part.shape === "tube" &&
       (!Number.isFinite(part.holeDiameter) ||
         part.holeDiameter! <= 0 ||
-        part.holeDiameter! >= part.size[0] - 0.5)
+        part.holeDiameter! >= part.size[2] - 0.5)
     )
       throw new DesignError("A tube needs a smaller, positive bore.");
     if (part.sections !== undefined) {
@@ -371,6 +389,8 @@ export function validateDesign(d: Design): void {
               }
             : {}),
         })),
+        loopSpan:
+          part.loopSpan === undefined ? undefined : part.loopSpan * p.scale,
         holeDiameter:
           part.holeDiameter === undefined
             ? undefined
@@ -482,15 +502,17 @@ function bom(parts: Part[]): BomItem[] {
       material: p.material,
       process: p.process,
       specification:
-        (p.shape === "box"
-          ? p.size.map(round).join(" × ") + " mm"
-          : round(p.size[0]) +
-            " mm diameter × " +
-            round(p.size[1]) +
-            " mm" +
-            (p.holeDiameter
-              ? " · bore " + round(p.holeDiameter) + " mm"
-              : "")) +
+        (p.loopSpan !== undefined
+          ? `${round(p.size[0])} × ${round(p.size[1])} × ${round(p.size[2])} mm · loop centres ${round(p.loopSpan)} mm · bend OD ${round(p.size[2])} / ID ${round(p.holeDiameter!)} mm · smooth clearance envelope, teeth omitted`
+          : p.shape === "box"
+            ? p.size.map(round).join(" × ") + " mm"
+            : round(p.size[0]) +
+              " mm diameter × " +
+              round(p.size[1]) +
+              " mm" +
+              (p.holeDiameter
+                ? " · bore " + round(p.holeDiameter) + " mm"
+                : "")) +
         (p.sections
           ? " · axial sections bottom→top: " +
             p.sections
@@ -1516,6 +1538,8 @@ export function deriveDesign(d: Design): DerivedDesign {
               }
             : {}),
         })),
+        loopSpan:
+          part.loopSpan === undefined ? undefined : part.loopSpan * p.scale,
         holeDiameter:
           part.holeDiameter === undefined
             ? undefined
