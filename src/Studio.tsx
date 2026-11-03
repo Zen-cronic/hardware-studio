@@ -53,6 +53,7 @@ import {
   tokenFromUrl,
   recent,
   remember,
+  rememberInvitation,
   getActor,
   setActor,
   pathFor,
@@ -91,6 +92,7 @@ export default function Studio({
     [proposal, setProposal] = useState<Proposal | null>(null),
     [promptBusy, setPromptBusy] = useState(false),
     [notice, setNotice] = useState("");
+  const [rememberFailed, setRememberFailed] = useState(false);
   const [draft, setDraft] = useState<Record<string, number>>({}),
     [base, setBase] = useState<Design | null>(null),
     [share, setShare] = useState(false),
@@ -126,7 +128,9 @@ export default function Studio({
     setLoading(true);
     setError("");
     try {
-      acceptSnapshot(await api<Snapshot>("/designs/" + id, token));
+      const incoming = await api<Snapshot>("/designs/" + id, token);
+      acceptSnapshot(incoming);
+      setRememberFailed(!rememberInvitation(incoming, token));
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -507,6 +511,12 @@ export default function Studio({
         <div className="workspace-alert">
           <Eye size={16} />
           <span>You can explore this design. Make a copy to change it.</span>
+        </div>
+      )}
+      {rememberFailed && (
+        <div className="workspace-alert" role="status">
+          <AlertCircle size={18} />
+          <span>This browser couldn’t remember this design. Keep your invitation link to return to it.</span>
         </div>
       )}
       <div className="panel-visibility-controls" role="group" aria-label="Side panels">

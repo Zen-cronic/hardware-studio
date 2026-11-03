@@ -8,28 +8,73 @@ export type Recent = {
   viewerToken?: string;
   editedAt: string;
 };
+function isRecent(value: unknown): value is Recent {
+  if (!value || typeof value !== "object") return false;
+  const row = value as Partial<Recent>;
+  return (
+    typeof row.id === "string" &&
+    !!row.id &&
+    typeof row.name === "string" &&
+    typeof row.token === "string" &&
+    !!row.token &&
+    [
+      "turntable",
+      "slider",
+      "conveyor",
+      "lamp",
+      "planter",
+      "holder",
+      "custom",
+    ].includes(row.kind || "") &&
+    typeof row.editedAt === "string" &&
+    Number.isFinite(Date.parse(row.editedAt)) &&
+    (row.viewerToken === undefined || typeof row.viewerToken === "string")
+  );
+}
 export function recent(): Recent[] {
   try {
-    return JSON.parse(localStorage.getItem("hardware-designs") || "[]");
+    const rows: unknown = JSON.parse(
+      localStorage.getItem("hardware-designs") || "[]",
+    );
+    return Array.isArray(rows) ? rows.filter(isRecent).slice(0, 30) : [];
   } catch {
     return [];
   }
 }
-export function remember(snapshot: Snapshot, access: Access) {
-  const item = {
+function saveRecent(
+  snapshot: Snapshot,
+  token: string,
+  viewerToken?: string,
+): boolean {
+  const rows = recent();
+  const previous = rows.find((row) => row.id === snapshot.design.id);
+  const item: Recent = {
     id: snapshot.design.id,
     name: snapshot.design.name,
     kind: snapshot.design.kind,
-    token: access.editorToken,
-    viewerToken: access.viewerToken,
+    token,
+    viewerToken: viewerToken || previous?.viewerToken,
     editedAt: new Date().toISOString(),
   };
-  localStorage.setItem(
-    "hardware-designs",
-    JSON.stringify(
-      [item, ...recent().filter((x) => x.id !== item.id)].slice(0, 30),
-    ),
-  );
+  try {
+    localStorage.setItem(
+      "hardware-designs",
+      JSON.stringify(
+        [item, ...rows.filter((row) => row.id !== item.id)].slice(0, 30),
+      ),
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+export function remember(snapshot: Snapshot, access: Access): boolean {
+  return saveRecent(snapshot, access.editorToken, access.viewerToken);
+}
+// Call only after the server has authenticated this invitation.
+export function rememberInvitation(snapshot: Snapshot, token: string): boolean {
+  if (snapshot.role !== "editor" || !token) return true;
+  return saveRecent(snapshot, token);
 }
 export function tokenFromUrl() {
   return new URLSearchParams(location.hash.slice(1)).get("token") || "";
