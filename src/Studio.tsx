@@ -15,6 +15,10 @@ import {
   Mic,
   Move3D,
   Pause,
+  PanelLeftClose,
+  PanelLeftOpen,
+  PanelRightClose,
+  PanelRightOpen,
   Play,
   Plus,
   RotateCcw,
@@ -98,6 +102,8 @@ export default function Studio({
     [mobileEditor, setMobileEditor] = useState<"dimensions" | "prompt">(
       "dimensions",
     );
+  const [leftPanelOpen, setLeftPanelOpen] = useState(true),
+    [rightPanelOpen, setRightPanelOpen] = useState(true);
   const [step, setStep] = useState(0),
     [completed, setCompleted] = useState<string[]>([]),
     [check, setCheck] = useState<{ ok: boolean; text: string } | null>(null);
@@ -503,14 +509,38 @@ export default function Studio({
           <span>You can explore this design. Make a copy to change it.</span>
         </div>
       )}
+      <div className="panel-visibility-controls" role="group" aria-label="Side panels">
+        <button
+          className="button small"
+          aria-label={leftPanelOpen ? "Collapse left panel" : "Expand left panel"}
+          aria-expanded={leftPanelOpen}
+          aria-controls="studio-left-panel"
+          onClick={() => setLeftPanelOpen((open) => !open)}
+        >
+          {leftPanelOpen ? <PanelLeftClose size={17} /> : <PanelLeftOpen size={17} />}
+          Left panel
+        </button>
+        <button
+          className="button small"
+          aria-label={rightPanelOpen ? "Collapse right panel" : "Expand right panel"}
+          aria-expanded={rightPanelOpen}
+          aria-controls="studio-right-panel"
+          onClick={() => setRightPanelOpen((open) => !open)}
+        >
+          Right panel
+          {rightPanelOpen ? <PanelRightClose size={17} /> : <PanelRightOpen size={17} />}
+        </button>
+      </div>
       <main
         className={
           "studio-main " +
+          (!leftPanelOpen ? " left-panel-collapsed " : "") +
+          (!rightPanelOpen ? " right-panel-collapsed " : "") +
           (tab === "build" ? "build-layout" : "") +
           (tab === "design" ? " is-design mobile-" + mobileEditor : "")
         }
       >
-        <aside className="left-panel">
+        <aside className="left-panel" id="studio-left-panel">
           {tab === "design" ? (
             <>
               <div className="conversation-editor">
@@ -929,7 +959,7 @@ export default function Studio({
             </button>
           </div>
         )}
-        <aside className="right-panel">
+        <aside className="right-panel" id="studio-right-panel">
           {tab === "design" ? (
             <>
               <div className="panel-heading">

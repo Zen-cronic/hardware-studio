@@ -183,3 +183,19 @@
   :root .design-title {overflow:hidden;}
   :root .notes-drawer .panel-heading > .button {min-width:44px;min-height:44px;}
 }
+
+:root .panel-visibility-controls {display:flex;justify-content:space-between;gap:12px;padding:6px 12px 0;background:var(--surface);flex-shrink:0;}
+:root .panel-visibility-controls .button {min-height:36px;background:var(--panel);}
+:root .panel-visibility-controls .button[aria-expanded="false"] {background:var(--primary);color:var(--on-primary);border-color:var(--action);}
+@media(min-width:821px){
+  :root .studio-main.left-panel-collapsed {grid-template-columns:minmax(0,1fr) 300px;}
+  :root .studio-main.right-panel-collapsed {grid-template-columns:250px minmax(0,1fr);}
+  :root .studio-main.left-panel-collapsed.right-panel-collapsed {grid-template-columns:minmax(0,1fr);}
+  :root .left-panel-collapsed .left-panel,:root .right-panel-collapsed .right-panel {display:none;}
+}
+@media(min-width:821px) and (max-width:1050px){
+  :root .studio-main.left-panel-collapsed {grid-template-columns:minmax(0,1fr) 240px;}
+  :root .studio-main.right-panel-collapsed {grid-template-columns:230px minmax(0,1fr);}
+  :root .studio-main.left-panel-collapsed.right-panel-collapsed {grid-template-columns:minmax(0,1fr);}
+}
+@media(max-width:820px){:root .panel-visibility-controls {display:none;}}
