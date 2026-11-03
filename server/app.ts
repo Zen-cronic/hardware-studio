@@ -12,7 +12,7 @@ import {
 } from "node:fs";
 import { resolve, join } from "node:path";
 import { homedir } from "node:os";
-import { spawn, type ChildProcess } from "node:child_process";
+import { startCadWorker } from "./cad-worker";
 import type { WebSocket } from "ws";
 import { CATALOG } from "../src/shared/catalog";
 import { DesignError } from "../src/shared/engine";
@@ -57,7 +57,9 @@ export async function createApp(options: Options = {}) {
   const activeBuilds = new Map<string, string>();
   const buildKey = (id: string, revision: number) => `${id}:${revision}`;
   let running = false;
-  let child: ChildProcess | undefined;
+  let worker: ReturnType<typeof startCadWorker> | undefined;
+  let activeDone: Promise<void> | undefined;
+  let finishActive: (() => void) | undefined;
   let stopping = false;
   function send(ws: WebSocket, payload: unknown) {
     if (ws.readyState === 1) ws.send(JSON.stringify(payload));
@@ -82,69 +84,25 @@ export async function createApp(options: Options = {}) {
     const work = jobs.shift();
     if (!work) return;
     running = true;
+    activeDone = new Promise<void>((resolve) => { finishActive = resolve; });
     const { job, snapshot } = work;
     const jobDir = join(dataDir, "builds", job.id);
-    mkdirSync(jobDir, { recursive: true });
     const dir = join(jobDir, "package");
     const input = join(jobDir, "input.json");
-    writeFileSync(input, JSON.stringify(snapshot, null, 2));
-    store.setBuild({ ...job, status: "running" });
     try {
+      mkdirSync(jobDir, { recursive: true });
+      writeFileSync(input, JSON.stringify(snapshot, null, 2));
+      store.setBuild({ ...job, status: "running" });
       if (!existsSync(python))
         throw new Error(
           "CAD environment is not installed. Follow the setup instructions and retry.",
         );
-      const output = await new Promise<string>((resolveOutput, reject) => {
-        child = spawn(
-          python,
-          ["-m", "cad.build", "--input", input, "--output", dir],
-          { cwd: process.cwd(), stdio: ["ignore", "pipe", "pipe"] },
-        );
-        let out = "",
-          err = "";
-        let settled = false;
-        const timeout = setTimeout(() => {
-          child?.kill("SIGTERM");
-          reject(
-            new Error(
-              "The package took too long. Try again or simplify the design.",
-            ),
-          );
-        }, 180000);
-        child.stdout?.on("data", (b) => {
-          out += b.toString();
-          if (out.length > 1_000_000) {
-            child?.kill();
-            reject(new Error("CAD output exceeded its limit."));
-          }
-        });
-        child.stderr?.on("data", (b) => {
-          err = (err + b.toString()).slice(-4000);
-        });
-        child.on("error", (e) => {
-          clearTimeout(timeout);
-          if (!settled) {
-            settled = true;
-            reject(e);
-          }
-        });
-        child.on("close", (code) => {
-          clearTimeout(timeout);
-          if (!settled) {
-            settled = true;
-            if (code === 0) resolveOutput(out);
-            else
-              reject(
-                new Error(
-                  "CAD generation failed. " +
-                    (err
-                      ? err.slice(-500)
-                      : "Please inspect the design and retry."),
-                ),
-              );
-          }
-        });
-      });
+      worker = startCadWorker(
+        python,
+        ["-m", "cad.build", "--input", input, "--output", dir],
+        { cwd: process.cwd() },
+      );
+      const output = await worker.result;
       let result: any;
       try {
         result = JSON.parse(output.trim().split("\n").at(-1) || "");
@@ -171,8 +129,12 @@ export async function createApp(options: Options = {}) {
       });
     } finally {
       activeBuilds.delete(buildKey(job.designId, job.revision));
-      child = undefined;
+      worker = undefined;
       running = false;
+      const finished = finishActive;
+      finishActive = undefined;
+      activeDone = undefined;
+      finished?.();
       void processQueue();
     }
   }
@@ -379,7 +341,12 @@ export async function createApp(options: Options = {}) {
   }
   app.addHook("onClose", async () => {
     stopping = true;
-    child?.kill("SIGTERM");
+    worker?.cancel();
+    await activeDone;
+    for (const { job } of jobs.splice(0)) {
+      store.setBuild({ ...job, status: "failed", error: "Build interrupted. Please start a new package." });
+    }
+    activeBuilds.clear();
     for (const room of rooms.values()) for (const ws of room.keys()) ws.close();
     store.close();
   });
