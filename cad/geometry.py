@@ -106,7 +106,7 @@ def validate_snapshot(snapshot: Any) -> dict:
     design = snapshot.get("design", {})
     if not isinstance(design, dict) or design.get("kind") not in ALLOWED_KINDS:
         raise DesignError("Unknown design kind")
-    if "mechanismVersion" in design and (design["kind"] not in {"turntable", "slider", "conveyor", "lamp", "planter"} or design["mechanismVersion"] != 2):
+    if "mechanismVersion" in design and (design["kind"] not in {"turntable", "slider", "conveyor", "lamp", "planter", "holder"} or design["mechanismVersion"] != 2):
         raise DesignError("Unsupported mechanism version")
     if not isinstance(design.get("id"), str) or not design["id"]:
         raise DesignError("Design id is required")

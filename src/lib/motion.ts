@@ -14,24 +14,30 @@ function ownPose(
     travel = Math.max(0, seconds) * Math.abs(motion.speed);
   if (motion.type === "rotate") {
     let angle = (seconds * motion.speed * 2 * Math.PI) / 60;
+    const direction = motion.direction;
     const leader = motion.drivenBy
       ? parts.find((p) => p.id === motion.drivenBy)
       : undefined;
     if (leader?.motion && motion.travelPerTurn) {
       const leaderAxis =
         leader.motion.axis === "x" ? 0 : leader.motion.axis === "y" ? 1 : 2;
-      const displacement =
-        ownPose(leader, parts, seconds).position[leaderAxis] -
-        leader.position[leaderAxis];
+      const leaderPosition = ownPose(leader, parts, seconds).position;
+      const displacement = leader.motion.direction
+        ? leaderPosition.reduce(
+            (n, v, i) =>
+              n + (v - leader.position[i]) * leader.motion!.direction![i],
+            0,
+          )
+        : leaderPosition[leaderAxis] - leader.position[leaderAxis];
       angle = -(displacement * 2 * Math.PI) / motion.travelPerTurn;
     }
-    if (rotation.every((value, i) => i === axis || value === 0)) {
+    if (!direction && rotation.every((value, i) => i === axis || value === 0)) {
       rotation[axis] += angle;
     } else {
       const worldAxis = new Vector3(
-        axis === 0 ? 1 : 0,
-        axis === 1 ? 1 : 0,
-        axis === 2 ? 1 : 0,
+        direction?.[0] ?? (axis === 0 ? 1 : 0),
+        direction?.[1] ?? (axis === 1 ? 1 : 0),
+        direction?.[2] ?? (axis === 2 ? 1 : 0),
       );
       const pose = new Euler().setFromQuaternion(
         new Quaternion()
@@ -57,6 +63,11 @@ function ownPose(
       position[axis] +=
         phase < distance ? phase - distance / 2 : distance * 1.5 - phase;
     }
+  }
+  if (motion.type === "slide" && motion.direction) {
+    const displacement = position[axis] - part.position[axis];
+    for (let i = 0; i < 3; i++)
+      position[i] = part.position[i] + displacement * motion.direction[i];
   }
   if (motion.type === "pivot") {
     if (part.id === "diverter") {

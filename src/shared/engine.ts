@@ -1,3 +1,4 @@
+import { standardHolder, holderPitch } from "./holder";
 import { standardPlanter } from "./planter";
 import { standardLamp } from "./lamp";
 import { standardConveyor } from "./conveyor";
@@ -35,7 +36,14 @@ export function createDesign(
     kind,
     name: name?.trim().slice(0, 120) || getProduct(kind).name,
     revision: 0,
-    ...(["turntable", "slider", "conveyor", "lamp", "planter"].includes(kind)
+    ...([
+      "turntable",
+      "slider",
+      "conveyor",
+      "lamp",
+      "planter",
+      "holder",
+    ].includes(kind)
       ? { mechanismVersion: 2 as const }
       : {}),
     params: defaultParams(kind),
@@ -310,6 +318,17 @@ export function validateParts(
   }
   for (const part of parts) {
     const m = part.motion;
+    if (
+      m?.direction !== undefined &&
+      (!Array.isArray(m.direction) ||
+        m.direction.length !== 3 ||
+        !m.direction.every(Number.isFinite) ||
+        Math.abs(Math.hypot(...m.direction) - 1) > 1e-6 ||
+        !["slide", "rotate"].includes(m.type))
+    )
+      throw new DesignError(
+        "Directional motion requires a unit vector and slide or rotate type.",
+      );
     if (m && (m.drivenBy !== undefined || m.travelPerTurn !== undefined)) {
       const leader = parts.find((p) => p.id === m.drivenBy);
       if (
@@ -344,7 +363,9 @@ export function validateParts(
 export function validateDesign(d: Design): void {
   if (
     d.mechanismVersion !== undefined &&
-    (!["turntable", "slider", "conveyor", "lamp", "planter"].includes(d.kind) ||
+    (!["turntable", "slider", "conveyor", "lamp", "planter", "holder"].includes(
+      d.kind,
+    ) ||
       d.mechanismVersion !== 2)
   )
     throw new DesignError("Unsupported mechanism version.");
@@ -389,6 +410,14 @@ export function validateDesign(d: Design): void {
   )
     throw new DesignError(
       "The jaw opening or screw is too large for this jaw width.",
+    );
+  if (
+    d.kind === "holder" &&
+    d.mechanismVersion === 2 &&
+    !holderPitch[p.screwDiameter]
+  )
+    throw new DesignError(
+      "Choose a standard coarse screw diameter: 6, 8, 10, 12, 14 or 16 mm.",
     );
   if (d.kind === "planter" && !Number.isInteger(p.pots))
     throw new DesignError("Choose a whole number of pots.");
@@ -1480,6 +1509,19 @@ export function deriveDesign(d: Design): DerivedDesign {
       break;
     }
     case "holder": {
+      if (d.mechanismVersion === 2) {
+        const standard = standardHolder(p);
+        parts = standard.parts;
+        steps = standard.steps;
+        metrics = standard.metrics;
+        connections = standard.connections;
+        warnings.push(...standard.warnings);
+        validateParts(parts);
+        break;
+      }
+      warnings.push(
+        "Legacy conceptual holder. Create a new holder for retained guides, spindle and tilt joints.",
+      );
       const w = p.jawWidth,
         o = p.opening,
         total = o + 100;
@@ -1794,6 +1836,19 @@ export function deriveDesign(d: Design): DerivedDesign {
         row.sourceUrl = "https://www.adafruit.com/product/4545";
       if (row.id.includes("screw"))
         row.sourceUrl = "https://shop.hpceurope.com/pdf/gbPDFauto/CHCSS.pdf";
+    }
+  }
+  if (d.kind === "holder" && d.mechanismVersion === 2) {
+    for (const row of rows) {
+      row.sourceUrl = undefined;
+      if (row.id.startsWith("bushing-"))
+        row.sourceUrl =
+          "https://www.igus.co.uk/iglidur-ibh/flanged-bearings/product-details/iglidur-g-m?artnr=GFM-0810-10";
+      if (row.id.includes("screw") && row.id !== "screw")
+        row.sourceUrl = "https://shop.hpceurope.com/pdf/gbPDFauto/CHCSS.pdf";
+      if (row.id.startsWith("pivot-washer"))
+        row.sourceUrl =
+          "https://www.muepro.com/Products/Fastening-Technology/Accessories/Washers-M8-galvanised.html";
     }
   }
   return { parts, bom: rows, steps, connections, metrics, warnings };

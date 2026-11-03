@@ -307,7 +307,7 @@ export const CATALOG: ProductDefinition[] = [
         250,
         10,
         80,
-        "Changes the guide and lead screw length.",
+        "Changes frame and guide length while preserving screw engagement.",
       ),
       p(
         "screwDiameter",
@@ -315,9 +315,9 @@ export const CATALOG: ProductDefinition[] = [
         "mm",
         6,
         16,
-        1,
+        2,
         10,
-        "Updates the nut bore and handle hub.",
+        "Selects a standard metric coarse thread and matched support.",
       ),
       p(
         "angle",
@@ -369,6 +369,13 @@ export function defaultParams(kind: ProductKind): Record<string, number> {
 // Unversioned saved designs retain their original parameter and geometry contract.
 export function productForDesign(d: Design): ProductDefinition {
   const current = getProduct(d.kind);
+  if (d.kind === "holder" && d.mechanismVersion !== 2)
+    return {
+      ...current,
+      parameters: current.parameters.map((p) =>
+        p.key === "screwDiameter" ? { ...p, step: 1 } : p,
+      ),
+    };
   if (d.kind === "planter" && d.mechanismVersion !== 2)
     return {
       ...current,

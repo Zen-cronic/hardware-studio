@@ -33,6 +33,7 @@ export interface Motion {
   range?: number;
   drivenBy?: string;
   travelPerTurn?: number;
+  direction?: Vec3; // Optional unit vector in world coordinates for slide/rotation.
 }
 export interface Part {
   id: string;

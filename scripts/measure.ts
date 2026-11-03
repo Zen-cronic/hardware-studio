@@ -101,7 +101,7 @@ const cases: Case[] = [
     check: (d) =>
       part(d, "jaw-moving").position[0] -
         part(d, "jaw-fixed").position[0] -
-        18 ===
+        24 ===
       120,
     reason: "Opening matches clear jaw distance",
   },
@@ -109,7 +109,8 @@ const cases: Case[] = [
     kind: "holder",
     change: { screwDiameter: 12 },
     check: (d) =>
-      part(d, "screw").size[0] === 12 && part(d, "nut").holeDiameter! > 12,
+      part(d, "screw").size[0] === 12 &&
+      part(d, "nut").holes!.some((h) => h.diameter === 12),
     reason: "Screw and nut dimensions follow together",
   },
 ];
