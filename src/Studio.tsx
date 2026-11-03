@@ -154,7 +154,9 @@ export default function Studio({
     let socket: WebSocket;
     let stopped = false;
     const connect = () => {
-      socket = new WebSocket(
+      if (stopped) return;
+      setConnected(false);
+      const connection = new WebSocket(
         (location.protocol === "https:" ? "wss:" : "ws:") +
           "//" +
           location.host +
@@ -167,9 +169,14 @@ export default function Studio({
           "&name=" +
           encodeURIComponent(actor),
       );
-      ws.current = socket;
-      socket.onopen = () => setConnected(true);
-      socket.onmessage = (e) => {
+      socket = connection;
+      ws.current = connection;
+      const isCurrent = () => !stopped && ws.current === connection;
+      connection.onopen = () => {
+        if (isCurrent()) setConnected(true);
+      };
+      connection.onmessage = (e) => {
+        if (!isCurrent()) return;
         try {
           const m = JSON.parse(e.data);
           if (m.type === "snapshot") acceptSnapshot(m.snapshot);
@@ -177,11 +184,14 @@ export default function Studio({
           if (m.type === "error") setError(m.message);
         } catch {}
       };
-      socket.onclose = () => {
+      connection.onclose = () => {
+        if (!isCurrent()) return;
         setConnected(false);
-        if (!stopped) timer = setTimeout(connect, 2500);
+        timer = setTimeout(connect, 2500);
       };
-      socket.onerror = () => setConnected(false);
+      connection.onerror = () => {
+        if (isCurrent()) setConnected(false);
+      };
     };
     if (token) connect();
     return () => {
