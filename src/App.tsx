@@ -346,97 +346,118 @@ function Listing({
       setBusy(false);
     }
   }
+  const stage = (
+    <div className="listing-stage">
+      <div className="stage-label">
+        <span className="eyebrow">Try it before you make it</span>
+        <button
+          className="button icon-only"
+          onClick={() => setReset((v) => v + 1)}
+          aria-label="Reset camera"
+        >
+          <RotateCcw size={16} />
+        </button>
+      </div>
+      <ModelCanvas
+        parts={snapshot.derived.parts}
+        playing={playing}
+        exploded={exploded}
+        reset={reset}
+      />
+      <div className="viewer-toolbar">
+        <button
+          className={"button " + (playing ? "primary" : "")}
+          onClick={() => setPlaying(!playing)}
+        >
+          {playing ? <Pause size={16} /> : <Play size={16} />}{" "}
+          {playing ? "Pause" : "Try the mechanism"}
+        </button>
+        <button
+          className={"button " + (exploded ? "selected" : "")}
+          onClick={() => setExploded(!exploded)}
+        >
+          <Layers3 size={16} />
+          {exploded ? "Assemble" : "Explode view"}
+        </button>
+        <span>Drag to rotate · Scroll to zoom</span>
+      </div>
+    </div>
+  );
+  const heading = (
+    <>
+      <span className="eyebrow">{p.category}</span>
+      <h1>{p.name}</h1>
+    </>
+  );
+  const details = (
+    <>
+      <p className="lead">{p.story || p.description}</p>
+      <div className="listing-specs">
+        {p.parameters.slice(0, 3).map((s) => (
+          <div key={s.key}>
+            <span>{s.label}</span>
+            <strong className="mono">
+              {s.default}
+              <small> {s.unit}</small>
+            </strong>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+  const customizeAction = (
+    <>
+      <button
+        data-testid="customize-design"
+        className="button primary wide"
+        onClick={customize}
+        disabled={busy}
+      >
+        {busy ? (
+          <Loader2 className="spin" size={18} />
+        ) : (
+          <SlidersHorizontal size={18} />
+        )}{" "}
+        {busy ? "Opening your workspace…" : "Make it yours"}
+      </button>
+      {error && (
+        <p className="error" role="alert">
+          {error}
+        </p>
+      )}
+      <p className="subtle">
+        Your own editable copy, with every part connected.
+      </p>
+    </>
+  );
+  const included = (
+    <div className="included">
+      <h3>From idea to workbench</h3>
+      {[
+        "Working mechanism in 3D",
+        "Dimensions, materials and a shared workspace",
+        "CAD files, parts list and assembly guide",
+      ].map((s) => (
+        <p key={s}>
+          <Check size={16} />
+          {s}
+        </p>
+      ))}
+    </div>
+  );
   return (
     <main className="listing-page">
       <button className="button quiet back" onClick={() => navigate("/")}>
         <ArrowLeft size={16} /> All designs
       </button>
       <div className="listing-layout">
-        <div className="listing-stage">
-          <div className="stage-label">
-            <span className="eyebrow">Try it before you make it</span>
-            <button
-              className="button icon-only"
-              onClick={() => setReset((v) => v + 1)}
-              aria-label="Reset camera"
-            >
-              <RotateCcw size={16} />
-            </button>
-          </div>
-          <ModelCanvas
-            parts={snapshot.derived.parts}
-            playing={playing}
-            exploded={exploded}
-            reset={reset}
-          />
-          <div className="viewer-toolbar">
-            <button
-              className={"button " + (playing ? "primary" : "")}
-              onClick={() => setPlaying(!playing)}
-            >
-              {playing ? <Pause size={16} /> : <Play size={16} />}{" "}
-              {playing ? "Pause" : "Try the mechanism"}
-            </button>
-            <button
-              className={"button " + (exploded ? "selected" : "")}
-              onClick={() => setExploded(!exploded)}
-            >
-              <Layers3 size={16} />
-              {exploded ? "Assemble" : "Explode view"}
-            </button>
-            <span>Drag to rotate · Scroll to zoom</span>
-          </div>
+        <div className="listing-copy">
+          <header className="listing-heading">{heading}</header>
+          {stage}
+          <div className="listing-customize">{customizeAction}</div>
+          <div className="listing-details">{details}</div>
+          {included}
         </div>
-        <aside className="listing-copy">
-          <span className="eyebrow">{p.category}</span>
-          <h1>{p.name}</h1>
-          <p className="lead">{p.story || p.description}</p>
-          <div className="listing-specs">
-            {p.parameters.slice(0, 3).map((s) => (
-              <div key={s.key}>
-                <span>{s.label}</span>
-                <strong className="mono">
-                  {s.default}
-                  <small> {s.unit}</small>
-                </strong>
-              </div>
-            ))}
-          </div>
-          <button
-            data-testid="customize-design"
-            className="button primary wide"
-            onClick={customize}
-            disabled={busy}
-          >
-            {busy ? (
-              <Loader2 className="spin" size={18} />
-            ) : (
-              <SlidersHorizontal size={18} />
-            )}{" "}
-            {busy ? "Opening your workspace…" : "Make it yours"}
-          </button>
-          {error && (
-            <p className="error" role="alert">
-              {error}
-            </p>
-          )}
-          <p className="subtle">
-            Your own editable copy, with every part connected.
-          </p>
-          <div className="included">
-            <h3>From idea to workbench</h3>
-            {[
-              "Working mechanism in 3D",
-              "Dimensions, materials and a shared workspace",
-              "CAD files, parts list and assembly guide",
-            ].map((s) => (
-              <p key={s}>
-                <Check size={16} />
-                {s}
-              </p>
-            ))}
-          </div>
-        </aside>
       </div>
       <section className="listing-bottom">
         <div>
