@@ -255,6 +255,11 @@ export async function createApp(options: Options = {}) {
     void processQueue();
     return job;
   });
+  app.get("/api/designs/:id/builds/latest", async (r) => {
+    const id = designId(r);
+    store.authorize(id, tokenOf(r));
+    return store.latestBuild(id);
+  });
   app.get("/api/builds/:jobId", async (r) => {
     const { job } = store.getBuild((r.params as any).jobId);
     store.authorize(job.designId, tokenOf(r));

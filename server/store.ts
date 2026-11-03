@@ -302,6 +302,12 @@ export class Store {
       )
       .run(job.id, job.designId, JSON.stringify(job), archive || null);
   }
+  latestBuild(designId: string): BuildJob | null {
+    const row = this.db
+      .prepare("SELECT job FROM builds WHERE design_id=? ORDER BY rowid DESC LIMIT 1")
+      .get(designId) as { job: string } | undefined;
+    return row ? JSON.parse(row.job) : null;
+  }
   getBuild(id: string): { job: BuildJob; archive: string | null } {
     const r = this.db
       .prepare("SELECT job,archive FROM builds WHERE id=?")

@@ -49,6 +49,7 @@ import { CATALOG, productForDesign } from "./shared/catalog";
 import { readSetFor } from "./shared/engine";
 import {
   api,
+  ApiError,
   uid,
   tokenFromUrl,
   recent,
@@ -112,6 +113,11 @@ export default function Studio({
   const [job, setJob] = useState<BuildJob | null>(null),
     [follow, setFollow] = useState(""),
     [newPart, setNewPart] = useState(false);
+  const [buildRestoring, setBuildRestoring] = useState(false),
+    [buildStatusError, setBuildStatusError] = useState(""),
+    [buildRefresh, setBuildRefresh] = useState(0);
+  const buildReadVersion = useRef(0);
+  const requestedBuild = useRef<string | undefined>(undefined);
   const ws = useRef<WebSocket | null>(null);
   const clientId = useRef(uid());
   const mounted = useRef(true);
@@ -208,16 +214,40 @@ export default function Studio({
       );
   }, [selected, connected]);
   useEffect(() => {
-    if (!job || !["queued", "running"].includes(job.status)) return;
-    const timer = setTimeout(async () => {
+    if (tab !== "build" || !token) return;
+    let stopped = false;
+    let timer: ReturnType<typeof setTimeout>;
+    setBuildRestoring(true);
+    let pollJobId = requestedBuild.current;
+    requestedBuild.current = undefined;
+    const refresh = async () => {
+      const version = buildReadVersion.current;
+      let retry = false;
       try {
-        setJob(await api<BuildJob>("/builds/" + job.id, token));
+        const latest = await api<BuildJob | null>(
+          pollJobId ? "/builds/" + pollJobId : "/designs/" + id + "/builds/latest", token,
+        );
+        if (stopped || version !== buildReadVersion.current) return;
+        pollJobId = latest?.id;
+        setJob(latest);
+        setBuildStatusError("");
+        retry = !!latest && ["queued", "running"].includes(latest.status);
       } catch (e) {
-        setError((e as Error).message);
+        if (stopped || version !== buildReadVersion.current) return;
+        retry = !(e instanceof ApiError && e.status >= 400 && e.status < 500 && e.status !== 429);
+        setBuildStatusError(retry
+          ? "Could not check your package. Trying again…"
+          : "Package access could not be verified. Reopen the design with a valid invitation.");
+      } finally {
+        if (!stopped) {
+          setBuildRestoring(false);
+          if (retry) timer = setTimeout(refresh, 1500);
+        }
       }
-    }, 1500);
-    return () => clearTimeout(timer);
-  }, [job, token]);
+    };
+    void refresh();
+    return () => { stopped = true; clearTimeout(timer); };
+  }, [id, token, tab, buildRefresh]);
   useEffect(() => {
     setCheck(null);
     setCompleted([]);
@@ -325,7 +355,12 @@ export default function Studio({
     setBusy(true);
     setError("");
     try {
-      setJob(await api<BuildJob>("/designs/" + id + "/build", token, {}));
+      const next = await api<BuildJob>("/designs/" + id + "/build", token, {});
+      buildReadVersion.current += 1;
+      requestedBuild.current = next.id;
+      setBuildRefresh((value) => value + 1);
+      setBuildStatusError("");
+      setJob(next);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -1270,6 +1305,8 @@ export default function Studio({
             <BuildPanel
               snapshot={snapshot}
               job={job}
+              restoring={buildRestoring}
+              statusError={buildStatusError}
               busy={busy}
               token={token}
               readOnly={!!readOnly}
@@ -1460,6 +1497,8 @@ function ShareModal({
 function BuildPanel({
   snapshot,
   job,
+  restoring,
+  statusError,
   busy,
   token,
   readOnly,
@@ -1467,6 +1506,8 @@ function BuildPanel({
 }: {
   snapshot: Snapshot;
   job: BuildJob | null;
+  restoring: boolean;
+  statusError: string;
   busy: boolean;
   token: string;
   readOnly: boolean;
@@ -1500,7 +1541,7 @@ function BuildPanel({
         data-testid="generate-build"
         className="button primary wide"
         onClick={onBuild}
-        disabled={busy || !!working || readOnly}
+        disabled={busy || restoring || !!working || readOnly}
       >
         {working || busy ? (
           <Loader2 className="spin" size={17} />
@@ -1509,6 +1550,8 @@ function BuildPanel({
         )}{" "}
         {working ? "Preparing files…" : "Prepare build package"}
       </button>
+      {restoring && <p role="status" className="subtle">Checking existing package…</p>}
+      {statusError && <p role="alert" className="error">{statusError}</p>}
       {job?.status === "ready" && (
         <div className="build-ready">
           <CheckCircle2 size={23} />
@@ -1538,9 +1581,11 @@ function BuildPanel({
           <p>
             {job.error || "The build could not finish. Your design is saved."}
           </p>
-          <button className="button small" onClick={onBuild}>
-            Try again
-          </button>
+          {!readOnly && (
+            <button className="button small" disabled={busy || restoring} onClick={onBuild}>
+              Try again
+            </button>
+          )}
         </div>
       )}
       <details className="parts-disclosure" open>
