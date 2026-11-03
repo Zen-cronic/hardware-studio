@@ -26,6 +26,7 @@ import { CATALOG } from "./shared/catalog";
 import { createDesign, deriveDesign } from "./shared/engine";
 import ModelCanvas from "./components/ModelCanvas";
 import Studio from "./Studio";
+import GuideExample from "./components/GuideExample";
 import { create, pathFor, recent, type Recent } from "./lib/api";
 import { colors } from "./lib/tokens";
 export type Navigate = (path: string) => void;
@@ -642,26 +643,29 @@ function NewDesign({ navigate }: { navigate: Navigate }) {
 }
 function Judge({ navigate }: { navigate: Navigate }) {
   return (
-    <main className="work-page">
+    <main className="work-page judge-page">
       <span className="eyebrow">A guided look</span>
       <h1>Take a design from idea to build files.</h1>
       <p className="lead">
         Start with a working example, make a meaningful change, and inspect the
         result.
       </p>
-      <div className="judge-steps">
-        {[
-          "Try the mechanism and rotate the model.",
-          "Make your own copy and change a dimension.",
-          "Invite someone to edit the same design.",
-          "Review the parts and work through the assembly.",
-          "Export a package tied to your accepted design.",
-        ].map((s, i) => (
-          <div key={s}>
-            <span className="step-number">{i + 1}</span>
-            <p>{s}</p>
-          </div>
-        ))}
+      <div className="guide-layout">
+        <GuideExample />
+        <div className="judge-steps">
+          {[
+            "Try the mechanism and rotate the model.",
+            "Make your own copy and change a dimension.",
+            "Invite someone to edit the same design.",
+            "Review the parts and work through the assembly.",
+            "Export a package tied to your accepted design.",
+          ].map((s, i) => (
+            <div key={s}>
+              <span className="step-number">{i + 1}</span>
+              <p>{s}</p>
+            </div>
+          ))}
+        </div>
       </div>
       <button
         className="button primary"

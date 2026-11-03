@@ -228,3 +228,42 @@
 @media(max-width:520px){
   :root .listing-page > .back {margin-bottom:12px;}
 }
+
+
+:root .judge-page {max-width:1200px;padding-top:36px;}
+:root .judge-page > h1 {margin-top:12px;}
+:root .guide-layout {display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:32px;align-items:start;margin:28px 0;}
+:root .guide-layout > .judge-steps {margin:0;}
+:root .guide-example {min-width:0;}
+:root .guide-example h2 {font-size:var(--s-xl);line-height:1.35;margin:0 0 16px;}
+:root .guide-size-control {display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;}
+:root .guide-size-control > span {font-size:var(--s-sm);font-weight:600;}
+:root .guide-size-control > div {display:flex;gap:8px;}
+:root .guide-size-control .button {min-height:44px;min-width:80px;}
+:root .guide-example-body {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:center;}
+:root .guide-model {display:grid;grid-template-rows:minmax(0,1fr) auto;height:245px;min-width:0;background:var(--surface);border-radius:var(--radius);overflow:hidden;}
+:root .guide-model > .model-canvas {height:100%;min-height:0;}
+:root .guide-model-hint {font-size:var(--s-xs);color:var(--muted);text-align:center;margin:0;padding:0 8px 8px;}
+:root .guide-values {min-width:0;}
+:root .guide-values table {border-collapse:collapse;width:100%;font-size:var(--s-xs);}
+:root .guide-values caption {text-align:left;color:var(--muted);margin-bottom:10px;}
+:root .guide-values th,:root .guide-values td {text-align:right;padding:10px 4px;border-bottom:1px solid var(--line);}
+:root .guide-values th:first-child {text-align:left;padding-left:0;}
+:root .guide-values td {font-family:var(--font-mono);}
+:root .guide-values td:last-child {font-weight:600;color:var(--action);}
+:root .guide-fixed-values {font-size:var(--s-xs);color:var(--muted);line-height:1.5;margin:12px 0;}
+:root .guide-bom {font-size:var(--s-xs);line-height:1.5;margin:0;}
+:root .guide-bom strong,:root .guide-bom span {display:block;}
+:root .guide-bom span {margin-top:4px;}
+:root .guide-example-next {font-size:var(--s-sm);line-height:1.5;color:var(--muted);margin:14px 0 0;}
+@media(max-width:1000px){
+  :root .guide-layout {grid-template-columns:minmax(0,1fr);gap:24px;}
+}
+@media(max-width:520px){
+  :root .judge-page {padding-top:28px;}
+  :root .guide-layout {margin:24px 0;}
+  :root .guide-example-body {grid-template-columns:minmax(0,1fr);gap:14px;}
+  :root .guide-model {height:235px;}
+  :root .guide-values table {font-size:var(--s-sm);}
+  :root .guide-values th,:root .guide-values td {padding-top:9px;padding-bottom:9px;}
+}
