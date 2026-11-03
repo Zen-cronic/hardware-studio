@@ -53,3 +53,7 @@ poetry run python scripts/third_party_inventory.py --npm-root .
 ```
 
 The script reads installed metadata and notices, checks package versions against both lockfiles and writes `docs/third-party-runtime.json`. It makes no network calls or installations. Review changes, especially new license terms and dependencies with missing notices. Preserve applicable license texts in distributed browser assets and other release artifacts; this source-level index alone does not package those notices.
+
+## Browser distribution notices
+
+`npm run build` emits `dist/THIRD_PARTY_NOTICES.txt` and `dist/third-party-browser.json` from the bundled JavaScript module graph, imported CSS packages and vendored fonts. The HTML links to the notice text. Package license files and source-level block notices are copied into the text; the manifest records their hashes. Packages whose published archives omit their notice use only version-pinned, hash-checked upstream release notices listed in `scripts/browser-notice-overrides.json`. Missing notices, changed fallback bytes or mismatched installed versions fail the build. Server/CAD binary distribution remains a separate review.

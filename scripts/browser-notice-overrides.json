@@ -1,0 +1,26 @@
+[
+  {
+    "name": "@hocuspocus/common",
+    "version": "3.4.4",
+    "file": "docs/licenses/hocuspocus-3.4.4-LICENSE.txt",
+    "sha256": "dce30f7f8fff923e74d41b44a620714e928dd7708064c807d94f50210a1179d7",
+    "source": "https://github.com/ueberdosis/hocuspocus/blob/v3.4.4/LICENSE.md",
+    "gitBlobSha": "8cb2084982279c753573bb66415a4d143d999b52"
+  },
+  {
+    "name": "@hocuspocus/provider",
+    "version": "3.4.4",
+    "file": "docs/licenses/hocuspocus-3.4.4-LICENSE.txt",
+    "sha256": "dce30f7f8fff923e74d41b44a620714e928dd7708064c807d94f50210a1179d7",
+    "source": "https://github.com/ueberdosis/hocuspocus/blob/v3.4.4/LICENSE.md",
+    "gitBlobSha": "8cb2084982279c753573bb66415a4d143d999b52"
+  },
+  {
+    "name": "@react-three/fiber",
+    "version": "9.8.2",
+    "file": "docs/licenses/fiber-9.8.2-LICENSE.txt",
+    "sha256": "9c35b5de7b7493a707fffe4eb23bd2f7f449153c1911f7c6eefb4e591fd5349a",
+    "source": "https://github.com/pmndrs/react-three-fiber/blob/v9.8.2/LICENSE",
+    "gitBlobSha": "493cfb3c8335c31bea327e0e27a8cb22004111d7"
+  }
+]
