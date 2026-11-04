@@ -84,7 +84,7 @@ export default function App() {
     : undefined;
   return (
     <>
-      <header className="site-header">
+      <header className={"site-header" + (path === "/" ? " landing-header" : "")}>
         <Brand onClick={() => navigate("/")} />
         <nav aria-label="Main navigation">
           <button

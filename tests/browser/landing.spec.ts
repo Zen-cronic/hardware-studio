@@ -75,12 +75,16 @@ test('reduced motion stays still and controls fit small screens', async ({ page 
     await page.waitForTimeout(800);
     expect((await canvas.screenshot()).equals(first)).toBe(true);
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
-    for (const id of ['landing-motion-toggle','landing-assembly-toggle','landing-browse','landing-try']) {
+    for (const id of ['landing-motion-toggle','landing-assembly-toggle','landing-browse','landing-try','landing-size-220','landing-size-280']) {
       const box=await page.getByTestId(id).boundingBox();
       expect(box!.height).toBeGreaterThanOrEqual(44);
+      expect(box!.width).toBeGreaterThanOrEqual(44);
       expect(box!.x).toBeGreaterThanOrEqual(0);
       expect(box!.x+box!.width).toBeLessThanOrEqual(width);
     }
+    const spec=await page.locator('.landing-spec').boundingBox();
+    const actions=await page.locator('.landing-copy .landing-actions').boundingBox();
+    expect(spec!.y).toBeGreaterThanOrEqual(actions!.y+actions!.height);
   }
 });
 

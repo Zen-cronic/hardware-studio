@@ -1,0 +1,47 @@
+import { ChevronRight } from 'lucide-react';
+import type { Navigate } from '../App';
+import type { Part } from '../shared/types';
+import { CATALOG } from '../shared/catalog';
+import './landing-build-story.css';
+
+export default function LandingBuildStory({parts,navigate}:{parts:Part[];navigate:Navigate}) {
+  const platter=parts.find(p=>p.id==='platter')!;
+  const base=parts.find(p=>p.id==='base-floor')!;
+  const rows=['platter','base-floor','motor-plate'].map(id=>parts.find(p=>p.id===id)!).filter(Boolean);
+  const products=CATALOG.filter(p=>p.kind!=='custom');
+  const physicalCount=parts.filter(p=>p.role!=='reference').length;
+  return <>
+    <section className="landing-build-story" aria-labelledby="landing-build-title">
+      <div className="landing-build-copy">
+        <p className="eyebrow">From design to build files</p>
+        <h2 id="landing-build-title">The details<br/>come with it.</h2>
+        <p>The same dimensions shape the 3D model, parts list and assembly instructions. See what changes before you start making.</p>
+        <button className="button" onClick={()=>navigate('/judge')}>Explore the workflow <ChevronRight size={18}/></button>
+      </div>
+      <div className="landing-build-sheet" aria-label="Live turntable dimensions and sample parts">
+        <header><strong>Motorized turntable</strong><span>Parts & dimensions</span></header>
+        <div className="landing-sheet-drawing">
+          <svg viewBox="-170 -170 340 340" role="img" aria-label={`Top view: ${platter.size[0]} millimeter platter and ${base.size[0]} millimeter base`}>
+            <path className="sheet-centerline" d="M-156 0h312M0-156v312"/>
+            <circle className="sheet-platter" r={platter.size[0]/2}/>
+            <circle className="sheet-base" r={base.size[0]/2}/>
+            {platter.holes?.map((hole,i)=><circle className="sheet-hole" key={i} cx={hole.x} cy={hole.z} r={hole.diameter/2}/>)}
+            {platter.holeDiameter ? <circle className="sheet-hole" r={platter.holeDiameter/2}/> : null}
+            <path className="sheet-dimension" d={`M${-platter.size[0]/2} 150h${platter.size[0]}M${-platter.size[0]/2} 142v16M${platter.size[0]/2} 142v16`}/>
+          </svg>
+          <dl><div><dt>Platter</dt><dd>{platter.size[0]}<span>mm</span></dd></div><div><dt>Base</dt><dd>{base.size[0]}<span>mm</span></dd></div></dl>
+        </div>
+        <table><caption>Selected components</caption><thead><tr><th>Part</th><th>Diameter × thickness</th></tr></thead><tbody>{rows.map(part=><tr key={part.id}><td>{part.name}</td><td>{part.size[0]} × {part.size[1]} mm</td></tr>)}</tbody></table>
+        <footer>{rows.length} of {physicalCount} components · dimensions in millimetres</footer>
+      </div>
+    </section>
+    <section className="landing-examples" aria-labelledby="landing-examples-title">
+      <header><div><p className="eyebrow">Working designs, ready to explore</p><h2 id="landing-examples-title">Find your next build.</h2></div><button className="button primary" onClick={()=>navigate('/browse')}>Browse all designs <ChevronRight size={18}/></button></header>
+      <div className="landing-example-list">{products.map(product=><button className="landing-example" key={product.kind} onClick={()=>navigate('/designs/'+product.kind)} aria-label={`Explore ${product.name}`}>
+        <img src={`/previews/${product.kind}.png`} alt="" loading="lazy" width="1100" height={product.kind==='turntable'?1150:760}/>
+        <span>{product.name}</span>
+      </button>)}</div>
+      <p className="landing-start-shape">Have something else in mind? <button className="button" onClick={()=>navigate('/new')}>Start from a shape</button></p>
+    </section>
+  </>;
+}
