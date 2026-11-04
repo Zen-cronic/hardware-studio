@@ -410,7 +410,7 @@ export default function Studio({
           <button className="button" onClick={() => void reload()}>
             Try again
           </button>
-          <button className="button primary" onClick={() => navigate("/")}>
+          <button className="button primary" onClick={() => navigate("/browse")}>
             Back to designs
           </button>
         </div>

@@ -27,6 +27,7 @@ import { createDesign, deriveDesign } from "./shared/engine";
 import ModelCanvas from "./components/ModelCanvas";
 import Studio from "./Studio";
 import GuideExample from "./components/GuideExample";
+import Landing from "./components/Landing";
 import { create, pathFor, recent, type Recent } from "./lib/api";
 import { colors } from "./lib/tokens";
 export type Navigate = (path: string) => void;
@@ -87,10 +88,10 @@ export default function App() {
         <Brand onClick={() => navigate("/")} />
         <nav aria-label="Main navigation">
           <button
-            className={path === "/" ? "active" : ""}
-            onClick={() => navigate("/")}
+            className={path === "/browse" ? "active" : ""}
+            onClick={() => navigate("/browse")}
           >
-            Discover
+            Browse
           </button>
           <button
             className={path === "/work" ? "active" : ""}
@@ -114,8 +115,10 @@ export default function App() {
         <Work navigate={navigate} />
       ) : path === "/judge" ? (
         <Judge navigate={navigate} />
-      ) : (
+      ) : path === "/browse" ? (
         <Catalog navigate={navigate} />
+      ) : (
+        <Landing navigate={navigate} />
       )}
       <footer className="site-footer">
         <Brand onClick={() => navigate("/")} />
@@ -133,8 +136,6 @@ export default function App() {
 function Catalog({ navigate }: { navigate: Navigate }) {
   const [filter, setFilter] = useState("All designs"),
     [query, setQuery] = useState("");
-  const hero = useMemo(() => preview("turntable"), []);
-  const [playing, setPlaying] = useState(false);
   const categories = ["All designs", "Motion", "Desk & studio", "Growing"];
   const group = (kind: ProductKind) =>
     kind === "planter"
@@ -152,52 +153,16 @@ function Catalog({ navigate }: { navigate: Navigate }) {
   );
   return (
     <main className="catalog-page">
-      <section className="hero">
-        <div className="hero-copy">
-          <h1>
-            <span className="hero-intro">Start with a design.</span>
-            <span>Make it your own.</span>
-          </h1>
-          <p>
-            Try working 3D products, shape the details together, and leave with
-            the files to build them.
-          </p>
-          <button
-            className="button primary"
-            onClick={() => navigate("/designs/turntable")}
-          >
-            Try the turntable <ChevronRight size={18} />
-          </button>
-        </div>
-        <div className="hero-stage">
-          <div className="stage-label">
-            <span className="eyebrow">Featured design</span>
-            <span className="material-label">Aluminum / printed polymer</span>
-          </div>
-          <ModelCanvas
-            parts={hero.derived.parts}
-            playing={playing}
-            ariaLabel="Motorized product turntable preview"
-          />
-          <div className="hero-stage-bottom">
-            <div>
-              <strong>Motorized turntable</strong>
-            </div>
-            <button
-              className="button round"
-              aria-label={playing ? "Pause turntable" : "Play turntable"}
-              onClick={() => setPlaying(!playing)}
-            >
-              {playing ? <Pause size={19} /> : <Play size={19} />}
-            </button>
-          </div>
-        </div>
-      </section>
+      <header className="browse-heading">
+        <span className="eyebrow">Working designs, ready for your ideas</span>
+        <h1>Find your starting point.</h1>
+        <p>Try a mechanism, make a copy, and change it together.</p>
+      </header>
       <section className="collection" aria-labelledby="collection-heading">
         <div className="section-heading">
           <div>
             <span className="eyebrow">The collection</span>
-            <h2 id="collection-heading">Find your starting point.</h2>
+            <h2 id="collection-heading">Browse designs</h2>
           </div>
           <span className="mono count">{shown.length} designs to explore</span>
         </div>
@@ -448,7 +413,7 @@ function Listing({
   );
   return (
     <main className="listing-page">
-      <button className="button quiet back" onClick={() => navigate("/")}>
+      <button className="button quiet back" onClick={() => navigate("/browse")}>
         <ArrowLeft size={16} /> All designs
       </button>
       <div className="listing-layout">
@@ -504,7 +469,7 @@ function Work({ navigate }: { navigate: Navigate }) {
           <FolderOpen size={30} />
           <h3>Your first design starts here.</h3>
           <p>Make a copy of a working design or start with a simple shape.</p>
-          <button className="button primary" onClick={() => navigate("/")}>
+          <button className="button primary" onClick={() => navigate("/browse")}>
             Explore designs
           </button>
         </div>
@@ -568,8 +533,8 @@ function NewDesign({ navigate }: { navigate: Navigate }) {
   return (
     <main className="new-page">
       <div className="new-heading">
-        <button className="button quiet" onClick={() => navigate("/")}>
-          <ArrowLeft size={16} /> Discover
+        <button className="button quiet" onClick={() => navigate("/browse")}>
+          <ArrowLeft size={16} /> Browse designs
         </button>
         <h1>Make room for your idea.</h1>
         <p>Start with a shape. Add parts and refine it in your workspace.</p>
