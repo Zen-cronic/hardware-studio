@@ -20,11 +20,13 @@ const smooth=(a:number,b:number,v:number)=>{const t=Math.max(0,Math.min(1,(v-a)/
 function surfaceTexture(){
   const size=128,data=new Uint8Array(size*size*4);
   for(let y=0;y<size;y++)for(let x=0;x<size;x++){
-    const n=(Math.sin(x*12.9898+y*78.233)*43758.5453)%1;
-    const value=170+Math.floor(Math.abs(n)*35)+Math.floor(10*Math.sin(y*.8));
+    const value=238+Math.round(4*Math.sin(y*.8)+2*Math.sin(x*.16+y*.02));
     const i=(y*size+x)*4;data[i]=data[i+1]=data[i+2]=value;data[i+3]=255;
   }
-  const texture=new THREE.DataTexture(data,size,size);texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.repeat.set(2,4);texture.needsUpdate=true;return texture;
+  const texture=new THREE.DataTexture(data,size,size);
+  texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.repeat.set(2,4);
+  texture.magFilter=THREE.LinearFilter;texture.minFilter=THREE.LinearMipmapLinearFilter;
+  texture.generateMipmaps=true;texture.needsUpdate=true;return texture;
 }
 function Workbench(){
   const grid=useMemo(()=>{
@@ -117,7 +119,7 @@ function Scene({parts,playing,separated,manual,reduced,progress,diameter,onReady
     <Workbench/>
     <group ref={model} position={[mobile?0:165,0,0]}>
       {parts.map((p,i)=>{const metal=/steel|alumin|metal/i.test(p.material),reference=p.role==="reference",coated=["base-floor","motor-plate"].includes(p.id),cover=p.id==="platter-cover";if(reference)return <group key={p.id} ref={m=>{meshes.current[i]=m;}} position={p.position} rotation={p.rotation}><LandingPayload size={p.size}/></group>;return <mesh castShadow receiveShadow key={p.id} ref={m=>{meshes.current[i]=m;}} position={p.position} rotation={p.rotation} geometry={geometries[i]}>
-        <meshPhysicalMaterial color={reference?colors.action:coated?colors.action:cover?colors.primary:new THREE.Color(p.color).multiplyScalar(metal?.95:1)} metalness={coated?.65:metal?.88:0} roughness={coated?.32:metal?.25:.52} anisotropy={metal?.65:0} roughnessMap={metal?brushed:null} bumpMap={metal?brushed:null} bumpScale={metal?.06:0} clearcoat={reference||coated||cover?.35:.05}/>
+        <meshPhysicalMaterial color={reference?colors.action:coated?colors.action:cover?colors.primary:new THREE.Color(p.color).multiplyScalar(metal?.95:1)} metalness={coated?.65:metal?.88:0} roughness={coated?.32:metal?.25:.52} anisotropy={metal&&!coated?.65:0} roughnessMap={metal&&!coated?brushed:null} clearcoat={reference||coated||cover?.35:.05}/>
         <Edges threshold={30} color={reference?colors.primary:colors.text} transparent opacity={reference?.6:.12}/>
       </mesh>;})}
     </group>
