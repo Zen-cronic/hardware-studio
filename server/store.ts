@@ -51,6 +51,29 @@ export class Store {
     this.db.exec(
       "CREATE TABLE IF NOT EXISTS designs(id TEXT PRIMARY KEY,snapshot TEXT NOT NULL,editor_token TEXT NOT NULL,viewer_token TEXT NOT NULL); CREATE TABLE IF NOT EXISTS operations(design_id TEXT NOT NULL,command_id TEXT NOT NULL,payload_hash TEXT NOT NULL,result TEXT NOT NULL,before_snapshot TEXT NOT NULL,command TEXT NOT NULL,PRIMARY KEY(design_id,command_id)); CREATE TABLE IF NOT EXISTS builds(id TEXT PRIMARY KEY,design_id TEXT NOT NULL,job TEXT NOT NULL,archive TEXT); CREATE TABLE IF NOT EXISTS documents(id TEXT PRIMARY KEY,content BLOB NOT NULL); CREATE TABLE IF NOT EXISTS ai_usage(id TEXT PRIMARY KEY,at TEXT NOT NULL,status TEXT NOT NULL,reserved REAL NOT NULL,spent REAL NOT NULL,input_tokens INTEGER,output_tokens INTEGER);",
     );
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS proposed_versions (
+        id TEXT PRIMARY KEY, parent_design_id TEXT NOT NULL REFERENCES designs(id),
+        proposed_design_id TEXT NOT NULL UNIQUE REFERENCES designs(id),
+        base_snapshot TEXT NOT NULL, record TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS proposed_versions_parent ON proposed_versions(parent_design_id);
+      CREATE TABLE IF NOT EXISTS version_receipts (
+        version_id TEXT NOT NULL REFERENCES proposed_versions(id), operation_id TEXT NOT NULL,
+        request_hash TEXT NOT NULL, result TEXT NOT NULL, PRIMARY KEY(version_id, operation_id)
+      );
+      CREATE TABLE IF NOT EXISTS agent_credentials (
+        id TEXT PRIMARY KEY, version_id TEXT NOT NULL REFERENCES proposed_versions(id),
+        token_hash TEXT NOT NULL UNIQUE, role TEXT NOT NULL, label TEXT NOT NULL,
+        created_at TEXT NOT NULL, revoked_at TEXT
+      );
+      CREATE TABLE IF NOT EXISTS agent_events (
+        id TEXT PRIMARY KEY, version_id TEXT NOT NULL REFERENCES proposed_versions(id), event TEXT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS agent_runs (
+        id TEXT PRIMARY KEY, version_id TEXT NOT NULL REFERENCES proposed_versions(id), run TEXT NOT NULL
+      );
+    `);
     this.db
       .prepare(
         "UPDATE builds SET job=json_set(job,'$.status','failed','$.error','Build interrupted. Please start a new package.') WHERE json_extract(job,'$.status') IN ('queued','running')",
@@ -106,6 +129,7 @@ export class Store {
         "This link allows viewing. Ask the owner for an editing link.",
         "READ_ONLY",
       );
+    if (write) this.assertEditable(id);
     return role;
   }
   fork(id: string) {
@@ -121,9 +145,15 @@ export class Store {
     };
     return this.insert({ design, derived: deriveDesign(design), history: [] });
   }
+  assertEditable(id: string) {
+    const row = this.db.prepare("SELECT record FROM proposed_versions WHERE proposed_design_id=?").get(id) as { record: string } | undefined;
+    if (row && JSON.parse(row.record).status !== "open")
+      throw new HttpError(409, "This proposed version is closed. Start a new proposed version to make changes.", "VERSION_CLOSED");
+  }
   apply(id: string, command: Command): Snapshot {
     return this.db
       .transaction(() => {
+        this.assertEditable(id);
         const current = this.get(id);
         validateCommand(command, current.design);
         const serialized = JSON.stringify(command),
@@ -365,7 +395,7 @@ export class Store {
     this.db.close();
   }
 }
-function validateCommand(c: Command, d: Design) {
+export function validateCommand(c: Command, d: Design) {
   if (
     !c ||
     typeof c !== "object" ||
