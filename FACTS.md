@@ -42,4 +42,6 @@ New turntables use a versioned 8 mm spindle / 608 bearing reference. Older saved
 - Optional native browser-tool registration awaits the current `document.modelContext` registration API and uses abort-based cleanup. Contract tests cover partial failure, cancellation and disposal, but do not establish actual use in an enabled browser.
 - The product-video encoder produced exactly 600 frames at 1920 × 1080, 30 fps and 20.000 seconds. Full decode, all six example frames, repeated-frame identity, authenticated download and real process cancellation were checked.
 
+A real browser flow declared a 0.5 kg payload (4.903325 N), ran an unconverged 8 mm component study, and refined the recorded setup at 4 mm. The refined calculation passed the existing convergence criteria: 0.17% displacement change and 1.34% 95th-percentile stress change between its final levels. The material, force, supports, geometry snapshot and revision were preserved despite edits in the setup form. Viewer and outdated-result refinement were blocked. The fixed-end approximation does not reproduce pin-hole joint constraints.
+
 These checks do not establish fabrication success, customer adoption, microphone recognition or a production deployment.

@@ -1,6 +1,6 @@
 import {test,expect} from '@playwright/test';
 import {deskArmParts} from '../../src/shared/desk-arm';
-test('maker previews a selected arm edit, compares a proposed version and accepts it',async({page})=>{
+test('maker previews a selected arm edit, compares a proposed version and accepts it',async({page},testInfo)=>{
  const response=await page.request.post('/api/designs',{data:{kind:'custom',name:'Camera arm review',customParts:deskArmParts()}});expect(response.ok()).toBeTruthy();
  const {snapshot,access}=await response.json();const id=snapshot.design.id;
  await page.goto(`/develop/${id}#token=${access.editorToken}`);
@@ -22,9 +22,9 @@ test('maker previews a selected arm edit, compares a proposed version and accept
  await expect(page.getByText('Main r0 → proposed r1')).toBeVisible();
  await page.getByRole('button',{name:'Accept into main design'}).click();
  await expect(page.getByText(/Revision 1 \/ Every result/)).toBeVisible();
- await page.screenshot({path:'.artifacts/trello-build/accepted-version.png',fullPage:true});
+ await page.screenshot({path:testInfo.outputPath('accepted-version.png'),fullPage:true});
 });
-test('real manufacturing study displays findings and small-screen controls stay within viewport',async({page})=>{
+test('real manufacturing study displays findings and small-screen controls stay within viewport',async({page},testInfo)=>{
  const response=await page.request.post('/api/designs',{data:{kind:'custom',name:'Camera arm engineering',customParts:deskArmParts()}});const {snapshot,access}=await response.json();
  await page.goto(`/studio/${snapshot.design.id}#token=${access.editorToken}`);
  await page.getByLabel('Choose a part from the list',{exact:true}).click();
@@ -34,9 +34,9 @@ test('real manufacturing study displays findings and small-screen controls stay 
  await page.getByRole('combobox',{name:'Study',exact:true}).selectOption('manufacturing');
  await page.getByRole('button',{name:'Run study',exact:true}).click();
  await expect(page.getByRole('heading',{name:/Profile checks complete|Dimensions need review/})).toBeVisible({timeout:40000});
- await page.screenshot({path:'.artifacts/trello-build/manufacturing-study.png',fullPage:true});
+ await page.screenshot({path:testInfo.outputPath('manufacturing-study.png'),fullPage:true});
  await page.setViewportSize({width:390,height:844});
  await expect(page.getByRole('button',{name:'Run study',exact:true})).toBeVisible();
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();
- await page.screenshot({path:'.artifacts/trello-build/engineering-mobile.png',fullPage:true});
+ await page.screenshot({path:testInfo.outputPath('engineering-mobile.png'),fullPage:true});
 });
