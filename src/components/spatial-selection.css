@@ -1,0 +1,74 @@
+.model-canvas-viewport {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+.spatial-selection-tools {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 5;
+  max-width: min(320px, calc(100% - 24px));
+}
+.model-canvas > .spatial-selection-tools { height: auto !important; }
+.spatial-selection-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+.spatial-selection-list { position: relative; }
+.spatial-selection-list > summary { list-style: none; }
+.spatial-selection-list > summary::-webkit-details-marker { display: none; }
+.spatial-selection-status {
+  padding: 8px;
+  border-radius: 5px;
+  font-size: var(--s-xs);
+  line-height: 1.4;
+  background: var(--panel);
+  color: var(--text);
+  margin-top: 8px;
+}
+@media (max-width: 820px) {
+  :root .model-canvas.is-selectable {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  :root .model-canvas.is-selectable > .model-canvas-viewport {
+    order: 2;
+    height: 280px !important;
+    flex: none;
+  }
+  :root .model-canvas.is-selectable > .spatial-selection-tools {
+    position: relative;
+    inset: auto;
+    order: 0;
+    width: 100%;
+    max-width: none;
+    flex: none;
+  }
+  :root .model-canvas.is-selectable > .canvas-reference-label {
+    position: static;
+    inset: auto;
+    order: 1;
+    align-self: flex-start;
+    white-space: normal;
+    padding: 0;
+    flex: none;
+  }
+  .spatial-selection-actions > .button,
+  .spatial-selection-actions > .spatial-selection-list { flex: 1; min-width: 0; }
+  .spatial-selection-list > summary { width: 100%; justify-content: center; }
+  :root .spatial-selection-actions > .button,
+  :root .spatial-selection-list > summary {
+    min-height: 44px;
+    font-size: var(--s-xs);
+    padding: 8px 12px;
+  }
+  .spatial-selection-status {
+    padding: 0;
+    background: transparent;
+    margin-top: 6px;
+  }
+}

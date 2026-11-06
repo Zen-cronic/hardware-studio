@@ -66,7 +66,7 @@ export default function Landing({ navigate }: { navigate: Navigate }) {
           <p className="landing-intro">{chapter === 0 ? "Explore working 3D products. Shape the details together, then download CAD files, parts lists and assembly instructions." : chapter === 1 ? "Look inside a real mechanism. Separate the parts, follow the drive and understand how it all comes together." : "A wider platter needs a wider base. Connected dimensions and build files follow the design you choose."}</p>
           <div className="landing-actions"><button className="button primary" data-testid="landing-try" onClick={() => navigate("/designs/turntable")}>Try the turntable <ChevronRight size={18}/></button><button className="button" data-testid="landing-browse" onClick={() => navigate("/browse")}>Browse designs</button></div>
         </div>
-        <div className="landing-spec"><span className="eyebrow">Motorized turntable</span><strong>{diameter}<small>mm platter</small></strong><span>{base} mm base · {design.params.rpm} rpm</span></div>
+        <div className="landing-spec"><span className="eyebrow">Motorized turntable</span><strong>{diameter}<small>mm platter</small></strong><span>{base} mm base / {design.params.rpm} rpm</span></div>
         <div className="landing-controls">
           <div className="landing-scene-caption"><span>{captions[chapter]}</span>{(manual || manualSize !== null) && !reduced && <button className="button landing-follow" data-testid="landing-follow-scroll" onClick={() => {setManual(false);setManualSize(null);setPlaying(true);}}>Follow scroll</button>}<small>{reduced ? "Motion reduced. Choose a size or inspect the parts." : "Scroll to explore the design"}</small></div>
           <div className="landing-control-buttons">

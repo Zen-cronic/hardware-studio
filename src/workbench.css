@@ -267,3 +267,14 @@
   :root .guide-values table {font-size:var(--s-sm);}
   :root .guide-values th,:root .guide-values td {padding-top:9px;padding-bottom:9px;}
 }
+
+.development-entry-phone{display:none}
+@media(max-width:820px){:root .workspace-bar{flex-wrap:wrap;height:auto;min-height:54px}:root .workspace-bar>.development-entry{font-size:var(--s-sm);gap:6px;padding:7px 10px;min-height:44px}.development-entry-desktop{display:none}.development-entry-phone{display:inline}:root .workspace-tabs{flex:1;justify-content:space-between;gap:2px}:root .workspace-bar>.button{min-width:40px}:root .workspace-tabs button{padding:0 9px}}
+@media(max-width:820px){
+ :root .studio-main > .scene-panel{height:auto;min-height:0;display:flex;flex-direction:column;gap:10px;padding:12px;}
+ :root .studio-main > .scene-panel > .scene-heading{position:static;min-height:20px;}
+ :root .studio-main > .scene-panel > .model-canvas{position:relative;inset:auto;height:auto;flex:none;width:100%;}
+ :root .studio-main > .scene-panel > .part-selection{position:static;inset:auto;max-width:none;margin:0;width:100%;padding:10px 12px;flex:none;}
+ :root .studio-main > .scene-panel > .studio-viewer-toolbar{position:static;transform:none;inset:auto;max-width:100%;width:100%;margin:0;justify-content:center;}
+ :root .studio-main > .scene-panel > .scene-hint{position:static;inset:auto;margin:0;padding:0;}
+}

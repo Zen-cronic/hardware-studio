@@ -22,7 +22,7 @@ export default function GuideExample() {
   const originalBase = baseline.parts.find((part) => part.id === "base-floor")!;
   const baseSpecification = current.bom
     .find((part) => part.id === "base-floor")!
-    .specification.split(" · ")[0];
+    .specification.split(" / ")[0];
 
   return (
     <section

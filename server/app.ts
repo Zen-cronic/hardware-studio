@@ -26,6 +26,10 @@ import type {
 } from "../src/shared/types";
 import { Store, HttpError } from "./store";
 import { propose } from "./proposals";
+import { EngineeringJobs, registerEngineeringRoutes } from "./engineering-jobs";
+import { registerVersionRoutes } from "./versions";
+import { registerClipRoutes } from "./clips";
+import { ImportJobs, registerImportRoutes } from "./imports";
 const tokenOf = (r: FastifyRequest) => {
   const header = r.headers.authorization;
   return header?.startsWith("Bearer ")
@@ -49,6 +53,15 @@ export async function createApp(options: Options = {}) {
     options.python ||
     process.env.CAD_PYTHON ||
     join(homedir(), ".pyenv/versions/.victoria-hardware/bin/python");
+  const imports = new ImportJobs(store, dataDir, python);
+  registerImportRoutes(app, store, imports);
+  const engineering = new EngineeringJobs(store, dataDir, python);
+  registerEngineeringRoutes(app, store, engineering);
+  const clips = registerClipRoutes(app, {store, dataDir, serverBaseUrl: () => {
+    const address = app.server.address();
+    if (!address || typeof address === "string") throw new Error("Video rendering needs a listening HTTP server.");
+    return `http://127.0.0.1:${address.port}`;
+  }});
   const rooms = new Map<
     string,
     Map<WebSocket, { presence: Presence; role: "editor" | "viewer" }>
@@ -79,6 +92,28 @@ export async function createApp(options: Options = {}) {
       for (const [ws, p] of room)
         send(ws, { type: "snapshot", snapshot: { ...snapshot, role: p.role } });
   }
+  const agentRuntime = registerVersionRoutes(app, {
+    store, broadcast, aiKey: options.aiKey ?? process.env.OPENAI_API_KEY,
+    analyze: async (snapshot, input, signal) => {
+      const runStudy = async (request: Record<string, unknown>) => {
+        const job = engineering.submit(snapshot, request);
+        const cancel = () => engineering.cancel(job.id);
+        if (signal?.aborted) cancel();
+        signal?.addEventListener("abort", cancel, {once:true});
+        try { return await engineering.wait(job.id); } finally { signal?.removeEventListener("abort",cancel); }
+      };
+      if ((input as any).mode !== "review") return await runStudy(input);
+      const checks = [];
+      for (const part of snapshot.derived.parts.filter(p => p.role !== "reference" && p.process !== "buy")) {
+        if (signal?.aborted) throw new Error("Agent review cancelled.");
+        const job = await runStudy({type:"manufacturing",partId:part.id,profile:part.process === "print" ? "fdm" : "cnc"});
+        checks.push({component:part.name,status:job.result?.status||job.status,profile:job.result?.profile?.name,
+          findings:job.result?.findings,minimumWallMm:job.result?.minimumRecognizedWallMm,error:job.error||job.result?.error});
+      }
+      return {status: checks.every(c=>c.status==="solved")?"reviewed":"needs_inputs",revision:snapshot.design.revision,checks,
+        limits:"These are component manufacturing checks against editable example process profiles. No load capacity, assembly contacts or fabrication certification was established."};
+    },
+  });
   async function processQueue() {
     if (running || stopping) return;
     const work = jobs.shift();
@@ -346,6 +381,10 @@ export async function createApp(options: Options = {}) {
   }
   app.addHook("onClose", async () => {
     stopping = true;
+    await agentRuntime.agents.close();
+    await engineering.close();
+    await clips.close();
+    await imports.close();
     worker?.cancel();
     await activeDone;
     for (const { job } of jobs.splice(0)) {

@@ -550,7 +550,7 @@ strong {
   font-size: var(--s-xs);
 }
 .product-facts span + span:before {
-  content: "·";
+  content: "/";
   margin-right: 14px;
 }
 .workflow-strip {

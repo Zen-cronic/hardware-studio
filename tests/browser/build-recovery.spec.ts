@@ -22,7 +22,7 @@ test('real package survives a failed status request, reload, newer revision and 
  await page.reload();await page.getByRole('tab',{name:'Build',exact:true}).click();await expect(download).toBeVisible();expect(await download.getAttribute('href')).toContain('/api/builds/'+job.id+'/download');expect(builds).toBe(1);
  await page.getByRole('tab',{name:'Design',exact:true}).click();await page.getByTestId('param-scale').fill('1.2');await page.getByTestId('apply-dimensions').click();
  await expect(page.getByText('Design updated. Parts and assembly now match.')).toBeVisible();
- await page.getByRole('tab',{name:'Build',exact:true}).click();await expect(page.getByText('Revision 0 · An earlier version of this design',{exact:true})).toBeVisible();
+ await page.getByRole('tab',{name:'Build',exact:true}).click();await expect(page.getByText('Revision 0 / An earlier version of this design',{exact:true})).toBeVisible();
  await page.screenshot({path:info.outputPath('recovered-earlier-package.png')});
  const context=await browser.newContext({viewport:{width:375,height:812}});const viewer=await context.newPage();
  await viewer.goto('/studio/'+id+'#token='+encodeURIComponent(created.access.viewerToken));await viewer.getByRole('tab',{name:'Build',exact:true}).click();

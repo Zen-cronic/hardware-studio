@@ -33,6 +33,7 @@ import {
   AlertCircle,
   PackageOpen,
   RefreshCw,
+  FlaskConical,
 } from "lucide-react";
 import type {
   Access,
@@ -46,7 +47,7 @@ import type {
   Vec3,
 } from "./shared/types";
 import { CATALOG, productForDesign } from "./shared/catalog";
-import { readSetFor } from "./shared/engine";
+import { deriveDesign, readSetFor } from "./shared/engine";
 import {
   api,
   ApiError,
@@ -60,6 +61,8 @@ import {
   pathFor,
 } from "./lib/api";
 import ModelCanvas from "./components/ModelCanvas";
+import ContextualGuide from "./components/ContextualGuide";
+import { createSelection, type SelectionRef } from "./shared/selection";
 import SharedNotes from "./components/SharedNotes";
 import ReferenceInput, { VoiceButton } from "./components/ReferenceInput";
 import { Brand, type Navigate } from "./App";
@@ -82,6 +85,7 @@ export default function Studio({
     [peers, setPeers] = useState<Presence[]>([]),
     [connected, setConnected] = useState(false),
     [tab, setTab] = useState<Tab>("design");
+  const [selection, setSelection] = useState<SelectionRef | null>(null);
   const [selected, setSelected] = useState(""),
     [playing, setPlaying] = useState(false),
     [speed, setSpeed] = useState(1),
@@ -316,6 +320,7 @@ export default function Studio({
       const p = await api<Proposal>("/designs/" + id + "/propose", token, {
         prompt,
         actor,
+        ...(selection ? { selection } : {}),
         ...(image ? { image } : {}),
       });
       setProposal(p);
@@ -417,6 +422,10 @@ export default function Studio({
       </div>
     );
   const { design, derived, history } = snapshot;
+  let previewParts = derived.parts;
+  if (proposal && proposal.command.baseRevision === design.revision) {
+    try { previewParts = deriveDesign({ ...design, params: { ...design.params, ...proposal.command.changes }, ...(proposal.command.customParts ? {customParts:proposal.command.customParts}: {}) }).parts; } catch { /* Acceptance validates again. */ }
+  }
   const visibleParts =
     tab === "assemble" && selected && practice
       ? derived.parts.map((p) =>
@@ -431,7 +440,7 @@ export default function Studio({
               }
             : p,
         )
-      : derived.parts;
+      : previewParts;
   const currentStep = derived.steps[Math.min(step, derived.steps.length - 1)];
   const chosen = derived.parts.find((p) => p.id === selected);
   const pending = Object.keys(draft).length > 0;
@@ -445,7 +454,7 @@ export default function Studio({
           <h1>{design.name}</h1>
           <span>
             <span className={"connection-dot " + (connected ? "online" : "")} />
-            {connected ? "Saved together" : "Reconnecting…"} · Revision{" "}
+            {connected ? "Saved together" : "Reconnecting…"} / Revision{" "}
             {design.revision}
           </span>
         </div>
@@ -528,6 +537,7 @@ export default function Studio({
             <PackageOpen size={16} /> Build
           </button>
         </div>
+        <button className="button small development-entry" aria-label="Engineering & versions" title="Engineering & versions" onClick={() => navigate("/develop/" + id + (selected ? "?part=" + encodeURIComponent(selected) : "") + "#token=" + encodeURIComponent(token))}><FlaskConical size={17}/><span className="development-entry-desktop">Engineering & versions</span><span className="development-entry-phone">Develop</span></button>
         <button
           className="button quiet small"
           onClick={() => void fork()}
@@ -835,6 +845,7 @@ export default function Studio({
                   </div>
                 )}
               </div>
+              <ContextualGuide snapshot={snapshot} selection={selection} onPrompt={setPrompt} disabled={readOnly || busy} onPreview={(result) => setProposal({ command:{...result.command,actor}, explanation:result.explanation, source:"local" })} />
               <details className="history-panel">
                 <summary>
                   <RotateCcw size={15} /> Design history{" "}
@@ -847,7 +858,7 @@ export default function Studio({
                     <article key={h.id}>
                       <strong>{h.summary}</strong>
                       <span>
-                        {h.actor} · Revision {h.revision}
+                        {h.actor} / Revision {h.revision}
                       </span>
                     </article>
                   ))
@@ -929,7 +940,7 @@ export default function Studio({
                 ? "Assembly view"
                 : tab === "build"
                   ? "Your accepted design"
-                  : "Working model"}
+                  : proposal ? "Proposed preview" : "Working model"}
             </span>
             <div className="scene-heading-actions">
               {others.length > 0 && (
@@ -966,7 +977,10 @@ export default function Studio({
             exploded={exploded}
             dimensions={dimensions}
             selected={selected}
-            onSelect={setSelected}
+            onSelect={(partId) => { setSelected(partId); setSelection(partId ? createSelection(snapshot, [partId], "click") : null); }}
+            selectionContext={{designId:design.id,revision:design.revision}}
+            selectedPartIds={selection?.partIds}
+            onSelection={setSelection}
             reset={reset}
             camera={following?.camera}
             onCamera={cameraChanged}
@@ -980,7 +994,7 @@ export default function Studio({
               <div>
                 <strong>{chosen.name}</strong>
                 <span>
-                  {chosen.material} ·{" "}
+                  {chosen.material} /{" "}
                   {chosen.size.map((v) => Math.round(v)).join(" × ")} mm
                 </span>
               </div>
@@ -1040,7 +1054,7 @@ export default function Studio({
             </label>
           </div>
           <p className="scene-hint">
-            Drag to rotate · Scroll to zoom · Select a part to inspect
+            Drag to rotate / Scroll to zoom / Select a part to inspect
           </p>
         </section>
         {tab === "design" && (
@@ -1559,7 +1573,7 @@ function BuildPanel({
           <p>
             Revision {job.revision}
             {job.revision !== design.revision
-              ? " · An earlier version of this design"
+              ? " / An earlier version of this design"
               : ""}
           </p>
           <a
@@ -1599,7 +1613,7 @@ function BuildPanel({
                 <strong>{b.name}</strong>
                 <span>{b.specification}</span>
                 <small>
-                  {b.material} · {b.process}
+                  {b.material} / {b.process}
                 </small>
               </div>
               <span className="mono">×{b.quantity}</span>

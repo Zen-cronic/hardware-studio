@@ -15,6 +15,10 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import type { Part, Vec3 } from "../shared/types";
 import { colors } from "../lib/tokens";
 import { motionPose } from "../lib/motion";
+import { explodedParts, explosionProgress, EXPLOSION_DURATION } from "../lib/explosion";
+import { visiblePartsInPolygon, type ScreenPoint } from "../lib/selection";
+import type { SelectionRef, SelectionSource } from "../shared/selection";
+import { CircleSelectionOverlay, SpatialSelectionTools } from "./SpatialSelection";
 type Props = {
   parts: Part[];
   activePartIds?: string[];
@@ -22,6 +26,9 @@ type Props = {
   speed?: number;
   exploded?: boolean;
   selected?: string;
+  selectedPartIds?: string[];
+  selectionContext?: { designId: string; revision: number };
+  onSelection?: (selection: SelectionRef) => void;
   onSelect?: (id: string) => void;
   compact?: boolean;
   dimensions?: boolean;
@@ -96,41 +103,74 @@ function FeaturedGeometry({
   return <primitive object={geometry} attach="geometry" />;
 }
 
+interface AssemblyFrame {
+  progress: number;
+  seconds: number;
+  poses: Map<string, { position: Vec3; rotation: Vec3 }>;
+}
+function AssemblyAnimation({ parts, exploded, playing, speed, reduced, frozen, frame }: {
+  parts: Part[]; exploded: boolean; playing: boolean; speed: number; reduced: boolean; frozen: boolean;
+  frame: React.MutableRefObject<AssemblyFrame>;
+}) {
+  const { invalidate, gl } = useThree();
+  const transition = useRef({ from: frame.current.progress, to: frame.current.progress, elapsed: EXPLOSION_DURATION, last: performance.now() });
+  useEffect(() => {
+    transition.current = { from: frame.current.progress, to: exploded ? 1 : 0, elapsed: 0, last: performance.now() };
+    invalidate();
+  }, [exploded, reduced, invalidate, frame]);
+  useEffect(() => { transition.current.last = performance.now(); invalidate(); }, [frozen, invalidate]);
+  useFrame((_, delta) => {
+    const state = transition.current;
+    const now = performance.now();
+    if (!frozen) state.elapsed = Math.min(EXPLOSION_DURATION, state.elapsed + (now - state.last) / 1000);
+    state.last = now;
+    frame.current.progress = explosionProgress(state.from, state.to, state.elapsed, reduced);
+    if (playing && !reduced) frame.current.seconds += Math.min(delta, .05) * speed;
+    const movingParts = explodedParts(parts, frame.current.progress);
+    frame.current.poses = new Map(movingParts.map(part => [part.id, motionPose(part, movingParts, frame.current.seconds)]));
+    gl.domElement.dataset.explosionProgress = frame.current.progress.toFixed(4);
+    gl.domElement.dataset.mechanismSeconds = frame.current.seconds.toFixed(4);
+    if (!frozen && frame.current.progress !== state.to) invalidate();
+  }, -1);
+  return null;
+}
 function PartMesh({
   part,
   parts,
   playing,
   speed = 1,
   selected,
+  selectedPartIds,
   onSelect,
   compact,
   activePartIds,
-}: Props & { part: Part }) {
-  const ref = useRef<THREE.Mesh>(null),
-    elapsed = useRef(0);
+  animation,
+}: Props & { part: Part; animation: React.MutableRefObject<AssemblyFrame> }) {
+  const ref = useRef<THREE.Mesh>(null);
   const rot = part.rotation || [0, 0, 0];
+  const isSelected = selected === part.id || !!selectedPartIds?.includes(part.id);
   const metal = /steel|alumin|metal/i.test(part.material),
     reference = part.role === "reference",
     ghost =
       !!activePartIds &&
       !activePartIds.includes(part.id) &&
-      selected !== part.id,
+      !isSelected,
     referencePreview = reference && !!onSelect;
   const materialColor = useMemo(() => {
     const c = new THREE.Color(part.color);
     return metal ? c.multiplyScalar(0.82) : c;
   }, [part.color, metal]);
-  useFrame((_, delta) => {
+  useFrame(() => {
     const m = ref.current;
     if (!m) return;
-    if (playing) elapsed.current += Math.min(delta, 0.05) * speed;
-    const pose = motionPose(part, parts, elapsed.current);
+    const pose = animation.current.poses.get(part.id) || motionPose(part, parts, animation.current.seconds);
     m.position.set(...pose.position);
     m.rotation.set(...pose.rotation);
   });
   return (
     <mesh
       ref={ref}
+      userData={{ partId: part.id }}
       position={part.position}
       rotation={rot}
       castShadow
@@ -173,14 +213,14 @@ function PartMesh({
         metalness={metal ? 0.82 : 0.02}
         roughness={metal ? 0.38 : 0.78}
         emissive={
-          selected === part.id
+          isSelected
             ? colors.focus
             : part.id === "led"
               ? part.color
               : colors.text
         }
         emissiveIntensity={
-          selected === part.id ? 0.1 : part.id === "led" ? 0.25 : 0
+          isSelected ? 0.1 : part.id === "led" ? 0.25 : 0
         }
         transparent={
           ghost || referencePreview || /water|glass/i.test(part.material)
@@ -196,11 +236,11 @@ function PartMesh({
                 : 1
         }
       />
-      {(!reference || referencePreview || selected === part.id) && (
+      {(!reference || referencePreview || isSelected) && (
         <Edges
           threshold={24}
           color={
-            selected === part.id
+            isSelected
               ? colors.focus
               : referencePreview
                 ? part.color
@@ -208,7 +248,7 @@ function PartMesh({
           }
           transparent
           opacity={
-            selected === part.id
+            isSelected
               ? 1
               : ghost
                 ? 0.07
@@ -270,7 +310,13 @@ function Camera({
   box,
   parts,
   framingKey,
+  enabled = true,
+  exploded = false,
+  reduced = false,
 }: {
+  exploded?: boolean;
+  reduced?: boolean;
+  enabled?: boolean;
   framingKey?: string;
   reset?: number;
   remote?: Props["camera"];
@@ -279,11 +325,30 @@ function Camera({
   parts: Part[];
 }) {
   const ref = useRef<any>(null);
+  const previousExploded = useRef(exploded);
+  const cameraTween = useRef<{ from: THREE.Vector3; to: THREE.Vector3; fromTarget: THREE.Vector3; toTarget: THREE.Vector3; elapsed: number; last: number } | null>(null);
   const { camera, invalidate, size, gl } = useThree();
+  useEffect(() => { if (cameraTween.current) cameraTween.current.last = performance.now(); }, [enabled]);
+  useFrame(() => {
+    const tween = cameraTween.current;
+    if (!tween || !ref.current || !enabled) return;
+    const now = performance.now();
+    tween.elapsed += (now - tween.last) / 1000;
+    tween.last = now;
+    const progress = explosionProgress(0, 1, tween.elapsed, reduced);
+    camera.position.lerpVectors(tween.from, tween.to, progress);
+    ref.current.target.lerpVectors(tween.fromTarget, tween.toTarget, progress);
+    ref.current.update();
+    if (progress === 1) cameraTween.current = null; else invalidate();
+  });
   const center = box.getCenter(new THREE.Vector3());
   const extent = Math.max(...box.getSize(new THREE.Vector3()).toArray(), 80);
   useEffect(() => {
-    const dir = new THREE.Vector3(1.15, 0.9, 1.25).normalize(),
+    const isExplosionChange = previousExploded.current !== exploded;
+    previousExploded.current = exploded;
+    const dir = isExplosionChange && ref.current
+      ? camera.position.clone().sub(ref.current.target).normalize()
+      : new THREE.Vector3(1.15, 0.9, 1.25).normalize(),
       right = new THREE.Vector3()
         .crossVectors(new THREE.Vector3(0, 1, 0), dir)
         .normalize(),
@@ -333,15 +398,21 @@ function Camera({
         );
       }
     }
-    camera.position.copy(center).addScaledVector(dir, distance * 1.08);
-    camera.lookAt(center);
-    if (ref.current) {
-      ref.current.target.copy(center);
-      ref.current.update();
+    const destination = center.clone().addScaledVector(dir, distance * 1.08);
+    if (isExplosionChange && !reduced && ref.current) {
+      cameraTween.current = { from: camera.position.clone(), to: destination,
+        fromTarget: ref.current.target.clone(), toTarget: center.clone(), elapsed: 0, last: performance.now() };
+    } else {
+      cameraTween.current = null;
+      camera.position.copy(destination);
+      camera.lookAt(center);
+      if (ref.current) { ref.current.target.copy(center); ref.current.update(); }
     }
     invalidate();
   }, [
     reset,
+    exploded,
+    reduced,
     framingKey ?? `${box.min.toArray().join()}:${box.max.toArray().join()}`,
     size.width,
     size.height,
@@ -350,6 +421,7 @@ function Camera({
   ]);
   useEffect(() => {
     if (remote && ref.current) {
+      cameraTween.current = null;
       camera.position.set(...remote.position);
       ref.current.target.set(...remote.target);
       ref.current.update();
@@ -360,10 +432,12 @@ function Camera({
     <OrbitControls
       ref={ref}
       makeDefault
+      enabled={enabled}
       minDistance={extent * 0.4}
       maxDistance={extent * 6}
       enableDamping={false}
       maxPolarAngle={Math.PI * 0.49}
+      onStart={() => { cameraTween.current = null; }}
       onChange={() => {
         if (ref.current)
           gl.domElement.dataset.view = JSON.stringify({
@@ -381,34 +455,44 @@ function Camera({
     />
   );
 }
+type PolygonPicker = ((points: ScreenPoint[]) => string[]) | null;
+function SelectionBridge({ picker }: { picker: React.MutableRefObject<PolygonPicker> }) {
+  const { gl, scene, camera, size, invalidate } = useThree();
+  useEffect(() => {
+    picker.current = points => {
+      try { return visiblePartsInPolygon(gl, scene, camera, size.width, size.height, points); }
+      finally { invalidate(); }
+    };
+    return () => { picker.current = null; };
+  }, [gl, scene, camera, size.width, size.height, invalidate, picker]);
+  return null;
+}
 export default function ModelCanvas(props: Props) {
   const { compact, playing = false, dimensions = false } = props;
+  const [circleMode, setCircleMode] = useState(false);
+  const [candidates, setCandidates] = useState<string[]>([]);
+  const [selectionMessage, setSelectionMessage] = useState("");
+  const picker = useRef<PolygonPicker>(null);
+  const animation = useRef<AssemblyFrame>({ progress: props.exploded ? 1 : 0, seconds: 0, poses: new Map() });
+  const canSelect = !!(props.onSelect || props.onSelection);
+  const choose = (ids: string[], source: SelectionSource) => {
+    const existing = [...new Set(ids)].filter(id => props.parts.some(part => part.id === id));
+    if (!existing.length) return;
+    if (existing.length > 1 && (!props.onSelection || !props.selectionContext)) {
+      setSelectionMessage("Choose one of the circled parts before continuing."); return;
+    }
+    setCircleMode(false); setCandidates([]);
+    setSelectionMessage(existing.length === 1 ? `${props.parts.find(part => part.id === existing[0])!.name} selected.` : `${existing.length} parts selected.`);
+    props.onSelect?.(existing[0]);
+    if (props.selectionContext) props.onSelection?.({ ...props.selectionContext, partIds: existing, source });
+  };
+  useEffect(() => { setCircleMode(false); setCandidates([]); setSelectionMessage(""); }, [props.selectionContext?.designId, props.selectionContext?.revision]);
   const [ready, setReady] = useState(false),
     [failed, setFailed] = useState(false);
   // Once mounted, synchronous part/pose updates retain the rendered view.
   // FrameSignal still requests frames; only the initial canvas needs a loading overlay.
   const originalBox = useMemo(() => partBounds(props.parts), [props.parts]);
-  const parts = useMemo(() => {
-    if (!props.exploded) return props.parts;
-    const center = originalBox.getCenter(new THREE.Vector3());
-    const extent = Math.max(
-      ...originalBox.getSize(new THREE.Vector3()).toArray(),
-    );
-    const levels = [
-      ...new Set(props.parts.map((p) => Math.round(p.position[1]))),
-    ].sort((a, b) => a - b);
-    return props.parts.map((p) => ({
-      ...p,
-      position: [
-        center.x + (p.position[0] - center.x) * 1.25,
-        p.position[1] +
-          (levels.indexOf(Math.round(p.position[1])) -
-            (levels.length - 1) / 2) *
-            Math.min(extent * 0.1, 35),
-        center.z + (p.position[2] - center.z) * 1.25,
-      ] as Vec3,
-    }));
-  }, [props.parts, props.exploded, originalBox]);
+  const parts = useMemo(() => explodedParts(props.parts, props.exploded ? 1 : 0), [props.parts, props.exploded]);
   const box = useMemo(() => partBounds(parts), [parts]);
   const size = box.getSize(new THREE.Vector3()),
     extent = Math.max(size.x, size.y, size.z, 120),
@@ -423,8 +507,8 @@ export default function ModelCanvas(props: Props) {
   }, []);
   return (
     <div
-      className={"model-canvas" + (compact ? " compact" : "")}
-      role={failed ? "region" : "img"}
+      className={"model-canvas" + (compact ? " compact" : "") + (!compact && canSelect ? " is-selectable" : "")}
+      role={failed || canSelect ? "region" : "img"}
       data-ready={failed ? "error" : ready ? "true" : "false"}
       aria-busy={!ready && !failed}
       aria-label={
@@ -434,6 +518,7 @@ export default function ModelCanvas(props: Props) {
             "Interactive 3D product. Drag to rotate, scroll to zoom."
       }
     >
+      <div className="model-canvas-viewport">
       <CanvasBoundary onFailure={() => setFailed(true)}>
         <Canvas
           shadows={!compact}
@@ -447,6 +532,9 @@ export default function ModelCanvas(props: Props) {
           gl={{ antialias: true, preserveDrawingBuffer: true }}
           frameloop={playing && !reduced ? "always" : "demand"}
         >
+          <AssemblyAnimation parts={props.parts} exploded={!!props.exploded} playing={playing && !circleMode}
+            speed={props.speed ?? 1} reduced={reduced} frozen={circleMode} frame={animation} />
+          <SelectionBridge picker={picker} />
           <FrameSignal parts={parts} onReady={() => setReady(true)} />
           <color attach="background" args={[colors.surface]} />
           <StudioLight />
@@ -468,12 +556,15 @@ export default function ModelCanvas(props: Props) {
             intensity={0.7}
           />
           <Suspense fallback={null}>
-            {parts.map((part) => (
+            {props.parts.map((part) => (
               <PartMesh
                 key={part.id}
                 {...props}
-                parts={parts}
-                playing={playing && !reduced}
+                parts={props.parts}
+                animation={animation}
+                playing={playing && !reduced && !circleMode}
+                onSelect={canSelect && !circleMode ? id => choose([id], "click") : undefined}
+                selectedPartIds={candidates.length ? candidates : props.selectedPartIds}
                 part={part}
               />
             ))}
@@ -500,6 +591,9 @@ export default function ModelCanvas(props: Props) {
               </Html>
             )}
             <Camera
+              enabled={!circleMode}
+              exploded={!!props.exploded}
+              reduced={reduced}
               reset={props.reset}
               framingKey={props.framingKey}
               remote={props.camera}
@@ -510,21 +604,40 @@ export default function ModelCanvas(props: Props) {
           </Suspense>
         </Canvas>
       </CanvasBoundary>
+      {ready && !failed && !compact && canSelect && circleMode && <CircleSelectionOverlay
+        onCancel={() => setCircleMode(false)}
+        onCircle={points => {
+          try {
+            const ids = picker.current?.(points) || [];
+            setCircleMode(false); setCandidates(ids.length > 1 ? ids : []);
+            if (ids.length === 1) choose(ids, "circle");
+            else setSelectionMessage(ids.length ? "Confirm which visible parts you want to edit." : "No visible part inside that circle. Try a larger circle or use the parts list.");
+          } catch {
+            setCircleMode(false); setSelectionMessage("Circle selection is unavailable in this view. Choose a part from the list.");
+          }
+        }} />}
+      {!ready && !failed && <div className="model-loading">Loading model…</div>}
+      </div>
+      {!compact && canSelect && <SpatialSelectionTools
+        parts={props.parts} selectedIds={props.selectedPartIds || (props.selected ? [props.selected] : [])}
+        circleMode={circleMode} onCircleMode={enabled => { setCircleMode(enabled); setCandidates([]); setSelectionMessage(""); }}
+        circleAvailable={ready && !failed} candidates={candidates} onChoose={choose} onDismiss={() => { setCandidates([]); setSelectionMessage(""); }} message={selectionMessage}
+      />}
       {ready &&
         !failed &&
         !compact &&
         props.onSelect &&
         !props.activePartIds &&
+        !circleMode && !candidates.length && !selectionMessage &&
         props.parts
           .filter((part) => part.role === "reference")
           .slice(0, 1)
           .map((part) => (
-            <span className="canvas-reference-label" key={part.id}>
+            <span className="canvas-reference-label" style={{ top: 62 }} key={part.id}>
               <i style={{ background: part.color }} />
               {part.name}
             </span>
           ))}
-      {!ready && !failed && <div className="model-loading">Loading model…</div>}
     </div>
   );
 }

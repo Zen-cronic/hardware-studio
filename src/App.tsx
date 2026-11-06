@@ -26,6 +26,9 @@ import { CATALOG } from "./shared/catalog";
 import { createDesign, deriveDesign } from "./shared/engine";
 import ModelCanvas from "./components/ModelCanvas";
 import Studio from "./Studio";
+import Development from "./Development";
+import ClipRender from "./ClipRender";
+import { deskArmParts } from "./shared/desk-arm";
 import GuideExample from "./components/GuideExample";
 import Landing from "./components/Landing";
 import { create, pathFor, recent, type Recent } from "./lib/api";
@@ -71,6 +74,8 @@ export default function App() {
     window.addEventListener("popstate", pop);
     return () => window.removeEventListener("popstate", pop);
   }, []);
+  if (path === "/render-clip") return <ClipRender />;
+  if (path.startsWith("/develop/")) return <Development key={path + navTick} id={decodeURIComponent(path.split("/")[2])} navigate={navigate} />;
   if (path.startsWith("/studio/"))
     return (
       <Studio
@@ -345,7 +350,7 @@ function Listing({
           <Layers3 size={16} />
           {exploded ? "Assemble" : "Explode view"}
         </button>
-        <span>Drag to rotate · Scroll to zoom</span>
+        <span>Drag to rotate / Scroll to zoom</span>
       </div>
     </div>
   );
@@ -538,6 +543,7 @@ function NewDesign({ navigate }: { navigate: Navigate }) {
         </button>
         <h1>Make room for your idea.</h1>
         <p>Start with a shape. Add parts and refine it in your workspace.</p>
+        <button className="button" disabled={busy} onClick={async()=>{setBusy(true);setError("");try{const r=await create("custom","Articulated camera arm",deskArmParts());navigate(pathFor(r.snapshot.design.id,r.access.editorToken));}catch(e){setError((e as Error).message);}finally{setBusy(false);}}}>Start with an articulated camera arm</button>
       </div>
       <div className="new-layout">
         <div className="new-stage">

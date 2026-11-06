@@ -378,7 +378,7 @@ export function standardTurntable(
         value:
           Math.round(0.5 * p.payload * (p.diameter / 2000) ** 2 * 10000 * 100) /
           100,
-        unit: "×10⁻⁴ kg·m²",
+        unit: "×10⁻⁴ kg m²",
       },
     ],
     connections: [

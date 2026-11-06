@@ -574,7 +574,7 @@ function bom(parts: Part[]): BomItem[] {
       process: p.process,
       specification:
         (p.loopSpan !== undefined
-          ? `${round(p.size[0])} × ${round(p.size[1])} × ${round(p.size[2])} mm · loop centres ${round(p.loopSpan)} mm · bend OD ${round(p.size[2])} / ID ${round(p.holeDiameter!)} mm · smooth clearance envelope, teeth omitted`
+          ? `${round(p.size[0])} × ${round(p.size[1])} × ${round(p.size[2])} mm / loop centres ${round(p.loopSpan)} mm / bend OD ${round(p.size[2])} / ID ${round(p.holeDiameter!)} mm / smooth clearance envelope, teeth omitted`
           : p.shape === "box"
             ? p.size.map(round).join(" × ") + " mm"
             : round(p.size[0]) +
@@ -582,16 +582,16 @@ function bom(parts: Part[]): BomItem[] {
               round(p.size[1]) +
               " mm" +
               (p.holeDiameter
-                ? " · bore " + round(p.holeDiameter) + " mm"
+                ? " / bore " + round(p.holeDiameter) + " mm"
                 : "")) +
         (p.sections
-          ? " · axial sections bottom→top: " +
+          ? " / axial sections bottom→top: " +
             p.sections
               .map((s) => `${s.height} high / Ø${s.diameter} / bore ${s.bore}`)
               .join("; ")
           : "") +
         (p.holes?.length
-          ? " · through holes X/Z/Ø: " +
+          ? " / through holes X/Z/Ø: " +
             p.holes
               .map(
                 (h) =>
@@ -600,10 +600,10 @@ function bom(parts: Part[]): BomItem[] {
               .join("; ")
           : "") +
         (p.channel
-          ? ` · underside channel: ${p.channel.width} wide × ${p.channel.depth} deep, full X length`
+          ? ` / underside channel: ${p.channel.width} wide × ${p.channel.depth} deep, full X length`
           : "") +
         (p.process === "buy"
-          ? " · selection envelope; confirm actual fit and ratings"
+          ? " / selection envelope; confirm actual fit and ratings"
           : ""),
       sourceUrl: sourceFor(p),
     }));
@@ -814,7 +814,7 @@ export function deriveDesign(d: Design): DerivedDesign {
         {
           label: "Inertia estimate",
           value: round(0.5 * p.payload * (radius / 1000) ** 2 * 10000),
-          unit: "×10⁻⁴ kg·m²",
+          unit: "×10⁻⁴ kg m²",
         },
       ];
       connections = [
@@ -1731,12 +1731,12 @@ export function deriveDesign(d: Design): DerivedDesign {
       if (row.id === "coupling") {
         row.sourceUrl = "https://www.ruland.com/pcmr25-8-6-ss.html";
         row.specification +=
-          " · body Ø25.4; model reserves Ø31.8 for clamp hardware; verify engagement";
+          " / body Ø25.4; model reserves Ø31.8 for clamp hardware; verify engagement";
       }
       if (row.id === "collar") {
         row.sourceUrl = "https://www.ruland.com/mcl-8-a.html";
         row.specification +=
-          " · body Ø18; model reserves Ø22.4 for clamp hardware";
+          " / body Ø18; model reserves Ø22.4 for clamp hardware";
       }
       if (row.id.endsWith("-bearing"))
         row.sourceUrl =
@@ -1758,7 +1758,7 @@ export function deriveDesign(d: Design): DerivedDesign {
         row.sourceUrl =
           "https://us.misumi-ec.com/pdf/fa/2019/2019_US_1424_001.pdf";
         row.specification +=
-          " · includes two 675ZZ bearings (5 × 8 × 2.5); body and bearings shown separately";
+          " / includes two 675ZZ bearings (5 × 8 × 2.5); body and bearings shown separately";
       }
       if (
         ["rail-front", "rail-rear", "block-front", "block-rear"].includes(
@@ -1769,16 +1769,16 @@ export function deriveDesign(d: Design): DerivedDesign {
           "https://hiwin.co.uk/wp-content/uploads/2017/06/Linear-Guideways.pdf";
       if (row.id === "camera-screw")
         row.specification +=
-          " · cut 1/4-20 thread on upper 9 mm; 4 mm projection above carriage";
+          " / cut 1/4-20 thread on upper 9 mm; 4 mm projection above carriage";
       if (row.id === "idler-axle")
         row.specification +=
-          " · M5 lower 6 mm thread; smooth 5 mm bearing journal; verify bearing preload and retention";
+          " / M5 lower 6 mm thread; smooth 5 mm bearing journal; verify bearing preload and retention";
       if (row.id === "base")
         row.specification +=
-          " · 3 mm nominal holes indicate M3 threads; choose tap-drill dimensions in fabrication review";
+          " / 3 mm nominal holes indicate M3 threads; choose tap-drill dimensions in fabrication review";
       if (row.id === "tension-plate")
         row.specification +=
-          " · 5 mm nominal centre hole indicates M5 thread; 7 mm clearances permit ±2 mm X adjustment";
+          " / 5 mm nominal centre hole indicates M5 thread; 7 mm clearances permit ±2 mm X adjustment";
     }
   }
   if (d.kind === "conveyor" && d.mechanismVersion === 2) {
@@ -1798,14 +1798,14 @@ export function deriveDesign(d: Design): DerivedDesign {
       if (row.id === "diverter") {
         row.sourceUrl = "https://www.pololu.com/product/1998";
         row.specification +=
-          " · one hub used; supplier sells a two-pack, included set screw omitted from envelope";
+          " / one hub used; supplier sells a two-pack, included set screw omitted from envelope";
       }
       if (row.id === "sensor")
         row.sourceUrl =
           "https://assets.omron.eu/downloads/latest/datasheet/en/e3z_compact_photoelectric_sensor_with_built-in_amplifier_datasheet_en.pdf";
       if (row.id === "base")
         row.specification +=
-          " · nominal Ø4 holes indicate M4 threads; select tap-drill dimensions in fabrication review";
+          " / nominal Ø4 holes indicate M4 threads; select tap-drill dimensions in fabrication review";
     }
   }
   if (d.kind === "lamp" && d.mechanismVersion === 2) {
@@ -1830,7 +1830,7 @@ export function deriveDesign(d: Design): DerivedDesign {
       if (row.id === "pump") {
         row.sourceUrl = "https://www.adafruit.com/product/4546";
         row.specification +=
-          " · integral outlet included; measure actual revision";
+          " / integral outlet included; measure actual revision";
       }
       if (row.id === "inlet" || /^outlet-\d+$/.test(row.id))
         row.sourceUrl = "https://www.adafruit.com/product/4545";

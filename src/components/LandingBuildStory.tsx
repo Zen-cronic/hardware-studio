@@ -32,7 +32,7 @@ export default function LandingBuildStory({parts,navigate}:{parts:Part[];navigat
           <dl><div><dt>Platter</dt><dd>{platter.size[0]}<span>mm</span></dd></div><div><dt>Base</dt><dd>{base.size[0]}<span>mm</span></dd></div></dl>
         </div>
         <table><caption>Selected components</caption><thead><tr><th>Part</th><th>Diameter × thickness</th></tr></thead><tbody>{rows.map(part=><tr key={part.id}><td>{part.name}</td><td>{part.size[0]} × {part.size[1]} mm</td></tr>)}</tbody></table>
-        <footer>{rows.length} of {physicalCount} components · dimensions in millimetres</footer>
+        <footer>{rows.length} of {physicalCount} components / dimensions in millimetres</footer>
       </div>
     </section>
     <section className="landing-examples" aria-labelledby="landing-examples-title">
