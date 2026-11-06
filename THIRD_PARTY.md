@@ -1,8 +1,8 @@
 # Third-party materials
 
-Hardware Studio uses the components below. Versioned details, upstream package sources and hashes of installed license/notice files are recorded in [the runtime inventory](docs/third-party-runtime.json). Inventory checked November 3, 2026 against `package-lock.json` and `poetry.lock`.
+Hardware Studio uses the components below. Versioned details, upstream package sources and hashes of installed license/notice files are recorded in [the runtime inventory](docs/third-party-runtime.json). Inventory checked November 6, 2026 against `package-lock.json` and `poetry.lock`.
 
-The inventory covers 199 installed production npm packages and 39 packages in the CadQuery Python dependency closure on the checked platform. It lists installed dependencies, including packages not necessarily imported on a particular route. Platform-specific optional packages and development tools are not fully covered. Lockfiles remain the source of dependency versions. This is an attribution inventory, not a conclusion that every distribution obligation has been satisfied.
+The inventory covers 202 installed production npm packages and 88 packages in the declared Python runtime dependency closures on the checked platform. It lists installed dependencies, including packages not necessarily imported on a particular route. Platform-specific optional packages and development tools are not fully covered. Lockfiles remain the source of dependency versions. This is an attribution inventory, not a conclusion that every distribution obligation has been satisfied.
 
 ## Application libraries
 
@@ -29,6 +29,14 @@ Transitive dependencies, including WebGL helpers and collaboration transports, a
 - Other CAD/runtime dependencies, including ezdxf, nlopt, matplotlib and trame, are identified in the JSON inventory with exact versions and notice locations.
 
 No third-party CAD binaries are committed to this source repository. Before distributing a bundled runtime, installer or container, review that concrete artifact's embedded libraries, notices, corresponding-source and relinking requirements. This inventory does not substitute for that review.
+
+Additional engineering and rendering dependencies:
+
+- [scikit-fem](https://github.com/kinnala/scikit-fem), 12.0.2: BSD-3-Clause, verified from the installed license. Linear elasticity assembly and solution.
+- [Netgen](https://github.com/NGSolve/netgen), 6.2.2608: LGPL-2.1 package declaration. Its separately installed `netgen-occt` 7.8.1 contains the LGPL-2.1 text. Binary distribution requires reviewing the exact OCCT/Netgen artifacts and any applicable exceptions; a separate worker process does not remove their obligations.
+- [Trimesh](https://github.com/mikedh/trimesh), [SciPy](https://github.com/scipy/scipy), and [Open3D](https://github.com/isl-org/Open3D): MIT, BSD-3-Clause and MIT respectively, with additional numerical/binary notices recorded in the inventory. Used for geometry inspection, feature fitting and verification.
+- [Rapier](https://github.com/dimforge/rapier), `@dimforge/rapier3d-compat` 0.21.0: Apache-2.0. Explicit rigid-body joint studies run in an isolated server worker.
+- [Playwright](https://github.com/microsoft/playwright), 1.64.1: Apache-2.0. Chromium is a separately installed browser with its own notices. [FFmpeg](https://ffmpeg.org/legal.html) is a system executable; its build configuration determines LGPL/GPL obligations and codec availability. Neither browser nor FFmpeg binaries are committed to this repository.
 
 ## Fonts and assets
 

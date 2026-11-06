@@ -43,11 +43,23 @@ The model proposes structured changes. The server validates dimensions and depen
 
 Yjs/Hocuspocus shares annotations; authoritative commands handle engineering changes. SQLite persists accepted revisions, operation history, annotation documents and build jobs. Share links carry viewer or editor capabilities: treat editor links like a password.
 
+## Develop a design
+
+Select or circle a visible part to edit its supported dimensions, holes and walls. Preview the change before accepting it. Proposed versions let collaborators and scoped agents experiment without changing the main design; acceptance requires review of both current revisions.
+
+The engineering workspace runs linear-elastic finite-element studies on the actual selected solid, shows displacement and stress fields, and compares results using identical setups. Enter material, support and load assumptions explicitly. Manufacturing checks compare recognized features with editable FDM, milling or turning profiles. Rigid-body studies use explicit connections and entered masses, with rectangular-envelope inertia and visible motion limits.
+
+Import STEP, STL, OBJ or GLB originals and confirm units and the selected body. Supported common-axis plates, cylinders, tubes, holes and counterbores can become editable after measured surface/volume comparisons. Unsupported freeform or mixed-axis features remain view/analysis-only. Original files are retained, and a concurrent import configuration change requires another review before analysis.
+
+The design agent proposes measured changes; the engineering agent reads that revision and runs component checks. Both work inside the proposed version. External MCP credentials are restricted to that version and are revoked on acceptance or rejection. Native browser tools are optional and require a browser exposing the experimental `document.modelContext` API. Registration and cleanup are tested against the current API contract; use in an enabled browser has not yet been observed.
+
+Product video export creates a 20-second, 1080p, 30 fps MP4 from one frozen design revision. The preview and export use the same frame-based camera, motion and exploded-view timeline. Install Chromium with `npx playwright install chromium` and provide FFmpeg on the server. Jobs support cancellation and authenticated downloads.
+
 ## What to review before fabrication
 
 These are editable prototype designs, not validated load-bearing products or machine-ready instructions. Bought parts use simplified envelopes; confirm vendor dimensions and part availability. Review fasteners, fits, material, electrical protection, stability and process setup. STEP solid validation does not prove assembly fit or real-world performance. Wiring/control guides require review against the exact selected components. No machine-specific G-code is generated.
 
-Visual input asks for missing dimensions. It cannot reliably infer hidden geometry, tolerances, torque or wiring from a photograph. Voice support depends on the browser; typed input remains available. Kinematic animations and water/sensor illustrations are explanatory models, not physical simulation.
+Visual input asks for missing dimensions. It cannot reliably infer hidden geometry, tolerances, torque or wiring from a photograph. Voice support depends on the browser; typed input remains available. The default catalog motion and water/sensor illustrations are explanatory kinematics. The separate mechanism study runs rigid-body dynamics from explicitly entered masses, joints, gravity and drive limits; it excludes bending, collisions and friction.
 
 When no AI key is available, explicit local dimension commands remain available and are identified in the proposal. Generated appearance assets and environments are optional; Meshy/Skybox accounts are not bundled. No real supplier quote is requested by this application.
 

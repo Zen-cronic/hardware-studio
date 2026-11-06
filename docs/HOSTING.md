@@ -53,4 +53,10 @@ Before release verify health, a real two-browser note and sketch exchange throug
 
 Repeated authorized build requests for the same design revision share its queued or running job, including when the waiting queue is full. Different revisions remain separate; completed or failed jobs may be rebuilt. This reduces duplicate work but does not replace public request limits, storage controls or the single-instance requirement.
 
-CAD timeouts and output limits wait for process exit before releasing queue capacity. Cancellation sends SIGTERM, then SIGKILL after a one-second grace if needed. Graceful shutdown waits for the active worker and records queued jobs as interrupted before closing SQLite. Abrupt host termination still relies on startup recovery.
+CAD timeouts and output limits wait for process exit before releasing queue capacity. On POSIX, cancellation signals the worker process group with SIGTERM, then SIGKILL after a one-second grace if needed, including descendants that outlive their immediate parent. Windows retains direct-child termination. Graceful shutdown waits for the active worker and records queued jobs as interrupted before closing SQLite. Abrupt host termination still relies on startup recovery.
+
+## Engineering and video workers
+
+Use the committed Python runtime dependencies for CAD, meshing and reconstruction; the expanded runtime inventory includes their installed notices. Review numerical worker memory, CPU and disk requirements on the actual host. They are bounded server processes, not edge/serverless functions.
+
+The video queue needs the production Playwright package, a compatible installed Chromium (`npx playwright install chromium`) and an FFmpeg executable on PATH. Browser and FFmpeg binary notices must be included according to the concrete deployment artifacts. The renderer only loads the application's loopback render route and injects a frozen authenticated project; it does not navigate client-supplied URLs. Keep storage private and persistent, set resource/storage policy before public access, and do not expose capability tokens in logs.

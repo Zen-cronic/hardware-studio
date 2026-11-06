@@ -32,3 +32,14 @@ A live AI call created a three-part phone stand, which was accepted and exported
 Microphone recognition, physical fabrication and a human outcome comparison remain unverified. Video reference input samples one frame. No supplier quote is requested automatically. Generated appearance assets and provider subscriptions are not included.
 
 New turntables use a versioned 8 mm spindle / 608 bearing reference. Older saved turntables retain their conceptual shaft model. Nominal motor/coupling/collar envelopes, threadless fasteners and open-frame supports require fit, guarding, electrical and load review before physical use.
+
+## Additional bounded verification — November 6, 2026
+
+- A real model-backed design agent changed an upper camera-arm link from 4 mm to 6 mm; its holes and the main design were preserved. A second engineering role read that proposed revision and ran eight component manufacturing checks. An earlier attempt asked unnecessary questions and made no edit; the prompt and bounded partial-edit contract were repaired before the successful rerun. This is a recorded provider observation, not a deterministic reliability guarantee.
+- The linear-elastic cantilever fixture measured 0.045318 mm against the analytical 0.045714 mm result, with force-balance checks. Three refinement levels are required for a convergence assessment; an unconverged calculation is displayed explicitly. Full assemblies, contact, nonlinear material response and physical load capacity are not established.
+- Real rigid-body tests exercise gravity, sliding/rotational limits, zero drive limits, fixed connections, repeated results and rotated joint reference frames. Input masses and rectangular-envelope inertia remain declared approximations.
+- Actual STEP upload, feature fitting, acceptance, hole shrinking, retained-source integrity and source-based strength analysis pass. STL, OBJ and GLB mechanical feature fixtures also pass. Unsupported mixed-axis/freeform geometry and invalid topology remain explicit failures rather than silently repaired inputs.
+- Optional native browser-tool registration awaits the current `document.modelContext` registration API and uses abort-based cleanup. Contract tests cover partial failure, cancellation and disposal, but do not establish actual use in an enabled browser.
+- The product-video encoder produced exactly 600 frames at 1920 × 1080, 30 fps and 20.000 seconds. Full decode, all six example frames, repeated-frame identity, authenticated download and real process cancellation were checked.
+
+These checks do not establish fabrication success, customer adoption, microphone recognition or a production deployment.
