@@ -35,6 +35,50 @@ it("preserves successful output and reports failed exits or spawn errors", async
   await expect(startCadWorker("/missing/cad-interpreter", [], {cwd:process.cwd()}).result).rejects.toThrow(/ENOENT/);
 });
 
+it("accepts explicitly allowed nonzero exits without weakening the default", async () => {
+  const script = "process.stdout.write(JSON.stringify({ok:false,error:'mesh failed'}));process.exit(2)";
+  expect(await startCadWorker(process.execPath, ["-e", script], {
+    cwd: process.cwd(), acceptedExitCodes: [0, 2],
+  }).result).toBe('{"ok":false,"error":"mesh failed"}');
+  await expect(startCadWorker(process.execPath, ["-e", script], {
+    cwd: process.cwd(),
+  }).result).rejects.toThrow("CAD generation failed");
+});
+
+it.skipIf(process.platform === "win32").each(["cancel", "timeout"] as const)("terminates native descendants that ignore SIGTERM before settling after the parent exits (%s)", async (reason) => {
+  const root = fixture();
+  const descendant = `const fs=require('node:fs');
+process.on('SIGTERM',()=>fs.writeFileSync(${JSON.stringify(join(root, "descendant-term"))},'received'));
+fs.writeFileSync(${JSON.stringify(join(root, "descendant-pid"))},String(process.pid));
+setInterval(()=>{},1000);`;
+  const parent = `const fs=require('node:fs');
+require('node:child_process').spawn(process.execPath,['-e',${JSON.stringify(descendant)}],{stdio:'ignore'});
+fs.writeFileSync(${JSON.stringify(join(root, "parent-pid"))},String(process.pid));
+setInterval(()=>{},1000);`;
+  const worker = startCadWorker(process.execPath, ["-e", parent], {
+    cwd: root, killGraceMs: 100, timeoutMs: reason === "timeout" ? 1000 : 4000,
+  });
+  const rejected = expect(worker.result).rejects.toThrow(reason === "cancel" ? "interrupted" : "too long");
+  cleanups.push(async () => {
+    worker.cancel();
+    for (const name of ["parent-pid", "descendant-pid"]) {
+      const file = join(root, name);
+      if (!existsSync(file)) continue;
+      const pid = Number(readFileSync(file, "utf8"));
+      if (alive(pid)) process.kill(pid, "SIGKILL");
+      await until(() => !alive(pid));
+    }
+    await rejected;
+  });
+  await until(() => existsSync(join(root, "descendant-pid")));
+  const descendantPid = Number(readFileSync(join(root, "descendant-pid"), "utf8"));
+  if (reason === "cancel") worker.cancel();
+  await rejected;
+  expect(alive(descendantPid)).toBe(false);
+  expect(alive(Number(readFileSync(join(root, "parent-pid"), "utf8")))).toBe(false);
+  expect(readFileSync(join(root, "descendant-term"), "utf8")).toBe("received");
+});
+
 it("times out even after plausible output and waits for an ignoring child to die", async () => {
   const root=fixture();
   const worker=startCadWorker(process.execPath,["-e",stubborn(root,"console.log('{}');")],{cwd:root,timeoutMs:1000,killGraceMs:80});
