@@ -1,0 +1,53 @@
+import {test,expect} from 'vitest';
+import Fastify from 'fastify';
+import {mkdtempSync,readFileSync,rmSync} from 'node:fs';
+import {tmpdir,homedir} from 'node:os';
+import {join} from 'node:path';
+import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+import {Store,HttpError} from '../server/store';
+import {ImportJobs,registerImportRoutes,resolveImportGeometry} from '../server/imports';
+import {EngineeringJobs,registerEngineeringRoutes} from '../server/engineering-jobs';
+import type {ImportRecord} from '../src/shared/imports';
+const python=join(homedir(),'.pyenv/versions/.victoria-hardware/bin/python');
+test('source uploads are authenticated, immutable and measured before editable acceptance',async()=>{
+ const dir=mkdtempSync(join(tmpdir(),'hardware-import-')),store=new Store(join(dir,'store.sqlite')),jobs=new ImportJobs(store,dir,python),app=Fastify({bodyLimit:13_000_000});
+ const engineering=new EngineeringJobs(store,dir,python);registerEngineeringRoutes(app,store,engineering);
+ app.setErrorHandler((error:any,_r,reply)=>reply.code(error instanceof HttpError?error.status:500).send({error:error.message}));registerImportRoutes(app,store,jobs);
+ const {snapshot,access}=store.create('turntable'),id=snapshot.design.id,headers={authorization:'Bearer '+access.editorToken},viewer={authorization:'Bearer '+access.viewerToken};
+ try{
+  const path=join(dir,'plate.step');execFileSync(python,['-c',`import cadquery as cq,sys\nfrom cad.geometry import local_shape\np={'id':'p','name':'P','shape':'box','size':[40,8,20],'position':[0,0,0],'color':'#72a6d7','material':'Aluminum','process':'machine','holes':[{'x':0,'z':0,'diameter':4}]}\ncq.exporters.export(local_shape(p),sys.argv[1])`,path],{cwd:process.cwd()});
+  const source=readFileSync(path),payload={filename:'plate.step',contentBase64:source.toString('base64'),scaleToMm:1};
+  expect((await app.inject({method:'POST',url:`/api/designs/${id}/imports`,payload})).statusCode).toBe(403);
+  expect((await app.inject({method:'POST',url:`/api/designs/${id}/imports`,headers:viewer,payload})).statusCode).toBe(403);
+  expect((await app.inject({method:'POST',url:`/api/designs/${id}/imports`,headers,payload:{...payload,filename:'../x.step'}})).statusCode).toBe(422);
+  const response=await app.inject({method:'POST',url:`/api/designs/${id}/imports`,headers,payload});expect(response.statusCode,response.body).toBe(202);const importId=response.json().id;
+  async function wait(){for(let i=0;i<500;i++){const record=(await app.inject({method:'GET',url:'/api/imports/'+importId,headers})).json() as ImportRecord;if(!['queued','running'].includes(record.latestJob!.status))return record;await new Promise(r=>setTimeout(r,100));}throw Error('Import timed out');}
+  const inspected=await wait();expect(inspected.latestJob?.status,inspected.latestJob?.error).toBe('ready');expect(inspected.latestJob?.result?.bodyCount).toBe(1);expect(inspected).not.toHaveProperty('sourcePath');
+  expect((await app.inject({method:'GET',url:'/api/imports/'+importId+'/original'})).statusCode).toBe(403);
+  const downloaded=await app.inject({method:'GET',url:'/api/imports/'+importId+'/original',headers:viewer});expect(downloaded.rawPayload.equals(source)).toBe(true);
+  expect(inspected.sourceHash).toBe(createHash('sha256').update(source).digest('hex'));
+  expect(()=>resolveImportGeometry(store,store.create('turntable').snapshot.design.id,importId,{jobId:inspected.latestJobId,inputHash:inspected.latestJob?.result?.inputHash})).toThrow('not attached');
+  const geometry=resolveImportGeometry(store,id,importId,{jobId:inspected.latestJobId,inputHash:inspected.latestJob?.result?.inputHash});expect(geometry.scaleToMm).toBe(1);expect(readFileSync(geometry.path).equals(source)).toBe(true);
+  const studyResponse=await app.inject({method:'POST',url:`/api/designs/${id}/studies`,headers,payload:{type:'strength',importId,expectedImportJobId:inspected.latestJobId,expectedImportInputHash:inspected.latestJob?.result?.inputHash,partId:'platter',geometry:{path:'/not-permitted'},revision:0,material:{youngModulusMPa:70000,poissonRatio:.3,densityKgM3:2700},supports:[{axis:'x',side:'min'}],loads:[{axis:'x',side:'max',forceN:[0,-1,0]}],mesh:{maxSizeMm:5,refinements:0}}});
+  expect(studyResponse.statusCode,studyResponse.body).toBe(202);const studied=await engineering.wait(studyResponse.json().id);
+  expect(studied.status,studied.error).toBe('ready');expect(studied.result.status).toBe('solved');
+  expect(studied.result.importedSourceHash).toBe(inspected.sourceHash);expect(studied.setup.importId).toBe(importId);expect(studied.partId).toBeUndefined();
+  expect(studied.result.maxDisplacementMm).toBeGreaterThan(0);expect(studied.result.mesh.surface.length).toBeGreaterThan(0);
+  expect((await app.inject({method:'POST',url:'/api/imports/'+importId+'/reconstruct',headers:viewer,payload:{bodyIndex:0,scaleToMm:1,toleranceMm:.1}})).statusCode).toBe(403);
+  expect((await app.inject({method:'POST',url:'/api/imports/'+importId+'/accept',headers,payload:{jobId:inspected.latestJobId,expectedInputHash:inspected.latestJob?.result?.inputHash}})).statusCode).toBe(409);
+  expect((await app.inject({method:'POST',url:'/api/imports/'+importId+'/reconstruct',headers,payload:{bodyIndex:0,scaleToMm:1,toleranceMm:.1}})).statusCode).toBe(202);
+  const outdated=await app.inject({method:'POST',url:`/api/designs/${id}/studies`,headers,payload:{type:'strength',importId,expectedImportJobId:inspected.latestJobId,expectedImportInputHash:inspected.latestJob?.result?.inputHash,revision:0}});expect(outdated.statusCode,outdated.body).toBe(409);
+  expect(engineering.get(studied.id).stale).toBe(true);expect(engineering.list(id)[0].stale).toBe(true);
+  const reconstructed=await wait();expect(reconstructed.latestJob?.result?.status,JSON.stringify(reconstructed.latestJob)).toBe('reconstructed');
+  const acceptance={jobId:reconstructed.latestJobId,expectedInputHash:reconstructed.latestJob?.result?.inputHash};
+  expect((await app.inject({method:'POST',url:'/api/imports/'+importId+'/accept',headers:viewer,payload:acceptance})).statusCode).toBe(403);
+  expect((await app.inject({method:'POST',url:'/api/imports/'+importId+'/accept',headers,payload:{...acceptance,expectedInputHash:'forged'}})).statusCode).toBe(409);
+  const accepted=await app.inject({method:'POST',url:'/api/imports/'+importId+'/accept',headers,payload:acceptance});expect(accepted.statusCode,accepted.body).toBe(200);const created=accepted.json();expect(created.snapshot.design.kind).toBe('custom');expect(created.snapshot.derived.parts[0].holes[0].diameter).toBe(4);
+  expect((await app.inject({method:'POST',url:'/api/imports/'+importId+'/accept',headers,payload:acceptance})).json().snapshot.design.id).toBe(created.snapshot.design.id);
+  const linked=jobs.list(created.snapshot.design.id)[0];expect(linked.originalImportId).toBe(importId);expect(jobs.original(linked.id).data.equals(source)).toBe(true);
+  const changed=structuredClone(created.snapshot.derived.parts);changed[0].holes[0].diameter=2;
+  store.apply(created.snapshot.design.id,{id:'shrink',actor:'Tester',baseRevision:0,changes:{},readSet:created.snapshot.design.params,customParts:changed});expect(store.get(created.snapshot.design.id).derived.parts[0].holes?.[0].diameter).toBe(2);
+  expect(jobs.original(importId).data.equals(source)).toBe(true);
+ }finally{await engineering.close();await jobs.close();await app.close();store.db.close();rmSync(dir,{recursive:true,force:true});}
+},90000);
