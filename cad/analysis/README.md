@@ -1,6 +1,6 @@
 # Engineering worker
 
-The `cad.engineering` module accepts an `--input` flag containing an absolute JSON-file path. Without that flag it reads JSON stdin. It uses the project's existing Poetry Python environment. The coordinator must resolve file paths inside an owned immutable upload/job directory; filesystem paths are not a public API.
+The `cad.engineering` module accepts an `--input` flag containing an absolute JSON-file path. Without that flag it reads JSON stdin. It uses the project's existing Poetry Python environment. The calling server must resolve file paths inside an owned immutable upload/job directory; filesystem paths are not a public API.
 
 The last stdout line is the JSON result. Native geometry logs go to stderr. Exit 0 means a result was calculated (`solved` or `unconverged`), not that a physical design is safe; exit 2 carries an actionable result (`needs_inputs`, `invalid_geometry`, `mesh_failed`, `unsupported_physics` or `failed`). Parse JSON on either exit code.
 
