@@ -492,7 +492,7 @@ export default function Studio({
           >
             <MessageSquare size={18} />
           </button>
-          <button className="button small" onClick={() => setShare(true)}>
+          <button className="button small action-share" onClick={() => setShare(true)}>
             <Share2 size={16} />
             <span>Share</span>
           </button>
@@ -635,7 +635,7 @@ export default function Studio({
         <aside className={"left-panel" + (selection && editorMode === "selection" ? " show-selection" : "")} id="studio-left-panel" onKeyDown={(event) => { if (event.key === "Escape" && !(event.target as HTMLElement).closest('[role="dialog"]')) { setLeftPanelOpen(false); setMobileEditor("canvas"); requestAnimationFrame(() => { const selectors = window.innerWidth <= 820 && tab === "design" ? '.mobile-editor-switch [data-panel="left"]' : '[aria-controls="studio-left-panel"]'; document.querySelector<HTMLButtonElement>(selectors)?.focus(); }); } }}>
           {tab === "design" ? (
             <>
-              {selection && <div className="inspector-tabs" role="group" aria-label="Selected part tools"><button className={"button small " + (editorMode === "selection" ? "primary" : "")} onClick={() => setEditorMode("selection")}>Part controls</button><button className={"button small " + (editorMode === "prompt" ? "primary" : "")} onClick={() => setEditorMode("prompt")}>Write a request</button></div>}
+              {selection && <div className="inspector-tabs" role="group" aria-label="Selected part tools"><button className={"button small " + (editorMode === "selection" ? "primary action-secondary" : "")} onClick={() => setEditorMode("selection")}>Part controls</button><button className={"button small " + (editorMode === "prompt" ? "primary action-secondary" : "")} onClick={() => setEditorMode("prompt")}>Write a request</button></div>}
               <div className="conversation-editor">
                 <div className="panel-intro">
                   <h2>What would you change?</h2>

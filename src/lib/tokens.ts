@@ -1,17 +1,27 @@
-export const colors = {
+const base = {
   "focus": "#8B204B",
   "success": "#166148",
   "warning": "#725900",
   "danger": "#AD233F",
   "white": "#FFFFFF",
-  "background": "#F2F3F3",
-  "surface": "#DEE5E8",
+  "background": "#F3F7FF",
+  "surface": "#D6E7FF",
   "panel": "#FFFFFF",
-  "text": "#253740",
-  "muted": "#4C626D",
-  "border": "#71858F",
-  "primary": "#B8CFD8",
-  "onPrimary": "#253740",
-  "action": "#315E70",
+  "text": "#132344",
+  "muted": "#405576",
+  "border": "#627BA4",
+  "primary": "#A2C7FF",
+  "onPrimary": "#132344",
+  "action": "#245BA8",
   "onAction": "#FFFFFF"
+};
+
+export const colors = {
+  ...base,
+  secondary: base.primary,
+  secondaryInk: base.action,
+  onSecondary: base.text,
+  tertiary: base.surface,
+  tertiaryInk: base.action,
+  onTertiary: base.text,
 };

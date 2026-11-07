@@ -37,7 +37,7 @@ export default function ContextualGuide({ snapshot, selection, onPrompt, onPrevi
   const unavailable = !!disabled || context.stale || snapshot.role === "viewer";
   return <section className="contextual-guide" aria-label="Design guidance" style={{ border: `1px solid ${colors.border}`, borderRadius: 10, padding: 14, background: colors.panel }}>
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
-      <strong style={{ fontSize: "var(--s-sm)" }}>{context.parts.length === 1 ? context.parts[0].name : context.parts.length ? "Selected parts" : "Where to start"}</strong>
+      <strong className="text-edit" style={{ fontSize: "var(--s-sm)" }}>{context.parts.length === 1 ? context.parts[0].name : context.parts.length ? "Selected parts" : "Where to start"}</strong>
       <button type="button" className="button" aria-pressed={advanced} onClick={() => {
         setAdvanced(!advanced);
         try { localStorage.setItem("hardware-studio-guidance", !advanced ? "advanced" : "guided"); } catch { /* Browser storage is optional. */ }
