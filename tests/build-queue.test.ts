@@ -3,6 +3,7 @@ import { mkdtempSync, writeFileSync, readFileSync, existsSync, rmSync } from "no
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createApp } from "../server/app";
+import { ResourceAdmission } from "../server/resource-admission";
 import { readSetFor } from "../src/shared/engine";
 
 type Runtime = Awaited<ReturnType<typeof createApp>>;
@@ -36,7 +37,7 @@ const timer = setInterval(() => {
  console.log(JSON.stringify({ok:true,archive}));
 }, 5);
 `, { mode: 0o700 });
-  const { app, store } = await createApp({ dataDir: root, python, serveStatic: false, aiKey: "" });
+  const { app, store } = await createApp({ resources: new ResourceAdmission({dataDir:root,queueLimit:20}), dataDir: root, python, serveStatic: false, aiKey: "" });
   const create = () => store.create("turntable");
   const request = (design: ReturnType<typeof create>, token = design.access.editorToken) => app.inject({
     method: "POST", url: `/api/designs/${design.snapshot.design.id}/build`, headers: { authorization: `Bearer ${token}` },

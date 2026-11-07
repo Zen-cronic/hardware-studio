@@ -13,6 +13,8 @@ import {
 import { resolve, join } from "node:path";
 import { homedir } from "node:os";
 import { startCadWorker } from "./cad-worker";
+import { ResourceAdmission, type ResourceTicket } from "./resource-admission";
+import { resourceConfig, aiBudgetConfig, type AiBudgetPolicy } from "./config";
 import type { WebSocket } from "ws";
 import { CATALOG } from "../src/shared/catalog";
 import { DesignError } from "../src/shared/engine";
@@ -43,21 +45,24 @@ interface Options {
   serveStatic?: boolean;
   aiKey?: string;
   python?: string;
+  resources?: ResourceAdmission;
+  aiPolicy?: AiBudgetPolicy;
 }
 export async function createApp(options: Options = {}) {
   const dataDir = resolve(options.dataDir || process.env.DATA_DIR || ".data");
   mkdirSync(dataDir, { recursive: true });
-  const store = new Store(options.dbPath || join(dataDir, "studio.sqlite"));
+  const resources = options.resources || new ResourceAdmission({ dataDir, ...resourceConfig(process.env) });
+  const store = new Store(options.dbPath || join(dataDir, "studio.sqlite"), options.aiPolicy || aiBudgetConfig(process.env));
   const app = Fastify({ logger: false, bodyLimit: 13_000_000 });
   const python =
     options.python ||
     process.env.CAD_PYTHON ||
     join(homedir(), ".pyenv/versions/.victoria-hardware/bin/python");
-  const imports = new ImportJobs(store, dataDir, python);
+  const imports = new ImportJobs(store, dataDir, python, resources);
   registerImportRoutes(app, store, imports);
-  const engineering = new EngineeringJobs(store, dataDir, python);
+  const engineering = new EngineeringJobs(store, dataDir, python, resources);
   registerEngineeringRoutes(app, store, engineering);
-  const clips = registerClipRoutes(app, {store, dataDir, serverBaseUrl: () => {
+  const clips = registerClipRoutes(app, {store, dataDir, resources, serverBaseUrl: () => {
     const address = app.server.address();
     if (!address || typeof address === "string") throw new Error("Video rendering needs a listening HTTP server.");
     return `http://127.0.0.1:${address.port}`;
@@ -66,7 +71,8 @@ export async function createApp(options: Options = {}) {
     string,
     Map<WebSocket, { presence: Presence; role: "editor" | "viewer" }>
   >();
-  const jobs: { job: BuildJob; snapshot: Snapshot }[] = [];
+  const jobs: { job: BuildJob; snapshot: Snapshot; ticket: ResourceTicket }[] = [];
+  let activeTicket: ResourceTicket | undefined;
   const activeBuilds = new Map<string, string>();
   const buildKey = (id: string, revision: number) => `${id}:${revision}`;
   let running = false;
@@ -120,11 +126,14 @@ export async function createApp(options: Options = {}) {
     if (!work) return;
     running = true;
     activeDone = new Promise<void>((resolve) => { finishActive = resolve; });
-    const { job, snapshot } = work;
+    const { job, snapshot, ticket } = work;
+    activeTicket = ticket;
     const jobDir = join(dataDir, "builds", job.id);
     const dir = join(jobDir, "package");
     const input = join(jobDir, "input.json");
     try {
+      await ticket.wait();
+      if (stopping) throw new Error("Build interrupted. Please start a new package.");
       mkdirSync(jobDir, { recursive: true });
       writeFileSync(input, JSON.stringify(snapshot, null, 2));
       store.setBuild({ ...job, status: "running" });
@@ -163,6 +172,8 @@ export async function createApp(options: Options = {}) {
           error instanceof Error ? error.message : "Package generation failed.",
       });
     } finally {
+      ticket.release();
+      activeTicket = undefined;
       activeBuilds.delete(buildKey(job.designId, job.revision));
       worker = undefined;
       running = false;
@@ -278,15 +289,16 @@ export async function createApp(options: Options = {}) {
         429,
         "Several packages are being prepared. Please try again shortly.",
       );
+    const ticket = resources.reserve();
     const job: BuildJob = {
       id: randomUUID(),
       designId: id,
       revision: snapshot.design.revision,
       status: "queued",
     };
-    store.setBuild(job);
+    try { store.setBuild(job); } catch (error) { ticket.release(); throw error; }
     activeBuilds.set(key, job.id);
-    jobs.push({ job, snapshot });
+    jobs.push({ job, snapshot, ticket });
     void processQueue();
     return job;
   });
@@ -381,13 +393,14 @@ export async function createApp(options: Options = {}) {
   }
   app.addHook("onClose", async () => {
     stopping = true;
-    await agentRuntime.agents.close();
-    await engineering.close();
-    await clips.close();
-    await imports.close();
+    resources.close();
+    const otherQueues = Promise.all([agentRuntime.agents.close(), engineering.close(), clips.close(), imports.close()]);
+    activeTicket?.cancel();
     worker?.cancel();
     await activeDone;
-    for (const { job } of jobs.splice(0)) {
+    await otherQueues;
+    for (const { job, ticket } of jobs.splice(0)) {
+      ticket.release();
       store.setBuild({ ...job, status: "failed", error: "Build interrupted. Please start a new package." });
     }
     activeBuilds.clear();

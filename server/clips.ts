@@ -5,6 +5,7 @@ import { createReadStream, existsSync, mkdirSync, statSync, writeFileSync } from
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Store, HttpError } from "./store";
+import { ResourceAdmission, type ResourceTicket } from "./resource-admission";
 import { canonicalClipSource, makeClipProject, type ClipJob, type ClipProject } from "../src/lib/clip-timeline";
 import type { Snapshot } from "../src/shared/types";
 
@@ -16,24 +17,35 @@ interface RenderInput {
 export type ClipRenderer = (input: RenderInput) => Promise<Receipt>;
 interface ClipOptions {
   store: Store; dataDir: string; serverBaseUrl: string | (() => string);
-  renderer?: ClipRenderer; queueLimit?: number;
+  renderer?: ClipRenderer; queueLimit?: number; resources?: ResourceAdmission;
 }
 const token = (request: FastifyRequest) => request.headers.authorization?.startsWith("Bearer ") ? request.headers.authorization.slice(7) : "";
 const workerScript = fileURLToPath(new URL("../scripts/render-clip.mjs", import.meta.url));
 
-export const renderClip: ClipRenderer = ({ project, input, output, url, signal, progress }) => new Promise((resolveResult, reject) => {
+export function createClipRenderer(script = workerScript, killGraceMs = 5000): ClipRenderer {
+ return ({ project, input, output, url, signal, progress }) => new Promise((resolveResult, reject) => {
   if (signal.aborted) { reject(new Error("Video export cancelled.")); return; }
   const environment = Object.fromEntries(["PATH", "HOME", "TMPDIR", "PLAYWRIGHT_BROWSERS_PATH", "LANG", "LC_ALL"].flatMap(key => process.env[key] ? [[key, process.env[key]!]] : []));
-  const child = spawn(process.execPath, ["--max-old-space-size=2048", workerScript, "--input", input, "--output", output, "--url", url],
+  const child = spawn(process.execPath, ["--max-old-space-size=2048", script, "--input", input, "--output", output, "--url", url],
     { cwd: fileURLToPath(new URL("..", import.meta.url)), env: environment, stdio: ["ignore", "pipe", "pipe"], detached: process.platform !== "win32" });
   let failure: Error | undefined, receipt: Receipt | undefined, closed = false, buffer = "", stderr = "", outputBytes = 0;
   let killTimer: ReturnType<typeof setTimeout> | undefined, stopping = false;
+  let termination: Promise<void> | undefined;
+  const groupAlive = () => {
+    if(process.platform === "win32" || !child.pid) return !closed;
+    try { process.kill(-child.pid,0); return true; } catch(error) { return (error as NodeJS.ErrnoException).code !== "ESRCH"; }
+  };
   const kill = (name: NodeJS.Signals) => {
     try { if (process.platform !== "win32" && child.pid) process.kill(-child.pid, name); else child.kill(name); } catch { /* Process already exited. */ }
   };
   const stop = (error: Error) => {
     if (closed || stopping) return;
-    stopping = true; failure ||= error; kill("SIGTERM"); killTimer = setTimeout(() => { if (!closed) kill("SIGKILL"); }, 5000);
+    stopping = true; failure ||= error; kill("SIGTERM");
+    termination = new Promise<void>(resolve => {
+      killTimer = setTimeout(() => kill("SIGKILL"), killGraceMs);
+      const check = () => { if(groupAlive()) setTimeout(check,10); else { clearTimeout(killTimer); resolve(); } };
+      check();
+    });
   };
   const cancelled = () => stop(new Error("Video export cancelled."));
   signal.addEventListener("abort", cancelled, { once: true });
@@ -58,20 +70,25 @@ export const renderClip: ClipRenderer = ({ project, input, output, url, signal, 
   });
   child.stderr.on("data", (chunk: Buffer) => { stderr = (stderr + chunk.toString()).slice(-4000); });
   child.once("error", error => { failure ||= error; });
-  child.once("close", code => {
-    closed = true; clearTimeout(timeout); clearTimeout(killTimer); signal.removeEventListener("abort", cancelled);
+  child.once("close", async code => {
+    closed = true; clearTimeout(timeout); await termination; clearTimeout(killTimer); signal.removeEventListener("abort", cancelled);
     if (failure) reject(failure);
     else if (code !== 0 || !receipt) reject(new Error("Video rendering failed. Check that Chromium and FFmpeg are installed." + (stderr.includes("Executable doesn't exist") ? " The Chromium browser is missing." : "")));
     else resolveResult(receipt);
   });
-});
+ });
+}
+export const renderClip = createClipRenderer();
 
 export class ClipJobs {
   private queue: string[] = [];
+  private tickets = new Map<string, ResourceTicket>();
+  private resources: ResourceAdmission;
   private active?: { id: string; controller: AbortController; done: Promise<void> };
   private stopping = false;
   private readonly root: string;
   constructor(private options: ClipOptions) {
+    this.resources = options.resources || new ResourceAdmission({dataDir: options.dataDir});
     this.root = resolve(options.dataDir, "clips");
     mkdirSync(this.root, { recursive: true, mode: 0o700 });
     options.store.db.exec("CREATE TABLE IF NOT EXISTS clips(id TEXT PRIMARY KEY,design_id TEXT NOT NULL REFERENCES designs(id),job TEXT NOT NULL,project TEXT NOT NULL)");
@@ -107,13 +124,17 @@ export class ClipJobs {
     const job: ClipJob = { id: randomUUID(), designId: snapshot.design.id, revision: snapshot.design.revision, snapshotHash,
       status: "queued", frame: 0, totalFrames: project.format.durationSeconds * project.format.fps,
       format: project.format, createdAt: new Date().toISOString() };
-    this.options.store.db.prepare("INSERT INTO clips VALUES(?,?,?,?)").run(job.id, job.designId, JSON.stringify(job), serialized);
+    const ticket = this.resources.reserve();
+    try { this.options.store.db.prepare("INSERT INTO clips VALUES(?,?,?,?)").run(job.id, job.designId, JSON.stringify(job), serialized); } catch(error) { ticket.release(); throw error; }
+    this.tickets.set(job.id, ticket);
     this.queue.push(job.id); this.process(); return this.get(job.id);
   }
   cancel(id: string) {
     const job = this.get(id);
     if (!["queued", "running"].includes(job.status)) return job;
     this.queue = this.queue.filter(queued => queued !== id);
+    this.tickets.get(id)?.cancel();
+    if(this.active?.id !== id) this.tickets.delete(id);
     this.save({ ...job, status: "cancelled", finishedAt: new Date().toISOString() });
     if (this.active?.id === id) this.active.controller.abort();
     return this.get(id);
@@ -128,14 +149,17 @@ export class ClipJobs {
     if (this.active || this.stopping) return;
     const id = this.queue.shift(); if (!id) return;
     const job = this.get(id), project = this.project(id), dir = join(this.root, id), controller = new AbortController();
-    mkdirSync(dir, { recursive: true, mode: 0o700 });
+    const ticket = this.tickets.get(id)!;
     const input = join(dir, "project.json"), output = join(dir, "product.mp4");
-    writeFileSync(input, JSON.stringify(project), { mode: 0o600 });
-    this.save({ ...job, status: "running" });
     const active = { id, controller, done: Promise.resolve() };
     this.active = active;
     active.done = Promise.resolve().then(async () => {
       try {
+        await ticket.wait();
+        if(this.stopping || controller.signal.aborted) throw new Error("Video export interrupted. Start a new clip.");
+        mkdirSync(dir, { recursive: true, mode: 0o700 });
+        writeFileSync(input, JSON.stringify(project), { mode: 0o600 });
+        this.save({ ...job, status: "running" });
         const base = typeof this.options.serverBaseUrl === "function" ? this.options.serverBaseUrl() : this.options.serverBaseUrl;
         const url = new URL("/render-clip", base).href;
         const receipt = await (this.options.renderer || renderClip)({ project, input, output, url, signal: controller.signal, progress: frame => {
@@ -146,18 +170,18 @@ export class ClipJobs {
           throw new Error("The encoded video does not match the requested design and timeline.");
         if (this.get(id).status === "running") this.save({ ...job, status: "ready", frame: job.totalFrames, finishedAt: new Date().toISOString(), downloadUrl: `/api/clips/${id}/download` });
       } catch (issue) {
-        if (this.get(id).status === "running") this.save({ ...this.get(id), status: "failed", finishedAt: new Date().toISOString(), error: issue instanceof Error ? issue.message : "The video could not be rendered." });
-      } finally { if (this.active?.id === id) this.active = undefined; this.process(); }
+        if (["queued", "running"].includes(this.get(id).status)) this.save({ ...this.get(id), status: "failed", finishedAt: new Date().toISOString(), error: issue instanceof Error ? issue.message : "The video could not be rendered." });
+      } finally { ticket.release(); this.tickets.delete(id); if (this.active?.id === id) this.active = undefined; this.process(); }
     });
   }
   async close() {
     this.stopping = true;
-    for (const id of this.queue.splice(0)) this.save({ ...this.get(id), status: "failed", error: "Video export interrupted. Start a new clip.", finishedAt: new Date().toISOString() });
+    for (const id of this.queue.splice(0)) { this.tickets.get(id)?.cancel(); this.tickets.delete(id); this.save({ ...this.get(id), status: "failed", error: "Video export interrupted. Start a new clip.", finishedAt: new Date().toISOString() }); }
     const active = this.active;
     if (active) {
       const job = this.get(active.id);
-      if (job.status === "running") this.save({ ...job, status: "failed", error: "Video export interrupted. Start a new clip.", finishedAt: new Date().toISOString() });
-      active.controller.abort(); await active.done;
+      if (["queued", "running"].includes(job.status)) this.save({ ...job, status: "failed", error: "Video export interrupted. Start a new clip.", finishedAt: new Date().toISOString() });
+      this.tickets.get(active.id)?.cancel(); active.controller.abort(); await active.done;
     }
   }
 }

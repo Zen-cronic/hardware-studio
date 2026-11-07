@@ -1,4 +1,5 @@
 import Database from "better-sqlite3";
+import { aiBudgetConfig, type AiBudgetPolicy } from "./config";
 import { randomBytes, createHash } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
@@ -43,7 +44,8 @@ interface OperationRow {
 }
 export class Store {
   db: Database.Database;
-  constructor(path: string) {
+  constructor(path: string, private aiPolicy: AiBudgetPolicy = aiBudgetConfig({})) {
+    if (!Number.isFinite(aiPolicy.budgetUsd) || aiPolicy.budgetUsd < 0 || !Number.isFinite(aiPolicy.reservationUsd) || aiPolicy.reservationUsd < 1) throw new Error("Invalid AI budget configuration.");
     if (path !== ":memory:") mkdirSync(dirname(path), { recursive: true });
     this.db = new Database(path);
     this.db.pragma("journal_mode = WAL");
@@ -353,15 +355,15 @@ export class Store {
             "SELECT COALESCE(SUM(spent+reserved),0) AS total FROM ai_usage",
           )
           .get() as { total: number };
-        if (used.total + 1 > 50)
+        if (used.total + this.aiPolicy.reservationUsd > this.aiPolicy.budgetUsd)
           throw new HttpError(
             429,
             "The configured AI spending limit has been reached. Manual editing remains available.",
             "BUDGET_LIMIT",
           );
         this.db
-          .prepare("INSERT INTO ai_usage VALUES(?,?,?,1,0,0,0)")
-          .run(id, new Date().toISOString(), "reserved");
+          .prepare("INSERT INTO ai_usage VALUES(?,?,?,?,0,0,0)")
+          .run(id, new Date().toISOString(), "reserved", this.aiPolicy.reservationUsd);
       })
       .immediate();
   }
@@ -388,7 +390,7 @@ export class Store {
   }
   failAi(id: string, possiblyCharged: boolean) {
     this.db
-      .prepare("UPDATE ai_usage SET status=?,reserved=?,spent=? WHERE id=?")
+      .prepare("UPDATE ai_usage SET status=?,reserved=CASE WHEN ? THEN reserved ELSE 0 END,spent=? WHERE id=?")
       .run("failed", possiblyCharged ? 1 : 0, 0, id);
   }
   close() {

@@ -4,6 +4,7 @@ import { mkdirSync,writeFileSync,readFileSync } from 'node:fs';
 import { join,resolve } from 'node:path';
 import { Store,HttpError } from './store';
 import { startCadWorker } from './cad-worker';
+import { ResourceAdmission, type ResourceTicket } from './resource-admission';
 import type { ImportRecord,ImportJob,ImportFormat,ReconstructionResult } from '../src/shared/imports';
 const MAX_BYTES=8*1024*1024;
 const token=(r:FastifyRequest)=>r.headers.authorization?.replace(/^Bearer /,'')||'';
@@ -31,10 +32,10 @@ export function resolveImportGeometry(store:Store,designId:string,importId:strin
  return {path:record.sourcePath,format:record.format,scaleToMm:job.scaleToMm,bodyIndex:job.bodyIndex,sourceHash:record.sourceHash,importId:record.id,importJobId:job.id,importInputHash:job.result!.inputHash};
 }
 export class ImportJobs {
- private queue:{job:ImportJob;record:StoredImport}[]=[];
- private active?:{worker:ReturnType<typeof startCadWorker>;done:Promise<void>};
+ private queue:{job:ImportJob;record:StoredImport;ticket:ResourceTicket}[]=[];
+ private active?:{ticket:ResourceTicket;worker?:ReturnType<typeof startCadWorker>;done:Promise<void>};
  private stopping=false;
- constructor(private store:Store,private dataDir:string,private python:string){
+ constructor(private store:Store,private dataDir:string,private python:string,private resources=new ResourceAdmission({dataDir})){
   store.db.exec(`CREATE TABLE IF NOT EXISTS imported_sources(id TEXT PRIMARY KEY,design_id TEXT NOT NULL,record TEXT NOT NULL);
    CREATE TABLE IF NOT EXISTS import_jobs(id TEXT PRIMARY KEY,import_id TEXT NOT NULL,job TEXT NOT NULL);
    CREATE TABLE IF NOT EXISTS import_acceptances(job_id TEXT PRIMARY KEY,input_hash TEXT NOT NULL,result TEXT NOT NULL);`);
@@ -55,20 +56,25 @@ export class ImportJobs {
   const initialScaleToMm=scale(body.scaleToMm);
   if(typeof body.contentBase64!=='string'||body.contentBase64.length>Math.ceil(MAX_BYTES/3)*4||!body.contentBase64.length||/[^A-Za-z0-9+/=]/.test(body.contentBase64)||body.contentBase64.length%4!==0)throw new HttpError(413,'Source must be valid base64 and no larger than 8 MB.');
   const data=Buffer.from(body.contentBase64,'base64');if(data.toString('base64')!==body.contentBase64||data.length>MAX_BYTES||!data.length)throw new HttpError(413,'Source must be 1 byte to 8 MB.');
+  const ticket=this.resources.reserve();
+  try {
   const id=randomUUID(),directory=resolve(this.dataDir,'imports',id);mkdirSync(directory,{recursive:true});
   const sourcePath=join(directory,'original.'+format);writeFileSync(sourcePath,data,{flag:'wx',mode:0o400});
   const record:StoredImport={id,designId,filename:body.filename,format:format as ImportFormat,byteLength:data.length,sourceHash:hash(data),initialScaleToMm,createdAt:new Date().toISOString(),latestJobId:'',sourcePath};
-  this.saveRecord(record);this.enqueue(record,'inspect',{scaleToMm:initialScaleToMm,bodyIndex:0});return this.get(id);
+  this.saveRecord(record);this.enqueue(record,'inspect',{scaleToMm:initialScaleToMm,bodyIndex:0},ticket);return this.get(id);
+  }catch(error){ticket.release();throw error;}
  }
  reconstruct(id:string,body:any){const record=stored(this.store,id);this.enqueue(record,'reconstruct',body);return this.get(id);}
  private capacity(){if(this.stopping||this.queue.length>=8)throw new HttpError(429,'Several imports are waiting. Try again shortly.');}
- private enqueue(record:StoredImport,action:ImportJob['action'],body:any){
+ private enqueue(record:StoredImport,action:ImportJob['action'],body:any,reserved?:ResourceTicket){
   this.capacity();if(record.latestJobId&&['queued','running'].includes(jobFromStore(this.store,record.latestJobId).status))throw new HttpError(409,'Wait for this source operation to finish.');
   const bodyIndex=body?.bodyIndex??0;if(!Number.isInteger(bodyIndex)||bodyIndex<0||bodyIndex>15)throw new HttpError(422,'Select a valid source body.');
   const scaleToMm=scale(body?.scaleToMm);const toleranceMm=action==='reconstruct'?body?.toleranceMm:undefined;
   if(action==='reconstruct'&&(typeof toleranceMm!=='number'||!Number.isFinite(toleranceMm)||toleranceMm<.001||toleranceMm>1))throw new HttpError(422,'Fit tolerance must be 0.001–1 mm.');
   bytes(record);const job:ImportJob={id:randomUUID(),importId:record.id,action,status:'queued',bodyIndex,scaleToMm,toleranceMm,createdAt:new Date().toISOString()};
-  this.saveJob(job);record.latestJobId=job.id;this.saveRecord(record);this.queue.push({job,record});this.process();
+  const ticket=reserved||this.resources.reserve();
+  try{this.saveJob(job);record.latestJobId=job.id;this.saveRecord(record);}catch(error){ticket.release();throw error;}
+  this.queue.push({job,record,ticket});this.process();
  }
  accept(id:string,body:any){
   const record=stored(this.store,id);const job=jobFromStore(this.store,String(body?.jobId||''));
@@ -85,19 +91,22 @@ export class ImportJobs {
   })();
  }
  private process(){
-  if(this.active||this.stopping)return;const next=this.queue.shift();if(!next)return;const {job,record}=next;
-  const directory=resolve(this.dataDir,'imports',record.id,job.id);mkdirSync(directory,{recursive:true});const inputPath=join(directory,'input.json');
-  writeFileSync(inputPath,JSON.stringify({action:job.action,geometry:{path:record.sourcePath,format:record.format,scaleToMm:job.scaleToMm},bodyIndex:job.bodyIndex,toleranceMm:job.toleranceMm}));
-  this.saveJob({...job,status:'running'});
-  const worker=startCadWorker(this.python,['-m','cad.reconstruction','--input',inputPath],{cwd:process.cwd(),timeoutMs:150000,maxOutputBytes:32_000_000,acceptedExitCodes:[0,2]});
-  const done=(async()=>{try{
+  if(this.active||this.stopping)return;const next=this.queue.shift();if(!next)return;const {job,record,ticket}=next;
+  const active:NonNullable<ImportJobs["active"]>={ticket,done:Promise.resolve()};this.active=active;
+  active.done=Promise.resolve().then(async()=>{try{
+   await ticket.wait();if(this.stopping)throw new Error('Import interrupted. Try again.');
+   const directory=resolve(this.dataDir,'imports',record.id,job.id);mkdirSync(directory,{recursive:true});const inputPath=join(directory,'input.json');
+   writeFileSync(inputPath,JSON.stringify({action:job.action,geometry:{path:record.sourcePath,format:record.format,scaleToMm:job.scaleToMm},bodyIndex:job.bodyIndex,toleranceMm:job.toleranceMm}));
+   this.saveJob({...job,status:'running'});
+   const worker=startCadWorker(this.python,['-m','cad.reconstruction','--input',inputPath],{cwd:process.cwd(),timeoutMs:150000,maxOutputBytes:32_000_000,acceptedExitCodes:[0,2]});active.worker=worker;
    const output=await worker.result;const result=JSON.parse(output.trim().split('\n').at(-1)||'') as ReconstructionResult;
    if(typeof result.status!=='string'||result.sourceHash!==record.sourceHash||!result.inputHash)throw new Error('Import did not return a source-bound result.');
    bytes(record);this.saveJob({...job,status:'ready',result,finishedAt:new Date().toISOString()});
   }catch(error){this.saveJob({...job,status:'failed',error:error instanceof Error?error.message:'Import failed.',finishedAt:new Date().toISOString()});}
-  finally{this.active=undefined;this.process();}})();this.active={worker,done};
+  finally{ticket.release();this.active=undefined;this.process();}});
  }
- async close(){this.stopping=true;for(const {job} of this.queue.splice(0))this.saveJob({...job,status:'failed',error:'Import interrupted. Try again.'});this.active?.worker.cancel();await this.active?.done;}
+ async close(){this.stopping=true;for(const {job,ticket} of this.queue.splice(0)){ticket.cancel();this.saveJob({...job,status:'failed',error:'Import interrupted. Try again.'});}this.active?.ticket.cancel();this.active?.worker?.cancel();await this.active?.done;}
+
 }
 export function registerImportRoutes(app:FastifyInstance,store:Store,jobs:ImportJobs){
  app.get('/api/designs/:id/imports',async r=>{const id=String((r.params as any).id);store.authorize(id,token(r));return jobs.list(id);});
