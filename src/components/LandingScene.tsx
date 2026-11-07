@@ -1,4 +1,4 @@
-import { Component, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Component, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Edges } from "@react-three/drei";
 import * as THREE from "three";
@@ -58,19 +58,20 @@ function Workbench(){
     {[0,1,2].map(i=><group key={i} position={[315+i*19,-3,75]} rotation={[Math.PI/2,0,.25]}><mesh castShadow><cylinderGeometry args={[2,2,20,12]}/><meshStandardMaterial color={colors.border} metalness={.95} roughness={.2}/></mesh><mesh castShadow position={[0,11,0]}><cylinderGeometry args={[4.5,4.5,4,6]}/><meshStandardMaterial color={colors.text} metalness={.9} roughness={.28}/></mesh></group>)}
   </group>;
 }
-function Scene({parts,playing,separated,manual,reduced,progress,diameter,onReady,onAssembly}:Props){
+function Scene({parts,playing,separated,manual,reduced,progress,diameter,onReady,onAssembly,annotations}:Props & {annotations:RefObject<SVGSVGElement|null>}){
   const meshes=useRef<(THREE.Object3D|null)[]>([]), model=useRef<THREE.Group>(null);
   const lastFrame=useRef<number|null>(null);
   const elapsed=useRef(0),amount=useRef(0),tick=useRef(0),reported=useRef(-1);
-  const {camera,size,gl,scene,invalidate}=useThree();
+  const {camera,size,gl,scene,invalidate,pointer}=useThree();
+  const cameraTarget=useMemo(()=>new THREE.Vector3(),[]),lookTarget=useMemo(()=>new THREE.Vector3(),[]);
   const mobile=size.width<=700;
   const geometries=useMemo(()=>parts.map(p=>featuredGeometry(p,false)),[parts]);
   const brushed=useMemo(()=>surfaceTexture(),[]);
   useEffect(()=>()=>brushed.dispose(),[brushed]);
   useEffect(()=>()=>geometries.forEach(g=>g.dispose()),[geometries]);
   const offsets=useMemo(()=>parts.map(p=>{
-    const y=p.position[1],lift=y>190?80:y>160?48:y>130?28:y>70?12:0;
-    return new THREE.Vector3(y>190?26:y>160?-18:0,lift,0);
+    const y=p.position[1],integral=["motor-pilot","motor-shaft"].includes(p.id),lift=integral?0:y>190?80:y>160?52:y>130?34:y>70?12:0;
+    return new THREE.Vector3(integral?0:y>190?78:y>160?-55:y>130?25:y>70?-30:0,lift,0);
   }),[parts]);
   useEffect(()=>{
     const centerY=mobile?260:110;
@@ -102,13 +103,48 @@ function Scene({parts,playing,separated,manual,reduced,progress,diameter,onReady
       amount.current=THREE.MathUtils.damp(amount.current,target,4,dt);
     }
     const t=elapsed.current;
-    if(model.current){model.current.position.x=mobile?0:165;model.current.rotation.y=reduced?-.25:-.25+Math.sin(t*.16)*.18+progress*.7;}
+    const inspection=smooth(.04,.22,progress), plan=smooth(.62,.90,progress);
+    if (active || reduced || tick.current < 2) {
+      const centerY=mobile?260-inspection*65:110;
+      cameraTarget.set(420 - inspection * 180 - plan * 40, centerY + 340 - inspection*140 + plan * 260, 640 + inspection * 80 - plan * 150);
+      if (!reduced) {cameraTarget.x += pointer.x * 25;cameraTarget.y += pointer.y * 12;}
+      camera.position.lerp(cameraTarget, reduced || tick.current < 2 ? 1 : 1-Math.exp(-4*dt));
+      lookTarget.set(0, centerY, 0);camera.lookAt(lookTarget);
+    }
+    if(model.current){model.current.position.x=mobile?0:165-inspection*165-plan*90;model.current.rotation.y=reduced?-.25:-.25+Math.sin(t*.16)*.18+inspection*.45-plan*.4;}
     parts.forEach((p,i)=>{
       const m=meshes.current[i];if(!m)return;
       const pose=motionPose(p,parts,t);m.position.set(...pose.position).addScaledVector(offsets[i],amount.current);m.rotation.set(...pose.rotation);
     });
+    if(annotations.current){
+      const overlay=annotations.current;
+      const mode=progress>.62?"dimensions":progress>.10?"mechanism":"none";
+      overlay.dataset.mode=mode;
+      model.current?.updateMatrixWorld(true);
+      const project=(id:string,side:number=0)=>{
+        const i=parts.findIndex(p=>p.id===id),mesh=meshes.current[i];
+        if(!mesh)return null;
+        const point=new THREE.Vector3(side*parts[i].size[0]/2,0,0);mesh.localToWorld(point);point.project(camera);
+        return {x:(point.x*.5+.5)*size.width,y:(-.5*point.y+.5)*size.height};
+      };
+      const bound=(n:number,a:number,b:number)=>Math.max(a,Math.min(b,n));
+      for(const [index,id]of ["motor","shaft","platter"].entries()){
+        const point=project(id),group=overlay.querySelector(`[data-part="${id}"]`);if(!point||!group)continue;
+        const right=index===1,tx=mobile?(right?size.width-18:18):(right?size.width*.79:size.width*.23);
+        const ty=bound(point.y+(index===0?18:index===1?-12:-25),mobile?205:220,size.height-115);
+        group.querySelector("path")?.setAttribute("d",`M${point.x} ${point.y}L${tx+(right?-12:12)} ${ty}L${tx} ${ty}`);
+        const text=group.querySelector("text");text?.setAttribute("x",String(tx));text?.setAttribute("y",String(ty-9));text?.setAttribute("text-anchor",right?"end":"start");
+      }
+      for(const [index,id]of ["platter","base-floor"].entries()){
+        const left=project(id,-1),right=project(id,1),group=overlay.querySelector(`[data-dimension="${id}"]`);if(!left||!right||!group)continue;
+        const y=bound(Math.max(left.y,right.y)+(index?36:-24),mobile?210:240,size.height-100);
+        group.querySelector("path")?.setAttribute("d",`M${left.x} ${left.y}V${y}H${right.x}V${right.y}M${left.x} ${y-4}V${y+4}M${right.x} ${y-4}V${y+4}`);
+        const text=group.querySelector("text");text?.setAttribute("x",String(bound((left.x+right.x)/2,85,size.width-85)));text?.setAttribute("y",String(y+(index||mobile?20:-10)));
+      }
+    }
     const binary=amount.current>=.5?1:0;if(binary!==reported.current){reported.current=binary;onAssembly?.(amount.current);}
     const canvas=gl.domElement;
+    canvas.dataset.cameraView=plan>.9?"dimensions":inspection>.9?"mechanism":"product";canvas.dataset.cameraPosition=camera.position.toArray().map(n=>n.toFixed(2)).join(",");
     canvas.dataset.assemblyAmount=amount.current.toFixed(3);canvas.dataset.elapsed=t.toFixed(3);canvas.dataset.phase=manual?"manual":progress>.62?"dimensions":progress>.04?"assembly":"construction";canvas.dataset.renderCount=String(++tick.current);canvas.dataset.diameter=String(diameter);canvas.dataset.drawCalls=String(gl.info.render.calls);canvas.dataset.triangles=String(gl.info.render.triangles);
     if(tick.current===2)onReady?.();if(tick.current<2)invalidate();
   });
@@ -127,8 +163,14 @@ function Scene({parts,playing,separated,manual,reduced,progress,diameter,onReady
 }
 export default function LandingScene(props:Props){
   const [ready,setReady]=useState(false),[failed,setFailed]=useState(false);
+  const annotations=useRef<SVGSVGElement>(null);
+  const base=props.parts.find(p=>p.id==="base-floor")!;
   return <div className="landing-scene" data-testid="landing-scene" data-motion={props.playing&&!props.reduced?"playing":"paused"} data-assembly={props.separated?"separated":"assembled"} data-scroll={props.progress.toFixed(3)} data-diameter={props.diameter} data-ready={ready} aria-label={failed?"3D preview unavailable":"Motorized turntable on a workbench. The moving camera shows the product it can display."} role={failed?"region":"img"}>
-    <PreviewBoundary onFailure={()=>setFailed(true)}><Canvas style={{position:"absolute",inset:0}} shadows="percentage" orthographic dpr={[1,1.5]} camera={{near:.1,far:3000}} gl={{antialias:true,preserveDrawingBuffer:true}} frameloop={props.playing&&!props.reduced?"always":"demand"}><Scene {...props} onReady={()=>setReady(true)}/></Canvas></PreviewBoundary>
+    <PreviewBoundary onFailure={()=>setFailed(true)}><Canvas style={{position:"absolute",inset:0}} shadows="percentage" orthographic dpr={[1,1.5]} camera={{near:.1,far:3000}} gl={{antialias:true,preserveDrawingBuffer:true}} frameloop={props.playing&&!props.reduced?"always":"demand"}><Scene {...props} annotations={annotations} onReady={()=>setReady(true)}/></Canvas></PreviewBoundary>
+    {ready&&!failed&&<svg className="landing-annotations" ref={annotations} aria-hidden="true">
+      <g className="mechanism-annotations">{[["motor","Drive motor"],["shaft","Drive shaft"],["platter","Rotating platter"]].map(([id,label])=><g key={id} data-part={id}><path/><text>{label}</text></g>)}</g>
+      <g className="dimension-annotations">{[["platter",`Platter ${props.diameter} mm`],["base-floor",`Base ${base.size[0]} mm`]].map(([id,label])=><g key={id} data-dimension={id}><path/><text textAnchor="middle">{label}</text></g>)}</g>
+    </svg>}
     {!ready&&!failed&&<span className="landing-loading">Preparing the 3D design…</span>}
   </div>;
 }
