@@ -357,7 +357,7 @@ function Camera({
       up = new THREE.Vector3().crossVectors(dir, right).normalize();
     const tan = Math.tan((35 * Math.PI) / 360),
       aspect = size.width / size.height,
-      fit = size.width < 600 ? 0.94 : 0.88;
+      fit = size.width < 600 ? 0.97 : 0.9;
     let distance = 1;
     for (const part of parts) {
       const matrix = new THREE.Matrix4().compose(
@@ -510,7 +510,7 @@ export default function ModelCanvas(props: Props) {
   }, []);
   return (
     <div
-      className={"model-canvas" + (compact ? " compact" : "") + (!compact && canSelect ? " is-selectable" : "")}
+      className={"model-canvas" + (compact ? " compact" : "") + (!compact && canSelect ? " is-selectable" : "") + (props.selected ? " has-selection" : "")}
       role={failed || canSelect ? "region" : "img"}
       data-ready={failed ? "error" : ready ? "true" : "false"}
       aria-busy={!ready && !failed}

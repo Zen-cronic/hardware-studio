@@ -837,7 +837,7 @@ export default function Studio({
                   </div>
                 )}
               </div>
-              {selection && editorMode === "selection" && <ContextualGuide snapshot={snapshot} selection={selection} onPrompt={(value) => { setPrompt(value); setEditorMode("prompt"); }} disabled={readOnly || busy} onPreview={(result) => { setProposal({ command:{...result.command,actor}, explanation:result.explanation, source:"local" }); setEditorMode("prompt"); }} />}
+              {selection && editorMode === "selection" && <ContextualGuide snapshot={snapshot} selection={selection} onClearSelection={() => { setSelected(""); setSelection(null); requestAnimationFrame(() => document.querySelector<HTMLElement>('.spatial-selection-list > summary')?.focus()); }} onPrompt={(value) => { setPrompt(value); setEditorMode("prompt"); }} disabled={readOnly || busy} onPreview={(result) => { setProposal({ command:{...result.command,actor}, explanation:result.explanation, source:"local" }); setEditorMode("prompt"); }} />}
               <details className="history-panel">
                 <summary>
                   <RotateCcw size={15} /> Design history{" "}

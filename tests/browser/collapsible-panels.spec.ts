@@ -98,3 +98,24 @@ test('assembly and build open actionable panels and let the model reclaim space'
     await expect(page.locator('.right-panel')).toBeVisible();
   }
 });
+
+
+test('mobile selected-part controls keep keyboard order and return focus when cleared', async ({ page, request }) => {
+  await page.setViewportSize({ width: 375, height: 900 });
+  await openDesign(page, request);
+  const list = page.getByLabel('Choose a part from the list', { exact: true });
+  await list.click();
+  await page.locator('.spatial-selection-list button').first().click();
+  const guide = page.getByRole('region', { name: 'Design guidance' });
+  await expect(guide).toBeVisible();
+  const control = page.getByRole('combobox', { name: 'Selected part control' });
+  await control.focus();
+  await page.keyboard.press('Tab');
+  await expect(guide.getByRole('spinbutton')).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('button', { name: 'Preview change', exact: true })).toBeFocused();
+  await guide.getByRole('button', { name: 'Clear selected part', exact: true }).click();
+  await expect(guide).toHaveCount(0);
+  await expect(list).toBeFocused();
+  await expect(page.locator('.model-canvas')).not.toHaveClass(/has-selection/);
+});

@@ -1,7 +1,7 @@
 :root {
-  --radius: 12px;
-  --font-display: "Sora", sans-serif;
-  --font-body: "Karla", sans-serif;
+  --radius: 9px;
+  --font-display: "Lato", sans-serif;
+  --font-body: "Source Sans 3", sans-serif;
 }
 :root { --line: color-mix(in srgb,var(--border) 40%,transparent); --subtle:color-mix(in srgb,var(--surface) 55%,var(--panel)); --s-hero:4rem; --s-caption:.6875rem; }
 :root body { background:var(--bg); }

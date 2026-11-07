@@ -1,23 +1,23 @@
 :root {
-  --bg: #f3f7ff;
-  --surface: #d6e7ff;
-  --text: #132344;
-  --muted: #405576;
-  --border: #627ba4;
-  --primary: #a2c7ff;
-  --focus: #8b204b;
+  --bg: #F2F3F3;
+  --surface: #DEE5E8;
+  --text: #253740;
+  --muted: #4C626D;
+  --border: #71858F;
+  --primary: #B8CFD8;
+  --focus: #8B204B;
   --success: #166148;
   --warning: #725900;
-  --danger: #ad233f;
-  --white: #ffffff;
-  --panel: #ffffff;
-  --action: #245ba8;
-  --on-primary: #132344;
-  --on-action: #ffffff;
+  --danger: #AD233F;
+  --white: #FFFFFF;
+  --panel: #FFFFFF;
+  --action: #315E70;
+  --on-primary: #253740;
+  --on-action: #FFFFFF;
   --line: color-mix(in srgb, var(--border) 24%, transparent);
   --subtle: color-mix(in srgb, var(--border) 10%, var(--bg));
-  --font-body: "Karla", sans-serif;
-  --font-display: "Sora", sans-serif;
+  --font-body: "Source Sans 3", sans-serif;
+  --font-display: "Lato", sans-serif;
   --font-mono: "IBM Plex Mono", monospace;
   --s-xs: 0.75rem;
   --s-sm: 0.875rem;
@@ -84,7 +84,7 @@ h2,
 h3,
 h4 {
   font-family: var(--font-display);
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.15;
 }
 h1 {

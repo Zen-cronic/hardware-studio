@@ -108,7 +108,7 @@ export function ClipPreview({ project, frame, onRendered }: { project: ClipProje
       <h1 style={{ fontFamily: "var(--font-display)", fontSize: "3.3cqw", lineHeight: 1.12, letterSpacing: "-.035em", margin: "0 0 1cqw", textWrap: "balance", overflowWrap: "anywhere", display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: 2, overflow: "hidden" }}>{state.title}</h1>
       <p style={{ fontFamily: "var(--font-body)", fontSize: "1.35cqw", margin: 0, lineHeight: 1.4 }}>{state.subtitle}</p>
     </div>
-    <div style={{ position: "absolute", right: "4.5%", top: "5%", fontFamily: "var(--font-display)", color: colors.text, fontWeight: 600, fontSize: "1.2cqw" }}>Hardware Studio</div>
+    <div style={{ position: "absolute", right: "4.5%", top: "5%", fontFamily: "var(--font-display)", color: colors.text, fontWeight: 700, fontSize: "1.2cqw" }}>Hardware Studio</div>
     {error && <p role="alert" style={{ position: "absolute", inset: "40% 10%", background: colors.panel, color: colors.danger, padding: 20 }}>Video preview unavailable. {error}</p>}
   </div>;
 }

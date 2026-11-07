@@ -5,6 +5,7 @@ import {
   type SelectionRef, type SemanticEdit, type SemanticEditPreview,
 } from "../shared/selection";
 import { colors } from "../lib/tokens";
+import { X } from "lucide-react";
 
 type Props = {
   snapshot: Snapshot;
@@ -12,8 +13,9 @@ type Props = {
   onPrompt: (prompt: string) => void;
   onPreview?: (result: SemanticEditPreview) => void;
   disabled?: boolean;
+  onClearSelection?: () => void;
 };
-export default function ContextualGuide({ snapshot, selection, onPrompt, onPreview, disabled }: Props) {
+export default function ContextualGuide({ snapshot, selection, onPrompt, onPreview, disabled, onClearSelection }: Props) {
   const [advanced, setAdvanced] = useState(() => {
     try { return localStorage.getItem("hardware-studio-guidance") === "advanced"; } catch { return false; }
   });
@@ -40,7 +42,9 @@ export default function ContextualGuide({ snapshot, selection, onPrompt, onPrevi
         setAdvanced(!advanced);
         try { localStorage.setItem("hardware-studio-guidance", !advanced ? "advanced" : "guided"); } catch { /* Browser storage is optional. */ }
       }}>{advanced ? "Advanced" : "Guided"}</button>
+      {onClearSelection && <button type="button" className="button icon-only mobile-clear-selection" aria-label="Clear selected part" onClick={onClearSelection}><X size={14}/></button>}
     </div>
+    {context.parts.length === 1 && <p className="mobile-selection-detail">{context.parts[0].material} / {context.parts[0].size.map(v => Math.round(v)).join(" × ")} mm</p>}
     {context.stale ? <p role="status" style={{ color: colors.warning, fontSize: "var(--s-sm)" }}>The design changed. Select the part again to keep your request attached to the right revision.</p> : <>
       {!advanced && <p style={{ fontSize: "var(--s-xs)", color: colors.muted, lineHeight: 1.5, margin: "8px 0 12px" }}>
         {context.parts.length ? "Preview your change before accepting it." : "Click or circle a part, describe what you want it to do, and review the proposed change before accepting."}
@@ -63,13 +67,13 @@ export default function ContextualGuide({ snapshot, selection, onPrompt, onPrevi
           </select>
         </label>
         {control && <>
-          {!advanced && <p style={{ fontSize: "var(--s-xs)", color: colors.muted, lineHeight: 1.5, margin: "8px 0" }}>{control.description}</p>}
           <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "var(--s-xs)", margin: "10px 0" }}>
             <span style={{ flex: 1 }}>New value ({control.unit})</span>
             <input aria-label={`New ${control.label.toLowerCase()}`} type="number" min={control.min} max={control.max} step="any" value={value} disabled={unavailable}
               style={{ width: 100 }} onChange={event => setValue(event.target.value)} />
           </label>
           <button type="submit" className="button primary" disabled={unavailable || !value.trim()}>Preview change</button>
+          {!advanced && <p style={{ fontSize: "var(--s-xs)", color: colors.muted, lineHeight: 1.5, margin: "8px 0" }}>{control.description}</p>}
         </>}
       </form>}
       <details className="suggested-requests"><summary>Suggested requests</summary><div style={{ display: "grid", gap: 6, marginTop: 8 }}>
