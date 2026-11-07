@@ -64,6 +64,7 @@ function Scene({parts,playing,separated,manual,reduced,progress,diameter,onReady
   const elapsed=useRef(0),amount=useRef(0),tick=useRef(0),reported=useRef(-1);
   const {camera,size,gl,scene,invalidate,pointer}=useThree();
   const cameraTarget=useMemo(()=>new THREE.Vector3(),[]),lookTarget=useMemo(()=>new THREE.Vector3(),[]);
+  const payloadBounds=useMemo(()=>new THREE.Box3(),[]),annotationPoint=useMemo(()=>new THREE.Vector3(),[]);
   const mobile=size.width<=700;
   const geometries=useMemo(()=>parts.map(p=>featuredGeometry(p,false)),[parts]);
   const brushed=useMemo(()=>surfaceTexture(),[]);
@@ -135,11 +136,24 @@ function Scene({parts,playing,separated,manual,reduced,progress,diameter,onReady
         group.querySelector("path")?.setAttribute("d",`M${point.x} ${point.y}L${tx+(right?-12:12)} ${ty}L${tx} ${ty}`);
         const text=group.querySelector("text");text?.setAttribute("x",String(tx));text?.setAttribute("y",String(ty-9));text?.setAttribute("text-anchor",right?"end":"start");
       }
+      let payloadBottom=-Infinity;
+      const payload=meshes.current[parts.findIndex(p=>p.role==="reference")];
+      if(mode==="dimensions"&&payload){
+        payloadBounds.setFromObject(payload);
+        let left=Infinity,right=-Infinity,top=Infinity;
+        for(const x of [payloadBounds.min.x,payloadBounds.max.x])for(const y of [payloadBounds.min.y,payloadBounds.max.y])for(const z of [payloadBounds.min.z,payloadBounds.max.z]){
+          annotationPoint.set(x,y,z).project(camera);
+          const px=(annotationPoint.x*.5+.5)*size.width,py=(-.5*annotationPoint.y+.5)*size.height;
+          left=Math.min(left,px);right=Math.max(right,px);top=Math.min(top,py);payloadBottom=Math.max(payloadBottom,py);
+        }
+        overlay.dataset.payloadBounds=JSON.stringify({left,right,top,bottom:payloadBottom});
+      }
       for(const [index,id]of ["platter","base-floor"].entries()){
         const left=project(id,-1),right=project(id,1),group=overlay.querySelector(`[data-dimension="${id}"]`);if(!left||!right||!group)continue;
-        const y=bound(Math.max(left.y,right.y)+(index?36:-24),mobile?210:240,size.height-100);
+        const dimensionY=Math.max(left.y,right.y)+(index?36:-24);
+        const y=bound(index?dimensionY:Math.max(dimensionY,payloadBottom+12),mobile?210:240,size.height-100);
         group.querySelector("path")?.setAttribute("d",`M${left.x} ${left.y}V${y}H${right.x}V${right.y}M${left.x} ${y-4}V${y+4}M${right.x} ${y-4}V${y+4}`);
-        const text=group.querySelector("text");text?.setAttribute("x",String(bound((left.x+right.x)/2,85,size.width-85)));text?.setAttribute("y",String(y+(index||mobile?20:-10)));
+        const text=group.querySelector("text");text?.setAttribute("x",String(bound((left.x+right.x)/2,85,size.width-85)));text?.setAttribute("y",String(y+20));
       }
     }
     const binary=amount.current>=.5?1:0;if(binary!==reported.current){reported.current=binary;onAssembly?.(amount.current);}
