@@ -158,8 +158,9 @@ function PartMesh({
     referencePreview = reference && !!onSelect;
   const materialColor = useMemo(() => {
     const c = new THREE.Color(part.color);
+    if (isSelected) c.lerp(new THREE.Color(colors.focus), 0.3);
     return metal ? c.multiplyScalar(0.82) : c;
-  }, [part.color, metal]);
+  }, [part.color, metal, isSelected]);
   useFrame(() => {
     const m = ref.current;
     if (!m) return;
@@ -220,7 +221,7 @@ function PartMesh({
               : colors.text
         }
         emissiveIntensity={
-          isSelected ? 0.1 : part.id === "led" ? 0.25 : 0
+          isSelected ? 0.3 : part.id === "led" ? 0.25 : 0
         }
         transparent={
           ghost || referencePreview || /water|glass/i.test(part.material)
@@ -230,7 +231,7 @@ function PartMesh({
           ghost
             ? 0.18
             : referencePreview
-              ? 0.34
+              ? (selected || selectedPartIds?.length ? 0.08 : 0.14)
               : /water|glass/i.test(part.material)
                 ? 0.58
                 : 1
@@ -239,6 +240,7 @@ function PartMesh({
       {(!reference || referencePreview || isSelected) && (
         <Edges
           threshold={24}
+          lineWidth={isSelected ? 2 : 1}
           color={
             isSelected
               ? colors.focus
@@ -253,7 +255,7 @@ function PartMesh({
               : ghost
                 ? 0.07
                 : referencePreview
-                  ? 0.45
+                  ? (selected || selectedPartIds?.length ? 0.16 : 0.24)
                   : 0.38
           }
         />
@@ -354,7 +356,8 @@ function Camera({
         .normalize(),
       up = new THREE.Vector3().crossVectors(dir, right).normalize();
     const tan = Math.tan((35 * Math.PI) / 360),
-      aspect = size.width / size.height;
+      aspect = size.width / size.height,
+      fit = size.width < 600 ? 0.94 : 0.88;
     let distance = 1;
     for (const part of parts) {
       const matrix = new THREE.Matrix4().compose(
@@ -393,12 +396,12 @@ function Camera({
         const v = point.applyMatrix4(matrix).sub(center);
         distance = Math.max(
           distance,
-          v.dot(dir) + Math.abs(v.dot(right)) / (tan * aspect * 0.83),
-          v.dot(dir) + Math.abs(v.dot(up)) / (tan * 0.83),
+          v.dot(dir) + Math.abs(v.dot(right)) / (tan * aspect * fit),
+          v.dot(dir) + Math.abs(v.dot(up)) / (tan * fit),
         );
       }
     }
-    const destination = center.clone().addScaledVector(dir, distance * 1.08);
+    const destination = center.clone().addScaledVector(dir, distance * 1.03);
     if (isExplosionChange && !reduced && ref.current) {
       cameraTween.current = { from: camera.position.clone(), to: destination,
         fromTarget: ref.current.target.clone(), toTarget: center.clone(), elapsed: 0, last: performance.now() };

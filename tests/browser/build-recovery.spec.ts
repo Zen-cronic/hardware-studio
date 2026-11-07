@@ -1,3 +1,4 @@
+import { openDimensions } from './workspace-tools';
 import {test,expect} from '@playwright/test';
 import {createHash} from 'node:crypto';
 const sha=(bytes:Buffer)=>createHash('sha256').update(bytes).digest('hex');
@@ -20,7 +21,7 @@ test('real package survives a failed status request, reload, newer revision and 
  await expect(page.getByText('Could not check your package. Trying again…',{exact:true})).toHaveCount(0);
  const archive=await request.get('/api/builds/'+job.id+'/download',{headers:{Authorization:'Bearer '+created.access.editorToken}});expect(archive.status()).toBe(200);const originalHash=sha(await archive.body());
  await page.reload();await page.getByRole('tab',{name:'Build',exact:true}).click();await expect(download).toBeVisible();expect(await download.getAttribute('href')).toContain('/api/builds/'+job.id+'/download');expect(builds).toBe(1);
- await page.getByRole('tab',{name:'Design',exact:true}).click();await page.getByTestId('param-scale').fill('1.2');await page.getByTestId('apply-dimensions').click();
+ await page.getByRole('tab',{name:'Design',exact:true}).click();{ await openDimensions(page); await page.getByTestId('param-scale').fill('1.2'); }await page.getByTestId('apply-dimensions').click();
  await expect(page.getByText('Design updated. Parts and assembly now match.')).toBeVisible();
  await page.getByRole('tab',{name:'Build',exact:true}).click();await expect(page.getByText('Revision 0 / An earlier version of this design',{exact:true})).toBeVisible();
  await page.screenshot({path:info.outputPath('recovered-earlier-package.png')});

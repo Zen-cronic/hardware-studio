@@ -36,7 +36,7 @@ export default function LandingBuildStory({parts,navigate}:{parts:Part[];navigat
       </div>
     </section>
     <section className="landing-examples" aria-labelledby="landing-examples-title">
-      <header><div><p className="eyebrow">Working designs, ready to explore</p><h2 id="landing-examples-title">Find your next build.</h2></div><button className="button primary" onClick={()=>navigate('/browse')}>Browse all designs <ChevronRight size={18}/></button></header>
+      <header><div><h2 id="landing-examples-title">Find your next build.</h2></div><button className="button primary" onClick={()=>navigate('/browse')}>Browse all designs <ChevronRight size={18}/></button></header>
       <div className="landing-example-list">{products.map(product=><button className="landing-example" key={product.kind} onClick={()=>navigate('/designs/'+product.kind)} aria-label={`Explore ${product.name}`}>
         <img src={`/previews/${product.kind}.png`} alt="" loading="lazy" width="1100" height={product.kind==='turntable'?1150:760}/>
         <span>{product.name}</span>

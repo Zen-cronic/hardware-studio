@@ -33,9 +33,9 @@ export default function ContextualGuide({ snapshot, selection, onPrompt, onPrevi
   useEffect(() => { setControlId(context.controls[0]?.id || ""); setError(""); }, [selection, snapshot.design.revision]);
   useEffect(() => { setValue(control ? String(control.value) : ""); setError(""); }, [control?.id, control?.value]);
   const unavailable = !!disabled || context.stale || snapshot.role === "viewer";
-  return <section aria-label="Design guidance" style={{ border: `1px solid ${colors.border}`, borderRadius: 10, padding: 14, background: colors.panel }}>
+  return <section className="contextual-guide" aria-label="Design guidance" style={{ border: `1px solid ${colors.border}`, borderRadius: 10, padding: 14, background: colors.panel }}>
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
-      <strong style={{ fontSize: "var(--s-sm)" }}>{context.parts.length ? "Work on your selection" : "Where to start"}</strong>
+      <strong style={{ fontSize: "var(--s-sm)" }}>{context.parts.length === 1 ? context.parts[0].name : context.parts.length ? "Selected parts" : "Where to start"}</strong>
       <button type="button" className="button" aria-pressed={advanced} onClick={() => {
         setAdvanced(!advanced);
         try { localStorage.setItem("hardware-studio-guidance", !advanced ? "advanced" : "guided"); } catch { /* Browser storage is optional. */ }
@@ -43,13 +43,8 @@ export default function ContextualGuide({ snapshot, selection, onPrompt, onPrevi
     </div>
     {context.stale ? <p role="status" style={{ color: colors.warning, fontSize: "var(--s-sm)" }}>The design changed. Select the part again to keep your request attached to the right revision.</p> : <>
       {!advanced && <p style={{ fontSize: "var(--s-xs)", color: colors.muted, lineHeight: 1.5, margin: "8px 0 12px" }}>
-        {context.parts.length ? `${context.parts.map(part => part.name).join(", ")}. Describe the outcome you want, review the affected parts, then accept the change.` : "Click or circle a part, describe what you want it to do, and review the proposed change before accepting."}
+        {context.parts.length ? "Preview your change before accepting it." : "Click or circle a part, describe what you want it to do, and review the proposed change before accepting."}
       </p>}
-      <div style={{ display: "grid", gap: 6, marginTop: 8 }}>
-        {context.suggestions.map(prompt => <button key={prompt} type="button" className="button" disabled={unavailable}
-          style={{ whiteSpace: "normal", textAlign: "left", justifyContent: "flex-start", fontSize: "var(--s-xs)", lineHeight: 1.45, padding: "8px 10px" }}
-          onClick={() => onPrompt(prompt)}>{prompt}</button>)}
-      </div>
       {!!context.controls.length && onPreview && <form aria-label="Preview a selected-part edit" style={{ borderTop: `1px solid ${colors.surface}`, marginTop: 12, paddingTop: 12 }} onSubmit={event => {
         event.preventDefault();
         if (!control || !selection || unavailable) return;
@@ -77,6 +72,11 @@ export default function ContextualGuide({ snapshot, selection, onPrompt, onPrevi
           <button type="submit" className="button primary" disabled={unavailable || !value.trim()}>Preview change</button>
         </>}
       </form>}
+      <details className="suggested-requests"><summary>Suggested requests</summary><div style={{ display: "grid", gap: 6, marginTop: 8 }}>
+        {context.suggestions.map(prompt => <button key={prompt} type="button" className="button" disabled={unavailable}
+          style={{ whiteSpace: "normal", textAlign: "left", justifyContent: "flex-start", fontSize: "var(--s-xs)", lineHeight: 1.45, padding: "8px 10px" }}
+          onClick={() => onPrompt(prompt)}>{prompt}</button>)}
+      </div></details>
       {!!selection && !context.controls.length && <p style={{ fontSize: "var(--s-xs)", color: colors.muted, lineHeight: 1.5 }}>Select one fabricated part to change a local dimension. Reference and purchased components keep their measured dimensions.</p>}
       {!advanced && <details style={{ fontSize: "var(--s-xs)", color: colors.muted, marginTop: 12 }}>
         <summary style={{ cursor: "pointer", color: colors.action }}>What do these terms mean?</summary>

@@ -1,3 +1,4 @@
+import { openDimensions, closePanels } from './workspace-tools';
 import { test, expect } from "@playwright/test";
 
 test("mounting channels and counterbores remain visible through scaled save and package export", async ({
@@ -54,23 +55,19 @@ test("mounting channels and counterbores remain visible through scaled save and 
     "data-ready",
     "true",
   );
-  await page.getByTestId("param-scale").fill("1.5");
+  { await openDimensions(page); await page.getByTestId("param-scale").fill("1.5"); }
   await page.getByTestId("apply-dimensions").click();
   await expect(
     page.getByText("Design updated. Parts and assembly now match."),
   ).toBeVisible();
   await page.reload();
-  await expect(page.getByTestId("param-scale")).toHaveValue("1.5");
+  { await openDimensions(page); await expect(page.getByTestId("param-scale")).toHaveValue("1.5"); }
   await expect(page.locator(".scene-panel .model-canvas")).toHaveAttribute(
     "data-ready",
     "true",
   );
-  await page
-    .getByRole("button", { name: "Collapse left panel", exact: true })
-    .click();
-  await page
-    .getByRole("button", { name: "Collapse right panel", exact: true })
-    .click();
+  await closePanels(page);
+  await closePanels(page);
   await page.screenshot({
     path: ".artifacts/mounting-features-desktop.png",
     fullPage: true,

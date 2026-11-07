@@ -1,3 +1,4 @@
+import {openPrompt} from './workspace-tools';
 import { test, expect } from "@playwright/test";
 
 for (const width of [1440, 375]) {
@@ -20,10 +21,7 @@ for (const width of [1440, 375]) {
     await page.goto(
       `/studio/${data.snapshot.design.id}#token=${encodeURIComponent(data.access.editorToken)}`,
     );
-    if (width < 600)
-      await page
-        .getByRole("button", { name: "Describe a change", exact: true })
-        .click();
+    await openPrompt(page);
     const prompt = page.getByTestId("design-prompt");
     await prompt.fill("Keep my existing draft.");
     await page

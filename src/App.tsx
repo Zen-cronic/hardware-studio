@@ -159,14 +159,12 @@ function Catalog({ navigate }: { navigate: Navigate }) {
   return (
     <main className="catalog-page">
       <header className="browse-heading">
-        <span className="eyebrow">Working designs, ready for your ideas</span>
         <h1>Find your starting point.</h1>
         <p>Try a mechanism, make a copy, and change it together.</p>
       </header>
       <section className="collection" aria-labelledby="collection-heading">
         <div className="section-heading">
           <div>
-            <span className="eyebrow">The collection</span>
             <h2 id="collection-heading">Browse designs</h2>
           </div>
           <span className="mono count">{shown.length} designs to explore</span>
@@ -256,7 +254,6 @@ function ProductCard({
         aria-label={"Explore " + product.name}
         onClick={() => navigate("/designs/" + product.kind)}
       >
-        <span className="product-number">{index + 1} / COLLECTION</span>
         <ModelCanvas
           compact
           parts={snapshot.derived.parts}
@@ -280,14 +277,7 @@ function ProductCard({
           <ChevronRight size={20} />
         </button>
       </div>
-      <div className="product-facts">
-        <span>
-          {snapshot.derived.parts.filter((p) => p.role !== "reference").length}{" "}
-          components
-        </span>
-        <span>Editable dimensions</span>
-        <span>Build files</span>
-      </div>
+
     </article>
   );
 }
@@ -339,9 +329,11 @@ function Listing({
         <button
           className={"button " + (playing ? "primary" : "")}
           onClick={() => setPlaying(!playing)}
+          disabled={!snapshot.derived.parts.some(part => part.motion)}
+          title={kind === "lamp" ? "Make a copy, then change Joint angle in Dimensions." : undefined}
         >
           {playing ? <Pause size={16} /> : <Play size={16} />}{" "}
-          {playing ? "Pause" : "Try the mechanism"}
+          {playing ? "Pause" : snapshot.derived.parts.some(part => part.motion) ? "Try the mechanism" : "Static pose"}
         </button>
         <button
           className={"button " + (exploded ? "selected" : "")}
@@ -402,8 +394,7 @@ function Listing({
     </>
   );
   const included = (
-    <div className="included">
-      <h3>From idea to workbench</h3>
+    <details className="included"><summary>What comes with this design</summary>
       {[
         "Working mechanism in 3D",
         "Dimensions, materials and a shared workspace",
@@ -414,7 +405,7 @@ function Listing({
           {s}
         </p>
       ))}
-    </div>
+    </details>
   );
   return (
     <main className="listing-page">
@@ -432,11 +423,9 @@ function Listing({
       </div>
       <section className="listing-bottom">
         <div>
-          <span className="eyebrow">Think it through</span>
-          <h2>Every detail has a next step.</h2>
+          <h2>Preview the assembly</h2>
           <p>
-            Customize the design, then inspect how that decision changes the
-            parts and the way they come together.
+            Make a copy to review every step with your dimensions.
           </p>
         </div>
         <ol>
@@ -467,7 +456,6 @@ function Work({ navigate }: { navigate: Navigate }) {
   const items = recent();
   return (
     <main className="work-page">
-      <span className="eyebrow">Your workshop</span>
       <h1>Pick up where you left off.</h1>
       {!items.length ? (
         <div className="empty">
@@ -615,7 +603,6 @@ function NewDesign({ navigate }: { navigate: Navigate }) {
 function Judge({ navigate }: { navigate: Navigate }) {
   return (
     <main className="work-page judge-page">
-      <span className="eyebrow">A guided look</span>
       <h1>Take a design from idea to build files.</h1>
       <p className="lead">
         Start with a working example, make a meaningful change, and inspect the

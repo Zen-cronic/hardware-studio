@@ -1,3 +1,4 @@
+import { openStudySetup } from './workspace-tools';
 import {test,expect} from '@playwright/test';
 import {deskArmParts} from '../../src/shared/desk-arm';
 test('maker previews a selected arm edit, compares a proposed version and accepts it',async({page},testInfo)=>{
@@ -36,6 +37,7 @@ test('real manufacturing study displays findings and small-screen controls stay 
  await expect(page.getByRole('heading',{name:/Profile checks complete|Dimensions need review/})).toBeVisible({timeout:40000});
  await page.screenshot({path:testInfo.outputPath('manufacturing-study.png'),fullPage:true});
  await page.setViewportSize({width:390,height:844});
+ await openStudySetup(page);
  await expect(page.getByRole('button',{name:'Run study',exact:true})).toBeVisible();
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();
  await page.screenshot({path:testInfo.outputPath('engineering-mobile.png'),fullPage:true});

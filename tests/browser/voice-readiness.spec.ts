@@ -1,3 +1,4 @@
+import { openPrompt } from './workspace-tools';
 import { test, expect, type Page, type APIRequestContext } from '@playwright/test';
 
 // SYNTHETIC UI contract tests only. No microphone, audio file, or cloud recognizer.
@@ -27,7 +28,7 @@ async function open(page: Page, request: APIRequestContext) {
   expect(r.status()).toBe(201);
   const data = await r.json();
   await page.goto('/studio/' + data.snapshot.design.id + '#token=' + encodeURIComponent(data.access.editorToken));
-  await expect(page.getByTestId('design-prompt')).toBeVisible();
+  { await openPrompt(page); await expect(page.getByTestId('design-prompt')).toBeVisible(); }
   return data;
 }
 const speak = (page: Page) => page.getByRole('button', { name: 'Speak an instruction', exact: true });
@@ -37,7 +38,7 @@ test('SYNTHETIC: final transcript appends to draft without making a proposal or 
   const d = await open(page, request);
   let proposals = 0;
   await page.route('**/propose', async route => { proposals++; await route.abort(); });
-  await page.getByTestId('design-prompt').fill('Keep the speed.');
+  { await openPrompt(page); await page.getByTestId('design-prompt').fill('Keep the speed.'); }
   await speak(page).click();
   await expect(page.getByRole('button', { name: 'Stop listening' })).toBeVisible();
   const settings = await page.evaluate(() => {
@@ -47,7 +48,7 @@ test('SYNTHETIC: final transcript appends to draft without making a proposal or 
     return { lang: r.lang, interimResults: r.interimResults };
   });
   expect(settings).toEqual({ lang: 'en-US', interimResults: false });
-  await expect(page.getByTestId('design-prompt')).toHaveValue('Keep the speed. Make the platter 240 millimeters wide.');
+  { await openPrompt(page); await expect(page.getByTestId('design-prompt')).toHaveValue('Keep the speed. Make the platter 240 millimeters wide.'); }
   expect(proposals).toBe(0);
   const snap = await request.get('/api/designs/' + d.snapshot.design.id, { headers: { Authorization: 'Bearer ' + d.access.editorToken } });
   expect((await snap.json()).design.revision).toBe(0);
@@ -67,11 +68,11 @@ test('SYNTHETIC: stop ends listening and leaving the design panel aborts the rec
 test('SYNTHETIC: unsupported browser retains the typed draft and offers typing', async ({ page, request }) => {
   await installRecognizer(page, 'unsupported');
   await open(page, request);
-  await page.getByTestId('design-prompt').fill('Keep this draft');
+  { await openPrompt(page); await page.getByTestId('design-prompt').fill('Keep this draft'); }
   await speak(page).click();
   await expect(page.getByRole('alert')).toContainText('Voice input is not supported');
-  await expect(page.getByTestId('design-prompt')).toHaveValue('Keep this draft');
-  await page.getByTestId('design-prompt').fill('Make the platter 240 mm wide.');
+  { await openPrompt(page); await expect(page.getByTestId('design-prompt')).toHaveValue('Keep this draft'); }
+  { await openPrompt(page); await page.getByTestId('design-prompt').fill('Make the platter 240 mm wide.'); }
   await expect(page.getByTestId('propose-change')).toBeEnabled();
 });
 
@@ -82,7 +83,7 @@ test('SYNTHETIC: asynchronous permission denial resets listening and retains typ
   await page.evaluate(() => (window as any).__syntheticVoice.instances[0].onerror({ error: 'not-allowed' }));
   await expect(speak(page)).toBeVisible();
   await expect(page.getByRole('alert')).toContainText('Microphone access was unavailable');
-  await page.getByTestId('design-prompt').fill('Make the platter 240 mm wide.');
+  { await openPrompt(page); await page.getByTestId('design-prompt').fill('Make the platter 240 mm wide.'); }
   await expect(page.getByTestId('propose-change')).toBeEnabled();
 });
 
@@ -123,9 +124,9 @@ for (const [code, message] of [
 test('SYNTHETIC: a result from an ended session cannot alter the current draft', async ({ page, request }) => {
   await installRecognizer(page);
   await open(page, request);
-  await page.getByTestId('design-prompt').fill('Preserve this draft');
+  { await openPrompt(page); await page.getByTestId('design-prompt').fill('Preserve this draft'); }
   await speak(page).click();
   await page.getByRole('button', { name: 'Stop listening', exact: true }).click();
   await page.evaluate(() => (window as any).__syntheticVoice.instances[0].onresult({ results: [[{ transcript: 'stale result' }]] }));
-  await expect(page.getByTestId('design-prompt')).toHaveValue('Preserve this draft');
+  { await openPrompt(page); await expect(page.getByTestId('design-prompt')).toHaveValue('Preserve this draft'); }
 });

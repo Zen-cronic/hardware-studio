@@ -61,7 +61,6 @@ export default function Landing({ navigate }: { navigate: Navigate }) {
       <section className="landing-hero" ref={hero} aria-labelledby="landing-title" data-chapter={chapter}>
         <LandingScene parts={current.parts} playing={moving} separated={separated} manual={manual} reduced={reduced} progress={progress} diameter={diameter} onAssembly={setReportedAssembly}/>
         <div className="landing-copy">
-          <p className="landing-kicker">A studio for things you can make</p>
           {chapter === 0 ? <h1 id="landing-title">Hardware, <span>brought to life.</span></h1> : chapter === 1 ? <h1 id="landing-title">Inside the mechanism.</h1> : <h1 id="landing-title">Connected dimensions.</h1>}
           <p className="landing-intro">{chapter === 0 ? "Explore working 3D products. Shape the details together, then download CAD files, parts lists and assembly instructions." : chapter === 1 ? "Look inside a real mechanism. Separate the parts, follow the drive and understand how it all comes together." : "A wider platter needs a wider base. Connected dimensions and build files follow the design you choose."}</p>
           <div className="landing-actions"><button className="button primary" data-testid="landing-try" onClick={() => navigate("/designs/turntable")}>Try the turntable <ChevronRight size={18}/></button><button className="button" data-testid="landing-browse" onClick={() => navigate("/browse")}>Browse designs</button></div>

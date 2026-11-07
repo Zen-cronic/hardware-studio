@@ -1,3 +1,4 @@
+import { openDimensions } from './workspace-tools';
 import { test, expect } from "@playwright/test";
 test("disabled WebGL shows a readable fallback without a perpetual loading state", async ({
   browser,
@@ -43,7 +44,7 @@ test("disabled WebGL shows a readable fallback without a perpetual loading state
       "Your dimensions, parts list and build files are still available.",
     );
     await expect(model.locator(".model-loading")).toHaveCount(0);
-    await page.getByTestId("param-rpm").fill("4");
+    { await openDimensions(page); await page.getByTestId("param-rpm").fill("4"); }
     await page.getByTestId("apply-dimensions").click();
     await expect(
       page.getByText("Design updated. Parts and assembly now match."),

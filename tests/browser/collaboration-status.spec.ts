@@ -1,3 +1,4 @@
+import { openDimensions } from './workspace-tools';
 import { test, expect } from "@playwright/test";
 
 for (const closeDelay of [0, 1000]) test(`renaming preserves status, shared edits and reconnection with close delay ${closeDelay}`, async ({ browser, request }) => {
@@ -27,7 +28,7 @@ for (const closeDelay of [0, 1000]) test(`renaming preserves status, shared edit
       };
     }, closeDelay);
     const [a, b] = await Promise.all(contexts.map(c => c.newPage()));
-    const invite = `http://127.0.0.1:4174/studio/${made.snapshot.design.id}#token=${encodeURIComponent(made.access.editorToken)}`;
+    const invite = `${process.env.APP_URL || "http://127.0.0.1:4174"}/studio/${made.snapshot.design.id}#token=${encodeURIComponent(made.access.editorToken)}`;
     await Promise.all([a.goto(invite), b.goto(invite)]);
     for (const page of [a, b]) await expect(page.locator(".connection-dot.online")).toBeVisible();
     for (const [page, name] of [[a, "Alex"], [b, "Sam"]] as const) {
@@ -42,16 +43,16 @@ for (const closeDelay of [0, 1000]) test(`renaming preserves status, shared edit
       await expect(page.getByTitle("Alex")).toBeVisible();
       await expect(page.getByTitle("Sam")).toBeVisible();
     }
-    await a.getByTestId("param-diameter").fill("280");
+    { await openDimensions(a); await a.getByTestId("param-diameter").fill("280"); }
     await a.getByTestId("apply-dimensions").click();
-    await expect(b.getByTestId("param-diameter")).toHaveValue("280");
+    { await openDimensions(b); await expect(b.getByTestId("param-diameter")).toHaveValue("280"); }
     // Close a real transport; no fake server messages or network responses.
     await b.evaluate(() => (window as any).roomSockets.at(-1).close());
     await expect(b.locator(".connection-dot.online")).toHaveCount(0);
     await expect(b.locator(".connection-dot.online")).toBeVisible();
-    await b.getByTestId("param-height").fill("200");
+    { await openDimensions(b); await b.getByTestId("param-height").fill("200"); }
     await b.getByTestId("apply-dimensions").click();
-    await expect(a.getByTestId("param-height")).toHaveValue("200");
+    { await openDimensions(a); await expect(a.getByTestId("param-height")).toHaveValue("200"); }
     await expect(a.locator(".connection-dot.online")).toBeVisible();
     await a.screenshot({ path: ".artifacts/collaboration-status/connected.png", fullPage: true });
     const after = await (await request.get(`/api/designs/${made.snapshot.design.id}`, { headers: { Authorization: `Bearer ${made.access.editorToken}` } })).json();

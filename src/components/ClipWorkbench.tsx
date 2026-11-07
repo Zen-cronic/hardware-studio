@@ -51,9 +51,9 @@ export default function ClipWorkbench({ snapshot, token }: { snapshot: Snapshot;
     const url = URL.createObjectURL(await response.blob()), anchor = document.createElement("a");
     anchor.href = url; anchor.download = `hardware-studio-r${job.revision}.mp4`; anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 30000);
   });
-  return <section aria-labelledby="clip-heading" style={{ padding: "24px clamp(16px, 3vw, 48px)", maxWidth: 1440, margin: "0 auto" }}>
+  return <section className="clip-workbench" aria-labelledby="clip-heading" style={{ padding: "16px 0", maxWidth: 1440, margin: "0 auto" }}>
     <div style={{ display: "flex", alignItems: "start", justifyContent: "space-between", gap: 24, flexWrap: "wrap" }}>
-      <div><h2 id="clip-heading">Show your product in motion</h2><p>A 20-second film of the design, its assembly and its working mechanism.</p></div>
+      <div><h2 id="clip-heading">Show your product in motion</h2><p>A 20-second film showing the design, assembly and camera views.</p></div>
       <button className="button primary" disabled={busy || !editable} onClick={() => void exportClip()}><Video size={18}/>Create video from revision {snapshot.design.revision}</button>
     </div>
     {error && <p className="workspace-alert error" role="alert">{error}</p>}
@@ -64,7 +64,7 @@ export default function ClipWorkbench({ snapshot, token }: { snapshot: Snapshot;
     {selectedId && !savedProject ? <p role="status">Loading the saved video design…</p> : <ClipPreview project={project} frame={Math.min(frame, total - 1)}/>}
     <div style={{ display: "flex", alignItems: "center", gap: 16, margin: "16px 0" }}>
       <button className="button" disabled={!!selectedId && !savedProject} aria-label={playing ? "Pause video preview" : "Play video preview"} onClick={() => { if (!playing && frame === total - 1) setFrame(0); setPlaying(value => !value); }}>{playing ? <Pause size={18}/> : <Play size={18}/>}</button>
-      <input aria-label="Video frame" type="range" min={0} max={total - 1} step={1} value={frame} onChange={event => { setPlaying(false); setFrame(Number(event.target.value)); }} style={{ flex: 1 }}/>
+      <input aria-label="Video frame" type="range" min={0} max={total - 1} step={1} value={frame} onChange={event => { setPlaying(false); setFrame(Number(event.target.value)); }} style={{ flex: 1, minWidth: 0 }}/>
       <output className="mono" style={{ minWidth: 100 }}>{(frame / project.format.fps).toFixed(1)} / {project.format.durationSeconds}s</output>
     </div>
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 12, marginBottom: 24 }}>

@@ -1,3 +1,4 @@
+import { openDimensions, closePanels } from './workspace-tools';
 import { test, expect } from "@playwright/test";
 
 test("standard conveyor keeps supported rollers, sensor and gate through edit, reload, motion and real export", async ({
@@ -20,26 +21,22 @@ test("standard conveyor keeps supported rollers, sensor and gate through edit, r
     "data-ready",
     "true",
   );
-  await page.getByTestId("param-length").fill("650");
-  await page.getByTestId("param-beltWidth").fill("160");
-  await page.getByTestId("param-sensorPosition").fill("250");
+  { await openDimensions(page); await page.getByTestId("param-length").fill("650"); }
+  { await openDimensions(page); await page.getByTestId("param-beltWidth").fill("160"); }
+  { await openDimensions(page); await page.getByTestId("param-sensorPosition").fill("250"); }
   await page.getByTestId("apply-dimensions").click();
   await expect(
     page.getByText("Design updated. Parts and assembly now match."),
   ).toBeVisible();
   await page.reload();
-  await expect(page.getByTestId("param-length")).toHaveValue("650");
-  await expect(page.getByTestId("param-beltWidth")).toHaveValue("160");
+  { await openDimensions(page); await expect(page.getByTestId("param-length")).toHaveValue("650"); }
+  { await openDimensions(page); await expect(page.getByTestId("param-beltWidth")).toHaveValue("160"); }
   await expect(page.locator(".scene-panel .model-canvas")).toHaveAttribute(
     "data-ready",
     "true",
   );
-  await page
-    .getByRole("button", { name: "Collapse left panel", exact: true })
-    .click();
-  await page
-    .getByRole("button", { name: "Collapse right panel", exact: true })
-    .click();
+  await closePanels(page);
+  await closePanels(page);
   await page.screenshot({
     path: ".artifacts/conveyor-standard/desktop.png",
     fullPage: true,
@@ -72,7 +69,7 @@ test("standard conveyor keeps supported rollers, sensor and gate through edit, r
   });
   await page.getByRole("tab", { name: "Design", exact: true }).click();
   await page.setViewportSize({ width: 375, height: 900 });
-  await expect(page.getByTestId("param-length")).toHaveValue("650");
+  { await openDimensions(page); await expect(page.getByTestId("param-length")).toHaveValue("650"); }
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,

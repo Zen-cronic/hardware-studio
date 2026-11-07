@@ -86,6 +86,7 @@ export default function Studio({
     [connected, setConnected] = useState(false),
     [tab, setTab] = useState<Tab>("design");
   const [selection, setSelection] = useState<SelectionRef | null>(null);
+  const [editorMode, setEditorMode] = useState<"prompt" | "selection">("prompt");
   const [selected, setSelected] = useState(""),
     [playing, setPlaying] = useState(false),
     [speed, setSpeed] = useState(1),
@@ -106,11 +107,12 @@ export default function Studio({
     [fitWidth, setFitWidth] = useState("100"),
     [fitHeight, setFitHeight] = useState("80");
   const [practice, setPractice] = useState(0),
-    [mobileEditor, setMobileEditor] = useState<"dimensions" | "prompt">(
-      "dimensions",
+    [mobileEditor, setMobileEditor] = useState<"canvas" | "dimensions" | "prompt">(
+      "canvas",
     );
-  const [leftPanelOpen, setLeftPanelOpen] = useState(true),
-    [rightPanelOpen, setRightPanelOpen] = useState(true);
+  const [leftPanelOpen, setLeftPanelOpen] = useState(false),
+    [rightPanelOpen, setRightPanelOpen] = useState(false);
+  useEffect(() => { if (tab === "design" && selection?.partIds.length) { setLeftPanelOpen(true); setRightPanelOpen(false); setMobileEditor("prompt"); setEditorMode("selection"); } }, [selection, tab]);
   const [step, setStep] = useState(0),
     [completed, setCompleted] = useState<string[]>([]),
     [check, setCheck] = useState<{ ok: boolean; text: string } | null>(null);
@@ -390,7 +392,9 @@ export default function Studio({
     }
   }
   function changeStep(next: number) {
+    setLeftPanelOpen(false); setRightPanelOpen(true);
     setStep(next);
+    setSelection(null);
     setCheck(null);
     setSelected("");
     setPlaying(false);
@@ -422,6 +426,7 @@ export default function Studio({
       </div>
     );
   const { design, derived, history } = snapshot;
+  const hasMotion = derived.parts.some(part => part.motion);
   let previewParts = derived.parts;
   if (proposal && proposal.command.baseRevision === design.revision) {
     try { previewParts = deriveDesign({ ...design, params: { ...design.params, ...proposal.command.changes }, ...(proposal.command.customParts ? {customParts:proposal.command.customParts}: {}) }).parts; } catch { /* Acceptance validates again. */ }
@@ -491,13 +496,6 @@ export default function Studio({
             <Share2 size={16} />
             <span>Share</span>
           </button>
-          <button
-            className="button primary small"
-            onClick={() => setTab("build")}
-          >
-            <Download size={16} />
-            <span>Build files</span>
-          </button>
         </div>
       </header>
       <div className="workspace-bar">
@@ -512,7 +510,7 @@ export default function Studio({
             role="tab"
             aria-selected={tab === "design"}
             className={tab === "design" ? "active" : ""}
-            onClick={() => setTab("design")}
+            onClick={() => { setTab("design"); setLeftPanelOpen(false); setRightPanelOpen(false); }}
           >
             <Settings2 size={16} /> Design
           </button>
@@ -522,6 +520,7 @@ export default function Studio({
             className={tab === "assemble" ? "active" : ""}
             onClick={() => {
               setTab("assemble");
+              setLeftPanelOpen(false); setRightPanelOpen(true);
               setExploded(true);
               setPlaying(false);
             }}
@@ -532,19 +531,51 @@ export default function Studio({
             role="tab"
             aria-selected={tab === "build"}
             className={tab === "build" ? "active" : ""}
-            onClick={() => setTab("build")}
+            onClick={() => { setTab("build"); setLeftPanelOpen(false); setRightPanelOpen(true); }}
           >
             <PackageOpen size={16} /> Build
           </button>
         </div>
         <button className="button small development-entry" aria-label="Engineering & versions" title="Engineering & versions" onClick={() => navigate("/develop/" + id + (selected ? "?part=" + encodeURIComponent(selected) : "") + "#token=" + encodeURIComponent(token))}><FlaskConical size={17}/><span className="development-entry-desktop">Engineering & versions</span><span className="development-entry-phone">Develop</span></button>
+      <div
+        className="panel-visibility-controls"
+        data-task={tab}
+        role="group"
+        aria-label="Side panels"
+      >
         <button
-          className="button quiet small"
-          onClick={() => void fork()}
-          disabled={busy}
+          className="button small"
+          aria-label={
+            leftPanelOpen ? "Collapse left panel" : "Expand left panel"
+          }
+          aria-expanded={leftPanelOpen}
+          aria-controls="studio-left-panel"
+          onClick={() => { setLeftPanelOpen(!leftPanelOpen); if (!leftPanelOpen) setRightPanelOpen(false); }}
         >
-          <Copy size={15} /> Make a copy
+          {leftPanelOpen ? (
+            <PanelLeftClose size={17} />
+          ) : (
+            <PanelLeftOpen size={17} />
+          )}
+          {tab === "design" ? "Describe a change" : tab === "assemble" ? "Assembly steps" : "Package overview"}
         </button>
+        <button
+          className="button small"
+          aria-label={
+            rightPanelOpen ? "Collapse right panel" : "Expand right panel"
+          }
+          aria-expanded={rightPanelOpen}
+          aria-controls="studio-right-panel"
+          onClick={() => { setRightPanelOpen(!rightPanelOpen); if (!rightPanelOpen) setLeftPanelOpen(false); }}
+        >
+          {tab === "design" ? "Dimensions" : tab === "assemble" ? "Step details" : "Build files"}
+          {rightPanelOpen ? (
+            <PanelRightClose size={17} />
+          ) : (
+            <PanelRightOpen size={17} />
+          )}
+        </button>
+      </div>
       </div>
       {error && (
         <div className="workspace-alert error" role="alert">
@@ -570,6 +601,13 @@ export default function Studio({
           </button>
         </div>
       )}
+                {notice && (
+                  <p className="workspace-alert success inline-notice" role="status">
+                    <CheckCircle2 size={17} />
+                    {notice}
+                  </p>
+                )}
+
       {readOnly && (
         <div className="workspace-alert">
           <Eye size={16} />
@@ -585,44 +623,6 @@ export default function Studio({
           </span>
         </div>
       )}
-      <div
-        className="panel-visibility-controls"
-        role="group"
-        aria-label="Side panels"
-      >
-        <button
-          className="button small"
-          aria-label={
-            leftPanelOpen ? "Collapse left panel" : "Expand left panel"
-          }
-          aria-expanded={leftPanelOpen}
-          aria-controls="studio-left-panel"
-          onClick={() => setLeftPanelOpen((open) => !open)}
-        >
-          {leftPanelOpen ? (
-            <PanelLeftClose size={17} />
-          ) : (
-            <PanelLeftOpen size={17} />
-          )}
-          Left panel
-        </button>
-        <button
-          className="button small"
-          aria-label={
-            rightPanelOpen ? "Collapse right panel" : "Expand right panel"
-          }
-          aria-expanded={rightPanelOpen}
-          aria-controls="studio-right-panel"
-          onClick={() => setRightPanelOpen((open) => !open)}
-        >
-          Right panel
-          {rightPanelOpen ? (
-            <PanelRightClose size={17} />
-          ) : (
-            <PanelRightOpen size={17} />
-          )}
-        </button>
-      </div>
       <main
         className={
           "studio-main " +
@@ -632,16 +632,14 @@ export default function Studio({
           (tab === "design" ? " is-design mobile-" + mobileEditor : "")
         }
       >
-        <aside className="left-panel" id="studio-left-panel">
+        <aside className={"left-panel" + (selection && editorMode === "selection" ? " show-selection" : "")} id="studio-left-panel" onKeyDown={(event) => { if (event.key === "Escape" && !(event.target as HTMLElement).closest('[role="dialog"]')) { setLeftPanelOpen(false); setMobileEditor("canvas"); requestAnimationFrame(() => { const selectors = window.innerWidth <= 820 && tab === "design" ? '.mobile-editor-switch [data-panel="left"]' : '[aria-controls="studio-left-panel"]'; document.querySelector<HTMLButtonElement>(selectors)?.focus(); }); } }}>
           {tab === "design" ? (
             <>
+              {selection && <div className="inspector-tabs" role="group" aria-label="Selected part tools"><button className={"button small " + (editorMode === "selection" ? "primary" : "")} onClick={() => setEditorMode("selection")}>Part controls</button><button className={"button small " + (editorMode === "prompt" ? "primary" : "")} onClick={() => setEditorMode("prompt")}>Write a request</button></div>}
               <div className="conversation-editor">
                 <div className="panel-intro">
-                  <span className="eyebrow">Make it yours</span>
                   <h2>What would you change?</h2>
-                  <p>
-                    Describe the detail. See what it means for the whole design.
-                  </p>
+
                 </div>
                 <form
                   className="prompt-form"
@@ -763,17 +761,11 @@ export default function Studio({
                     </button>
                   </section>
                 )}
-                {notice && (
-                  <p className="success inline-notice" role="status">
-                    <CheckCircle2 size={17} />
-                    {notice}
-                  </p>
-                )}
                 <button className="fit-button" onClick={() => setFit(!fit)}>
                   <Ruler size={19} />
                   <div>
                     <strong>Fit something you own</strong>
-                    <span>Start with a measurement</span>
+
                   </div>
                   <ChevronDown size={15} />
                 </button>
@@ -845,7 +837,7 @@ export default function Studio({
                   </div>
                 )}
               </div>
-              <ContextualGuide snapshot={snapshot} selection={selection} onPrompt={setPrompt} disabled={readOnly || busy} onPreview={(result) => setProposal({ command:{...result.command,actor}, explanation:result.explanation, source:"local" })} />
+              {selection && editorMode === "selection" && <ContextualGuide snapshot={snapshot} selection={selection} onPrompt={(value) => { setPrompt(value); setEditorMode("prompt"); }} disabled={readOnly || busy} onPreview={(result) => { setProposal({ command:{...result.command,actor}, explanation:result.explanation, source:"local" }); setEditorMode("prompt"); }} />}
               <details className="history-panel">
                 <summary>
                   <RotateCcw size={15} /> Design history{" "}
@@ -899,12 +891,7 @@ export default function Studio({
                   </li>
                 ))}
               </ol>
-              <div className="assembly-progress">
-                <span>
-                  {completed.length} of {derived.steps.length} steps reviewed
-                </span>
-                <progress value={completed.length} max={derived.steps.length} />
-              </div>
+
             </>
           ) : (
             <>
@@ -960,10 +947,7 @@ export default function Studio({
                   </select>
                 </label>
               )}
-              <span className="mono">
-                {derived.parts.filter((p) => p.role !== "reference").length}{" "}
-                parts
-              </span>
+
             </div>
           </div>
           <ModelCanvas
@@ -1001,7 +985,7 @@ export default function Studio({
               <button
                 className="button icon-only"
                 aria-label="Clear selected part"
-                onClick={() => setSelected("")}
+                onClick={() => { setSelected(""); setSelection(null); }}
               >
                 <X size={14} />
               </button>
@@ -1011,10 +995,12 @@ export default function Studio({
             <button
               className={"button " + (playing ? "primary" : "")}
               onClick={() => setPlaying(!playing)}
+              disabled={!hasMotion}
+              title={hasMotion ? undefined : design.kind === "lamp" ? "Change Joint angle in Dimensions to adjust the lamp." : "Set up joints in Engineering & versions, then Mechanisms."}
               aria-label={playing ? "Pause mechanism" : "Run mechanism"}
             >
               {playing ? <Pause size={16} /> : <Play size={16} />}
-              <span>{playing ? "Pause" : "Try it"}</span>
+              <span>{playing ? "Pause" : hasMotion ? "Try it" : design.kind === "lamp" ? "Static pose" : "No motion set"}</span>
             </button>
             <button
               className={"button icon-only " + (exploded ? "selected" : "")}
@@ -1044,6 +1030,7 @@ export default function Studio({
               <span>Speed</span>
               <select
                 aria-label="Playback speed"
+                disabled={!hasMotion}
                 value={speed}
                 onChange={(e) => setSpeed(Number(e.target.value))}
               >
@@ -1054,7 +1041,8 @@ export default function Studio({
             </label>
           </div>
           <p className="scene-hint">
-            Drag to rotate / Scroll to zoom / Select a part to inspect
+            <span className="pointer-hint">Drag to rotate / Scroll to zoom / Select a part to inspect</span>
+            <span className="touch-hint">Drag to rotate / Pinch to zoom / Tap a part to inspect</span>
           </p>
         </section>
         {tab === "design" && (
@@ -1063,25 +1051,28 @@ export default function Studio({
             role="group"
             aria-label="Editing tools"
           >
+            <button className={mobileEditor === "canvas" ? "active" : ""} onClick={() => setMobileEditor("canvas")}><Box size={16} /> Model</button>
             <button
+              data-panel="right"
               className={mobileEditor === "dimensions" ? "active" : ""}
               onClick={() => setMobileEditor("dimensions")}
             >
               <Settings2 size={16} /> Dimensions
             </button>
             <button
+              data-panel="left"
               className={mobileEditor === "prompt" ? "active" : ""}
-              onClick={() => setMobileEditor("prompt")}
+              onClick={() => { setMobileEditor("prompt"); setEditorMode("prompt"); }}
             >
               <MessageSquare size={16} /> Describe a change
             </button>
           </div>
         )}
-        <aside className="right-panel" id="studio-right-panel">
+        <aside className="right-panel" id="studio-right-panel" onKeyDown={(event) => { if (event.key === "Escape" && !(event.target as HTMLElement).closest('[role="dialog"]')) { setRightPanelOpen(false); setMobileEditor("canvas"); requestAnimationFrame(() => { const selectors = window.innerWidth <= 820 && tab === "design" ? '.mobile-editor-switch [data-panel="right"]' : '[aria-controls="studio-right-panel"]'; document.querySelector<HTMLButtonElement>(selectors)?.focus(); }); } }}>
           {tab === "design" ? (
             <>
               <div className="panel-heading">
-                <h2>Design details</h2>
+                <h2>Dimensions</h2>
                 <Settings2 size={17} />
               </div>
               <div className="parameter-list">
@@ -1153,8 +1144,16 @@ export default function Studio({
                   <Plus size={16} /> Add a component
                 </button>
               )}
-              <section className="consequences">
-                <h3>What follows</h3>
+                      <button
+          className="button quiet small"
+          onClick={() => void fork()}
+          disabled={busy}
+        >
+          <Copy size={15} /> Make a copy
+        </button>
+
+              <details className="consequences"><summary>Design measurements</summary>
+
                 <div className="metric-list">
                   {derived.metrics.map((m) => (
                     <div key={m.label}>
@@ -1168,7 +1167,7 @@ export default function Studio({
                     </div>
                   ))}
                 </div>
-              </section>
+              </details>
               <details className="parts-disclosure">
                 <summary>
                   <Box size={16} /> Components{" "}
@@ -1182,7 +1181,7 @@ export default function Studio({
                     className={
                       "component-row " + (selected === p.id ? "selected" : "")
                     }
-                    onClick={() => setSelected(p.id)}
+                    onClick={() => { setSelected(p.id); setSelection(createSelection(snapshot, [p.id], "click")); }}
                   >
                     <span
                       className="part-color"
@@ -1207,6 +1206,12 @@ export default function Studio({
               <span className="eyebrow">
                 Step {step + 1} of {derived.steps.length}
               </span>
+              <div className="assembly-progress">
+                <span>
+                  {completed.length} of {derived.steps.length} steps reviewed
+                </span>
+                <progress value={completed.length} max={derived.steps.length} />
+              </div>
               <h2 className="assembly-title">{currentStep.title}</h2>
               <p className="assembly-instruction">{currentStep.instruction}</p>
               <div className="step-parts">
@@ -1219,7 +1224,7 @@ export default function Studio({
                         "component-row " + (selected === p.id ? "selected" : "")
                       }
                       key={p.id}
-                      onClick={() => setSelected(p.id)}
+                      onClick={() => { setSelected(p.id); setSelection(createSelection(snapshot, [p.id], "click")); }}
                     >
                       <span
                         className="part-color"
@@ -1330,7 +1335,7 @@ export default function Studio({
         </aside>
       </main>
       {notes && (
-        <div className="notes-drawer" id="shared-notes-drawer">
+        <div className="notes-drawer" id="shared-notes-drawer" role="region" aria-label="Shared notes" onKeyDown={(event) => { if (event.key === "Escape" && !(event.target as HTMLElement).closest('[role="dialog"]')) { setNotes(false); requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('[aria-label="Open shared notes"]')?.focus()); } }}>
           <div className="panel-heading">
             <h2>Work together</h2>
             <button
@@ -1362,6 +1367,7 @@ export default function Studio({
               setNotes(false);
               setTab("design");
               setMobileEditor("prompt");
+              setLeftPanelOpen(true); setRightPanelOpen(false);
             }}
           />
         </div>
@@ -1536,7 +1542,8 @@ function BuildPanel({
         <h2>Build package</h2>
         <Download size={18} />
       </div>
-      <ul className="package-list">
+      <p className="subtle">CAD files, drawings, parts lists and assembly instructions for revision {design.revision}.</p>
+      <details className="package-contents"><summary>Files included</summary><ul className="package-list">
         {[
           "Parametric source + design",
           "STEP and STL geometry",
@@ -1550,7 +1557,7 @@ function BuildPanel({
             {s}
           </li>
         ))}
-      </ul>
+      </ul></details>
       <button
         data-testid="generate-build"
         className="button primary wide"
@@ -1602,7 +1609,7 @@ function BuildPanel({
           )}
         </div>
       )}
-      <details className="parts-disclosure" open>
+      <details className="parts-disclosure">
         <summary>
           <Box size={16} /> Parts list <span>{derived.bom.length}</span>
         </summary>

@@ -110,13 +110,18 @@ try {
   async function study(id: string, token: string, meshSize: number, phase: string, previousId?: string) {
     if (previousId) return api('/studies/' + previousId, token);
     await page.goto(develop(id, token));
+    const setup = page.locator('.study-setup');
+    await setup.waitFor({ state: 'attached' });
+    if (await setup.getAttribute('open') === null) await setup.locator(':scope > summary').click();
     await page.getByRole('combobox', { name: 'Study', exact: true }).selectOption('strength');
     await page.getByRole('combobox', { name: 'Component', exact: true }).selectOption('upper-arm');
+    await page.getByText('Review loads and supports', { exact: true }).click();
     await page.getByRole('spinbutton', { name: 'Test payload (kg)', exact: true }).fill('0.5');
     await page.getByRole('combobox', { name: 'Cantilever axis', exact: true }).selectOption('x');
     await page.getByRole('combobox', { name: 'Fixed end', exact: true }).selectOption('min');
     await page.getByRole('combobox', { name: 'Loaded end', exact: true }).selectOption('max');
     await page.getByRole('combobox', { name: 'Force direction', exact: true }).selectOption('-y');
+    await page.getByText('Mesh accuracy', { exact: true }).click();
     await page.getByRole('spinbutton', { name: 'Starting mesh size (mm)', exact: true }).fill(String(meshSize));
     await page.getByRole('combobox', { name: 'Mesh refinements', exact: true }).selectOption('2');
     await page.getByRole('checkbox', { name: /I reviewed this component/ }).check();

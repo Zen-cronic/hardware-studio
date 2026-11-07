@@ -1,3 +1,4 @@
+import { openDimensions, closePanels } from './workspace-tools';
 import { test, expect } from "@playwright/test";
 test("retained holder preserves guided tilt and screw interfaces through edits, reload, motion and export", async ({
   page,
@@ -24,7 +25,7 @@ test("retained holder preserves guided tilt and screw interfaces through edits, 
     screwDiameter: 12,
     angle: 30,
   }))
-    await page.getByTestId("param-" + key).fill(String(value));
+    { await openDimensions(page); await page.getByTestId("param-" + key).fill(String(value)); }
   await page.getByTestId("apply-dimensions").click();
   await expect(
     page.getByText("Design updated. Parts and assembly now match."),
@@ -36,14 +37,10 @@ test("retained holder preserves guided tilt and screw interfaces through edits, 
     screwDiameter: 12,
     angle: 30,
   }))
-    await expect(page.getByTestId("param-" + key)).toHaveValue(String(value));
+    { await openDimensions(page); await expect(page.getByTestId("param-" + key)).toHaveValue(String(value)); }
   await expect(canvas).toHaveAttribute("data-ready", "true");
-  await page
-    .getByRole("button", { name: "Collapse left panel", exact: true })
-    .click();
-  await page
-    .getByRole("button", { name: "Collapse right panel", exact: true })
-    .click();
+  await closePanels(page);
+  await closePanels(page);
   await page
     .getByRole("button", { name: /Run mechanism|Pause mechanism/ })
     .click();
@@ -73,7 +70,7 @@ test("retained holder preserves guided tilt and screw interfaces through edits, 
   await (await dl).saveAs(".artifacts/holder-standard/revision-1.zip");
   await page.getByRole("tab", { name: "Design", exact: true }).click();
   await page.setViewportSize({ width: 375, height: 900 });
-  await expect(page.getByTestId("param-opening")).toHaveValue("150");
+  { await openDimensions(page); await expect(page.getByTestId("param-opening")).toHaveValue("150"); }
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,

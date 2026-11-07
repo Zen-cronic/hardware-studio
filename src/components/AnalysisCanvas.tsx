@@ -1,7 +1,33 @@
 import { useEffect,useMemo } from "react";
-import { Canvas } from "@react-three/fiber";
-import { Bounds, OrbitControls } from "@react-three/drei";
+import { Canvas, useThree } from "@react-three/fiber";
+import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
+function FitOriginalComponent({original}:{original:THREE.BufferGeometry}) {
+ const {camera,size,controls}=useThree();
+ original.computeBoundingBox();
+ const box=original.boundingBox!,key=[...box.min.toArray(),...box.max.toArray()].join(',');
+ useEffect(()=>{
+  if (!(camera instanceof THREE.PerspectiveCamera)) return;
+  const orbit=controls as unknown as {target:THREE.Vector3;update:()=>void}|undefined;
+  const center=box.getCenter(new THREE.Vector3());
+  const direction=camera.position.clone().sub(orbit?.target||new THREE.Vector3()).normalize();
+  const right=new THREE.Vector3().crossVectors(camera.up,direction).normalize();
+  const up=new THREE.Vector3().crossVectors(direction,right).normalize();
+  const tanV=Math.tan(THREE.MathUtils.degToRad(camera.fov/2));
+  const tanH=tanV*size.width/size.height;
+  let distance=0;
+  for(const x of [box.min.x,box.max.x])for(const y of [box.min.y,box.max.y])for(const z of [box.min.z,box.max.z]){
+   const corner=new THREE.Vector3(x,y,z).sub(center),depth=corner.dot(direction);
+   distance=Math.max(distance,Math.abs(corner.dot(right))/tanH+depth,Math.abs(corner.dot(up))/tanV+depth);
+  }
+  // Fit original geometry consistently; the declared deformation and field scales stay unchanged.
+  camera.position.copy(center).addScaledVector(direction,distance*1.2);
+  camera.near=Math.max(.01,distance/1000);camera.far=Math.max(10000,distance*100);
+  camera.lookAt(center);camera.updateProjectionMatrix();
+  if(orbit){orbit.target.copy(center);orbit.update();}
+ },[camera,controls,key,size.width,size.height]);
+ return null;
+}
 export default function AnalysisCanvas({result,multiplier=10,scaleMax,field='displacement'}:{result:any;multiplier?:number;scaleMax?:number;field?:'displacement'|'stress'}) {
  const geometry=useMemo(()=>{
   const mesh=result.mesh,dis=result.displacement;if(!mesh?.vertices?.length||!mesh.surface?.length||!dis?.length)return null;
@@ -18,5 +44,5 @@ export default function AnalysisCanvas({result,multiplier=10,scaleMax,field='dis
  useEffect(()=>()=>{if(geometry)Object.values(geometry).forEach(g=>g.dispose());},[geometry]);
  if(!geometry)return <p className="subtle">This study has no field to display.</p>;
  const maximum=scaleMax||(field==='stress'?result.maxVonMisesMPa:result.maxDisplacementMm)||0;
- return <div className="analysis-viewport" aria-label="Computed engineering field"><Canvas camera={{position:[180,140,180],far:10000}}><color attach="background" args={['#ecf6fd']}/><ambientLight intensity={1.5}/><directionalLight position={[100,200,100]} intensity={2}/><Bounds fit clip observe margin={1.35}><group><mesh geometry={geometry.deformed}><meshStandardMaterial vertexColors side={THREE.DoubleSide} roughness={.6}/></mesh><lineSegments geometry={geometry.outline}><lineBasicMaterial color="#335b79" transparent opacity={.4}/></lineSegments><mesh geometry={geometry.supports}><meshBasicMaterial color="#112f87" side={THREE.DoubleSide} transparent opacity={.55} polygonOffset polygonOffsetFactor={-2}/></mesh><mesh geometry={geometry.loads}><meshBasicMaterial color="#f1a435" side={THREE.DoubleSide} transparent opacity={.55} polygonOffset polygonOffsetFactor={-2}/></mesh></group></Bounds><OrbitControls makeDefault/></Canvas><div className="analysis-legend"><span>{field==='stress'?'Stress, vertex-averaged / MPa':'Displacement / mm'}</span><i/><span>0 → {maximum.toPrecision(3)}</span><small>Deformation ×{multiplier}; outline = original. Blue = fixed, amber = load.</small></div></div>;
+ return <div className="analysis-viewport" aria-label="Computed engineering field"><div className="analysis-canvas"><Canvas camera={{position:[180,140,180],far:10000}}><color attach="background" args={['#ecf6fd']}/><ambientLight intensity={1.5}/><directionalLight position={[100,200,100]} intensity={2}/><group><mesh geometry={geometry.deformed}><meshStandardMaterial vertexColors side={THREE.DoubleSide} roughness={.6}/></mesh><lineSegments geometry={geometry.outline}><lineBasicMaterial color="#335b79" transparent opacity={.4}/></lineSegments><mesh geometry={geometry.supports}><meshBasicMaterial color="#112f87" side={THREE.DoubleSide} transparent opacity={.55} polygonOffset polygonOffsetFactor={-2}/></mesh><mesh geometry={geometry.loads}><meshBasicMaterial color="#f1a435" side={THREE.DoubleSide} transparent opacity={.55} polygonOffset polygonOffsetFactor={-2}/></mesh></group><OrbitControls makeDefault/><FitOriginalComponent original={geometry.original}/></Canvas></div><div className="analysis-legend"><span>{field==='stress'?'Stress, vertex-averaged / MPa':'Displacement / mm'}</span><i/><span>0 → {maximum.toPrecision(3)}</span><small>Deformation ×{multiplier}; outline = original. Blue = fixed, amber = load.</small></div></div>;
 }

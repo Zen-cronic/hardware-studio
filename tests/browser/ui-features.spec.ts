@@ -1,3 +1,4 @@
+import { openDimensions, openPrompt } from './workspace-tools';
 import {
   test,
   expect,
@@ -33,7 +34,7 @@ test("shared sketch converges, own undo preserves another author and reload pers
     a = await browser.newContext(),
     b = await browser.newContext();
   await a.addInitScript(() => sessionStorage.setItem("hardware-name", "Kaung"));
-  await b.addInitScript(() => sessionStorage.setItem("hardware-name", "Maya"));
+  await b.addInitScript(() => sessionStorage.setItem("hardware-name", "Aiko"));
   const p = await a.newPage(),
     q = await b.newPage();
   try {
@@ -75,7 +76,7 @@ test("shared sketch converges, own undo preserves another author and reload pers
     await expect(
       q.getByText("1 shared strokes", { exact: true }),
     ).toBeVisible();
-    await expect(q.locator(".sketch-authors")).toContainText("Maya");
+    await expect(q.locator(".sketch-authors")).toContainText("Aiko");
     await expect(q.locator(".sketch-authors")).not.toContainText("Kaung");
     await q.reload();
     await q
@@ -147,6 +148,7 @@ test("sharing and sketch dialogs retain keyboard focus and restore it on Escape"
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(share).toBeFocused();
+  await openPrompt(page);
   await page
     .getByRole("button", { name: "Draw a sketch", exact: true })
     .click();
@@ -160,7 +162,7 @@ test("sharing and sketch dialogs retain keyboard focus and restore it on Escape"
   ).toBeFocused();
 });
 
-test("mobile editor opens dimensions first and switches to a compact prompt without overflow", async ({
+test("mobile editor opens the model first, then dimensions and switches to a compact prompt without overflow", async ({
   browser,
   request,
 }) => {
@@ -171,19 +173,19 @@ test("mobile editor opens dimensions first and switches to a compact prompt with
     page = await context.newPage();
   try {
     await page.goto(url(r));
-    await expect(page.getByTestId("param-diameter")).toBeVisible();
+    { await openDimensions(page); await expect(page.getByTestId("param-diameter")).toBeVisible(); }
     await expect(page.getByTestId("design-prompt")).not.toBeVisible();
-    await page.getByTestId("param-diameter").fill("280");
+    { await openDimensions(page); await page.getByTestId("param-diameter").fill("280"); }
     await page.getByTestId("apply-dimensions").click();
-    await expect(page.getByTestId("param-diameter")).toHaveValue("280");
+    { await openDimensions(page); await expect(page.getByTestId("param-diameter")).toHaveValue("280"); }
     await page
       .getByRole("button", { name: "Describe a change", exact: true })
       .click();
-    await expect(page.getByTestId("design-prompt")).toBeVisible();
+    { await openPrompt(page); await expect(page.getByTestId("design-prompt")).toBeVisible(); }
     await expect(page.getByTestId("param-diameter")).not.toBeVisible();
-    await page
+    { await openPrompt(page); await page
       .getByTestId("design-prompt")
-      .fill("Make the platter 300 mm wide.");
+      .fill("Make the platter 300 mm wide."); }
     const prompt = await page.locator(".conversation-editor").boundingBox(),
       history = await page.locator(".history-panel").boundingBox();
     expect(history!.y).toBeGreaterThanOrEqual(prompt!.y + prompt!.height - 1);
@@ -193,7 +195,7 @@ test("mobile editor opens dimensions first and switches to a compact prompt with
       ),
     ).toBe(true);
     await page.getByRole("button", { name: "Dimensions", exact: true }).click();
-    await expect(page.getByTestId("param-diameter")).toHaveValue("280");
+    { await openDimensions(page); await expect(page.getByTestId("param-diameter")).toHaveValue("280"); }
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
@@ -238,7 +240,7 @@ for (const width of [320, 375, 768]) {
       await phone.getByRole("button", { name: "Close shared notes", exact: true }).tap();
       await expect(phone.locator(".notes-drawer")).toHaveCount(0);
       await expect(toggle).toHaveAttribute("aria-expanded", "false");
-      await expect(phone.getByTestId("param-diameter")).toBeVisible();
+      { await openDimensions(phone); await expect(phone.getByTestId("param-diameter")).toBeVisible(); }
       await phone.reload();
       await phone.getByRole("button", { name: "Open shared notes", exact: true }).tap();
       await expect(phone.locator(".notes-list article")).toHaveCount(2);

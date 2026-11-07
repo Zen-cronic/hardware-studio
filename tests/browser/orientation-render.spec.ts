@@ -1,3 +1,4 @@
+import { openDimensions } from './workspace-tools';
 import { test, expect } from "@playwright/test";
 import { mkdir } from "node:fs/promises";
 
@@ -32,7 +33,7 @@ test("assembly practice preserves the native camera and rendered view; revision 
     await expect(view).toHaveAttribute("data-ready", "true");
     await page.getByRole("tab", { name: "Assemble", exact: true }).click();
     await button("Toggle exploded assembly").click();
-    await button("Collapse left panel").click();
+    await expect(page.locator(".left-panel")).toBeHidden();
     await button("Reset camera").click();
     const bounds = (await canvas.boundingBox())!;
     await page.mouse.move(
@@ -112,14 +113,14 @@ test("assembly practice preserves the native camera and rendered view; revision 
         ),
     );
     const beforeDimension = await canvas.getAttribute("data-view");
-    await page.getByTestId("param-diameter").fill("350");
+    { await openDimensions(page); await page.getByTestId("param-diameter").fill("350"); }
     await page.getByTestId("apply-dimensions").click();
     await expect(
       page.getByText("Design updated. Parts and assembly now match."),
     ).toBeVisible();
     await expect(canvas).not.toHaveAttribute("data-view", beforeDimension!);
     await page.setViewportSize({ width: 375, height: 900 });
-    await expect(page.getByTestId("param-diameter")).toHaveValue("350");
+    { await openDimensions(page); await expect(page.getByTestId("param-diameter")).toHaveValue("350"); }
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,

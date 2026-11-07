@@ -1,3 +1,4 @@
+import { openDimensions, closePanels } from './workspace-tools';
 import { test, expect } from "@playwright/test";
 
 test("standard slider keeps mounting and drive interfaces through edit, reload, motion and real export", async ({
@@ -20,25 +21,21 @@ test("standard slider keeps mounting and drive interfaces through edit, reload, 
     "data-ready",
     "true",
   );
-  await page.getByTestId("param-travel").fill("725");
-  await page.getByTestId("param-railSpacing").fill("130");
+  { await openDimensions(page); await page.getByTestId("param-travel").fill("725"); }
+  { await openDimensions(page); await page.getByTestId("param-railSpacing").fill("130"); }
   await page.getByTestId("apply-dimensions").click();
   await expect(
     page.getByText("Design updated. Parts and assembly now match."),
   ).toBeVisible();
   await page.reload();
-  await expect(page.getByTestId("param-travel")).toHaveValue("725");
-  await expect(page.getByTestId("param-railSpacing")).toHaveValue("130");
+  { await openDimensions(page); await expect(page.getByTestId("param-travel")).toHaveValue("725"); }
+  { await openDimensions(page); await expect(page.getByTestId("param-railSpacing")).toHaveValue("130"); }
   await expect(page.locator(".scene-panel .model-canvas")).toHaveAttribute(
     "data-ready",
     "true",
   );
-  await page
-    .getByRole("button", { name: "Collapse left panel", exact: true })
-    .click();
-  await page
-    .getByRole("button", { name: "Collapse right panel", exact: true })
-    .click();
+  await closePanels(page);
+  await closePanels(page);
   await page.screenshot({
     path: ".artifacts/slider-standard/desktop.png",
     fullPage: true,
@@ -71,7 +68,7 @@ test("standard slider keeps mounting and drive interfaces through edit, reload, 
   });
   await page.getByRole("tab", { name: "Design", exact: true }).click();
   await page.setViewportSize({ width: 375, height: 900 });
-  await expect(page.getByTestId("param-travel")).toHaveValue("725");
+  { await openDimensions(page); await expect(page.getByTestId("param-travel")).toHaveValue("725"); }
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,
