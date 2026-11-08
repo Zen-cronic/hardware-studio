@@ -2,7 +2,7 @@ import type { Command, Part, Snapshot } from "./types";
 import { deriveDesign, DesignError, readSetFor } from "./engine";
 import { productForDesign } from "./catalog";
 
-export type SelectionSource = "click" | "circle" | "list";
+export type SelectionSource = "click" | "circle" | "list" | "hover";
 export interface SelectionRef {
   designId: string;
   revision: number;

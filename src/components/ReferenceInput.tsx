@@ -5,19 +5,32 @@ import { useDialog } from "../lib/useDialog";
 type Recognition = any;
 export function VoiceButton({
   onText,
-  onError,
+  onError, onSpeechStart, onListeningChange, disabled = false,
 }: {
+  onSpeechStart?: () => void;
+  onListeningChange?: (active: boolean) => void;
+  disabled?: boolean;
   onText: (text: string) => void;
   onError: (error: string) => void;
 }) {
   const [listening, setListening] = useState(false);
   const ref = useRef<Recognition>(null);
+  const latest = useRef({ onText, onError, onSpeechStart, onListeningChange });
+  latest.current = { onText, onError, onSpeechStart, onListeningChange };
+  const activeState = (active: boolean) => { setListening(active); latest.current.onListeningChange?.(active); };
+  const cancel = () => {
+    const active = ref.current; ref.current = null;
+    activeState(false);
+    try { active?.abort(); } catch { /* Already ended. */ }
+  };
+  useEffect(() => { if (disabled) cancel(); }, [disabled]);
   useEffect(
     () => () => {
       const active = ref.current;
       ref.current = null;
       if (active) {
-        active.onstart = active.onend = active.onerror = active.onresult = null;
+        active.onstart = active.onend = active.onerror = active.onresult = active.onspeechstart = null;
+        latest.current.onListeningChange?.(false);
         try {
           active.abort();
         } catch {
@@ -42,21 +55,8 @@ export function VoiceButton({
   }
   function listen() {
     // The ref guards the pending permission/start interval before onstart fires.
-    if (ref.current) {
-      try {
-        ref.current.stop();
-      } catch {
-        const active = ref.current;
-        ref.current = null;
-        setListening(false);
-        try {
-          active?.abort();
-        } catch {
-          // Stop/abort may both reject an already-ended session.
-        }
-      }
-      return;
-    }
+    if (ref.current) { cancel(); return; }
+    if (disabled) return;
     const C =
       (window as any).SpeechRecognition ||
       (window as any).webkitSpeechRecognition;
@@ -71,18 +71,25 @@ export function VoiceButton({
       r = new C();
       r.lang = "en-US";
       r.interimResults = false;
+      r.continuous = true;
+      let speechStarted = false;
+      r.onspeechstart = () => {
+        if (ref.current !== r || speechStarted) return;
+        speechStarted = true;
+        latest.current.onSpeechStart?.();
+      };
       r.onstart = () => {
-        if (ref.current === r) setListening(true);
+        if (ref.current === r) activeState(true);
       };
       r.onend = () => {
         if (ref.current !== r) return;
         ref.current = null;
-        setListening(false);
+        activeState(false);
       };
       r.onerror = (event: { error?: string }) => {
         if (ref.current !== r) return;
         ref.current = null;
-        setListening(false);
+        activeState(false);
         try {
           r.abort();
         } catch {
@@ -92,16 +99,22 @@ export function VoiceButton({
       };
       r.onresult = (event: any) => {
         if (ref.current !== r) return;
-        const text = event.results?.[event.resultIndex ?? 0]?.[0]?.transcript;
-        if (typeof text === "string" && text.trim()) onText(text);
+        const results = Array.from(event.results || []).slice(event.resultIndex ?? 0) as any[];
+        const text = results.filter(result => result.isFinal === true).map(result => result[0]?.transcript || "").join(" ").trim();
+        if (!text) return;
+        // End capture before handing off; late events and partial speech cannot submit.
+        ref.current = null;
+        try { r.stop(); } catch { /* The recognizer may already be ending. */ }
+        latest.current.onText(text);
+        activeState(false);
       };
       ref.current = r;
-      setListening(true);
+      activeState(true);
       r.start();
     } catch (error) {
       const active = ref.current;
       ref.current = null;
-      setListening(false);
+      activeState(false);
       try {
         active?.abort();
       } catch {
@@ -115,12 +128,14 @@ export function VoiceButton({
   return (
     <button
       type="button"
-      className={"button icon-only " + (listening ? "recording" : "")}
+      className={"button " + (listening ? "recording" : "")}
       onClick={listen}
+      disabled={disabled}
+      aria-pressed={listening}
       aria-label={listening ? "Stop listening" : "Speak an instruction"}
       title={listening ? "Stop listening" : "Speak an instruction"}
     >
-      <Mic size={17} />
+      <Mic size={17} /><span>{listening ? "Voice on" : "Voice"}</span>
     </button>
   );
 }

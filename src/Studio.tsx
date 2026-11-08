@@ -62,7 +62,7 @@ import {
 } from "./lib/api";
 import ModelCanvas from "./components/ModelCanvas";
 import ContextualGuide from "./components/ContextualGuide";
-import { createSelection, type SelectionRef } from "./shared/selection";
+import { assertCurrentSelection, createSelection, type SelectionRef } from "./shared/selection";
 import SharedNotes from "./components/SharedNotes";
 import ReferenceInput, { VoiceButton } from "./components/ReferenceInput";
 import { Brand, type Navigate } from "./App";
@@ -86,6 +86,14 @@ export default function Studio({
     [connected, setConnected] = useState(false),
     [tab, setTab] = useState<Tab>("design");
   const [selection, setSelection] = useState<SelectionRef | null>(null);
+  const [pendingCircleSelection, setPendingCircleSelection] = useState(false);
+  const [voiceOn, setVoiceOn] = useState(false);
+  const [voiceTarget, setVoiceTarget] = useState<SelectionRef | null>(null);
+  const hoverPicker = useRef<(() => SelectionRef | null) | null>(null);
+  const utteranceRef = useRef<SelectionRef | null>(null);
+  const [requestSelection, setRequestSelection] = useState<SelectionRef | null | undefined>(undefined);
+  const [unboundVoice, setUnboundVoice] = useState(false);
+  const [voiceMessage, setVoiceMessage] = useState("");
   const [editorMode, setEditorMode] = useState<"prompt" | "selection">("prompt");
   const [selected, setSelected] = useState(""),
     [playing, setPlaying] = useState(false),
@@ -313,16 +321,17 @@ export default function Studio({
           .join(", "),
     });
   }
-  async function propose() {
-    if (!snapshot || !prompt.trim()) return;
+  async function propose(text = prompt, target = requestSelection === undefined ? selection : requestSelection) {
+    if (!snapshot || !text.trim() || readOnly || promptBusy) return;
+    if (unboundVoice && target === null) { setError("Hover over a part and speak again, or edit the typed request before sending it."); return; }
     setPromptBusy(true);
     setError("");
     setNotice("");
     try {
       const p = await api<Proposal>("/designs/" + id + "/propose", token, {
-        prompt,
+        prompt: text,
         actor,
-        ...(selection ? { selection } : {}),
+        ...(target ? { selection: target } : {}),
         ...(image ? { image } : {}),
       });
       setProposal(p);
@@ -332,6 +341,31 @@ export default function Studio({
       setPromptBusy(false);
     }
   }
+  function speechStarted() {
+    const target = hoverPicker.current?.() || null;
+    utteranceRef.current = target ? structuredClone(target) : null;
+    setVoiceTarget(utteranceRef.current);
+    const name = target?.partIds.map(id => snapshot?.derived.parts.find(part => part.id === id)?.name).join(", ");
+    setVoiceMessage(name ? `Listening about ${name}.` : "No part under the pointer. Your words will be kept as a draft.");
+  }
+  function spokenRequest(text: string) {
+    const target = utteranceRef.current;
+    utteranceRef.current = null;
+    setPrompt(text); setRequestSelection(target); setUnboundVoice(!target);
+    setEditorMode("prompt"); setLeftPanelOpen(true); setRightPanelOpen(false); setMobileEditor("prompt");
+    if (!target || !snapshot) {
+      setVoiceMessage("No part was targeted. Hover over a part and try again, or edit the typed request."); return;
+    }
+    try { assertCurrentSelection(snapshot, target); }
+    catch (error) { setError((error as Error).message); return; }
+    if (proposal || readOnly || tab !== "design") { setError("Return to the current design before speaking another request."); return; }
+    setVoiceMessage("");
+    void propose(text, target);
+  }
+  useEffect(() => {
+    // Do not rebind an utterance after a remote revision; server validation also rejects it.
+    setVoiceTarget(null);
+  }, [snapshot?.design.id, snapshot?.design.revision]);
   async function undo() {
     if (!snapshot) return;
     const item = [...snapshot.history].reverse().find((h) => h.actor === actor);
@@ -391,12 +425,15 @@ export default function Studio({
       setBusy(false);
     }
   }
+  function selectParts(next: SelectionRef | null) {
+    setSelected(next?.partIds[0] || ""); setSelection(next);
+    setRequestSelection(undefined); setUnboundVoice(false); setVoiceMessage("");
+  }
   function changeStep(next: number) {
     setLeftPanelOpen(false); setRightPanelOpen(true);
     setStep(next);
-    setSelection(null);
+    selectParts(null);
     setCheck(null);
-    setSelected("");
     setPlaying(false);
     setExploded(true);
   }
@@ -635,7 +672,7 @@ export default function Studio({
         <aside className={"left-panel" + (selection && editorMode === "selection" ? " show-selection" : "")} id="studio-left-panel" onKeyDown={(event) => { if (event.key === "Escape" && !(event.target as HTMLElement).closest('[role="dialog"]')) { setLeftPanelOpen(false); setMobileEditor("canvas"); requestAnimationFrame(() => { const selectors = window.innerWidth <= 820 && tab === "design" ? '.mobile-editor-switch [data-panel="left"]' : '[aria-controls="studio-left-panel"]'; document.querySelector<HTMLButtonElement>(selectors)?.focus(); }); } }}>
           {tab === "design" ? (
             <>
-              {selection && <div className="inspector-tabs" role="group" aria-label="Selected part tools"><button className={"button small " + (editorMode === "selection" ? "primary action-secondary" : "")} onClick={() => setEditorMode("selection")}>Part controls</button><button className={"button small " + (editorMode === "prompt" ? "primary action-secondary" : "")} onClick={() => setEditorMode("prompt")}>Write a request</button></div>}
+              {selection && !pendingCircleSelection && !proposal && <div className="inspector-tabs" role="group" aria-label="Selected part tools"><button className={"button small " + (editorMode === "selection" ? "primary action-secondary" : "")} onClick={() => setEditorMode("selection")}>Part controls</button><button className={"button small " + (editorMode === "prompt" ? "primary action-secondary" : "")} onClick={() => setEditorMode("prompt")}>Write a request</button></div>}
               <div className="conversation-editor">
                 <div className="panel-intro">
                   <h2>What would you change?</h2>
@@ -661,17 +698,14 @@ export default function Studio({
                         : "Describe a change, with dimensions…"
                     }
                     value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
+                    onChange={(e) => { setPrompt(e.target.value); setUnboundVoice(false); }}
                     disabled={readOnly}
                   />
+                  {prompt && <p className="subtle" data-testid="request-target">{(requestSelection === undefined ? selection : requestSelection)?.partIds.length
+                    ? "Request for " + (requestSelection === undefined ? selection : requestSelection)!.partIds.map(id => derived.parts.find(part => part.id === id)?.name || "a part no longer available").join(", ")
+                    : unboundVoice ? "No part targeted. Edit this request or speak again." : "Request for the whole design"}</p>}
                   <div className="prompt-actions">
                     <div className="reference-actions">
-                      <VoiceButton
-                        onText={(text) =>
-                          setPrompt((v) => (v ? v + " " : "") + text)
-                        }
-                        onError={setError}
-                      />
                       <ReferenceInput
                         image={image}
                         onImage={setImage}
@@ -821,6 +855,7 @@ export default function Studio({
                       disabled={!fitMeasurementsValid}
                       onClick={() => {
                         if (!fitMeasurementsValid) return;
+                        setRequestSelection(null); setUnboundVoice(false);
                         setPrompt(
                           "Help adapt this " +
                             design.name +
@@ -837,7 +872,8 @@ export default function Studio({
                   </div>
                 )}
               </div>
-              {selection && editorMode === "selection" && <ContextualGuide snapshot={snapshot} selection={selection} onClearSelection={() => { setSelected(""); setSelection(null); requestAnimationFrame(() => document.querySelector<HTMLElement>('.spatial-selection-list > summary')?.focus()); }} onPrompt={(value) => { setPrompt(value); setEditorMode("prompt"); }} disabled={readOnly || busy} onPreview={(result) => { setProposal({ command:{...result.command,actor}, explanation:result.explanation, source:"local" }); setEditorMode("prompt"); }} />}
+              {pendingCircleSelection && <p className="subtle">Confirm the circled parts to open their controls.</p>}
+              {selection && !pendingCircleSelection && !proposal && editorMode === "selection" && <ContextualGuide snapshot={snapshot} selection={selection} onClearSelection={() => { selectParts(null); requestAnimationFrame(() => document.querySelector<HTMLElement>('.spatial-selection-list > summary')?.focus()); }} onPrompt={(value) => { setRequestSelection(undefined); setUnboundVoice(false); setPrompt(value); setEditorMode("prompt"); }} disabled={readOnly || busy} onPreview={(result) => { setProposal({ command:{...result.command,actor}, explanation:result.explanation, source:"local" }); setEditorMode("prompt"); }} />}
               <details className="history-panel">
                 <summary>
                   <RotateCcw size={15} /> Design history{" "}
@@ -930,6 +966,17 @@ export default function Studio({
                   : proposal ? "Proposed preview" : "Working model"}
             </span>
             <div className="scene-heading-actions">
+              {tab === "design" && <div className="voice-control">
+                <VoiceButton disabled={readOnly || busy || promptBusy || !!proposal || pendingCircleSelection}
+                  onText={spokenRequest} onError={setError} onSpeechStart={speechStarted}
+                  onListeningChange={active => {
+                    setVoiceOn(active);
+                    if (!active) { utteranceRef.current = null; setVoiceTarget(null); setVoiceMessage(message => /^(Listening about|Hover over a part, then|No part under the pointer)/.test(message) ? "" : message); }
+                    else { setVoiceMessage("Hover over a part, then speak your request."); setPlaying(false); }
+                  }} />
+                {(voiceOn || voiceMessage || proposal) && <p className="voice-status" role="status" data-testid="voice-status">{proposal ? "Review or dismiss this proposal before using voice." : voiceMessage}</p>}
+              </div>}
+
               {others.length > 0 && (
                 <label className="follow-control">
                   <Users size={15} />
@@ -960,16 +1007,20 @@ export default function Studio({
             speed={speed}
             exploded={exploded}
             dimensions={dimensions}
-            selected={selected}
-            onSelect={(partId) => { setSelected(partId); setSelection(partId ? createSelection(snapshot, [partId], "click") : null); }}
+            selected={proposal ? undefined : selected}
+            hoverEnabled={voiceOn && !proposal && !readOnly}
+            hoverPicker={hoverPicker}
+            onPendingSelectionChange={setPendingCircleSelection}
+            voiceTarget={voiceTarget}
+            onSelect={proposal ? undefined : partId => selectParts(partId ? createSelection(snapshot, [partId], "click") : null)}
             selectionContext={{designId:design.id,revision:design.revision}}
-            selectedPartIds={selection?.partIds}
-            onSelection={setSelection}
+            selectedPartIds={proposal ? undefined : selection?.partIds}
+            onSelection={proposal ? undefined : selectParts}
             reset={reset}
             camera={following?.camera}
             onCamera={cameraChanged}
           />
-          {chosen && (
+          {chosen && !pendingCircleSelection && !proposal && (
             <div className="part-selection">
               <span
                 className="part-color"
@@ -985,7 +1036,7 @@ export default function Studio({
               <button
                 className="button icon-only"
                 aria-label="Clear selected part"
-                onClick={() => { setSelected(""); setSelection(null); }}
+                onClick={() => { selectParts(null); }}
               >
                 <X size={14} />
               </button>
@@ -1181,7 +1232,7 @@ export default function Studio({
                     className={
                       "component-row " + (selected === p.id ? "selected" : "")
                     }
-                    onClick={() => { setSelected(p.id); setSelection(createSelection(snapshot, [p.id], "click")); }}
+                    onClick={() => { selectParts(createSelection(snapshot, [p.id], "click")); }}
                   >
                     <span
                       className="part-color"
@@ -1224,7 +1275,7 @@ export default function Studio({
                         "component-row " + (selected === p.id ? "selected" : "")
                       }
                       key={p.id}
-                      onClick={() => { setSelected(p.id); setSelection(createSelection(snapshot, [p.id], "click")); }}
+                      onClick={() => { selectParts(createSelection(snapshot, [p.id], "click")); }}
                     >
                       <span
                         className="part-color"

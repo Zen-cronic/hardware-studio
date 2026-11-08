@@ -33,7 +33,7 @@ async function open(page: Page, request: APIRequestContext) {
 }
 const speak = (page: Page) => page.getByRole('button', { name: 'Speak an instruction', exact: true });
 
-test('SYNTHETIC: final transcript appends to draft without making a proposal or changing a revision', async ({ page, request }) => {
+test('SYNTHETIC: speech without a target keeps a draft without making a proposal or changing a revision', async ({ page, request }) => {
   await installRecognizer(page);
   const d = await open(page, request);
   let proposals = 0;
@@ -43,12 +43,14 @@ test('SYNTHETIC: final transcript appends to draft without making a proposal or 
   await expect(page.getByRole('button', { name: 'Stop listening' })).toBeVisible();
   const settings = await page.evaluate(() => {
     const r = (window as any).__syntheticVoice.instances[0];
-    r.onresult({ results: [[{ transcript: 'Make the platter 240 millimeters wide.' }]] });
+    r.onspeechstart();
+    const result: any = [{ transcript: 'Make the platter 240 millimeters wide.' }]; result.isFinal = true;
+    r.onresult({ results: [result] });
     r.onend();
     return { lang: r.lang, interimResults: r.interimResults };
   });
   expect(settings).toEqual({ lang: 'en-US', interimResults: false });
-  { await openPrompt(page); await expect(page.getByTestId('design-prompt')).toHaveValue('Keep the speed. Make the platter 240 millimeters wide.'); }
+  { await openPrompt(page); await expect(page.getByTestId('design-prompt')).toHaveValue('Make the platter 240 millimeters wide.'); }
   expect(proposals).toBe(0);
   const snap = await request.get('/api/designs/' + d.snapshot.design.id, { headers: { Authorization: 'Bearer ' + d.access.editorToken } });
   expect((await snap.json()).design.revision).toBe(0);
@@ -62,7 +64,7 @@ test('SYNTHETIC: stop ends listening and leaving the design panel aborts the rec
   await expect(speak(page)).toBeVisible();
   await speak(page).click();
   await page.getByRole('tab', { name: 'Assemble', exact: true }).click();
-  expect(await page.evaluate(() => ({ stops: (window as any).__syntheticVoice.stops, aborts: (window as any).__syntheticVoice.aborts }))).toEqual({ stops: 1, aborts: 1 });
+  expect(await page.evaluate(() => ({ stops: (window as any).__syntheticVoice.stops, aborts: (window as any).__syntheticVoice.aborts }))).toEqual({ stops: 0, aborts: 2 });
 });
 
 test('SYNTHETIC: unsupported browser retains the typed draft and offers typing', async ({ page, request }) => {

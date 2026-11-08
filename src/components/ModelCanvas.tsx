@@ -29,6 +29,10 @@ type Props = {
   selectedPartIds?: string[];
   selectionContext?: { designId: string; revision: number };
   onSelection?: (selection: SelectionRef) => void;
+  hoverEnabled?: boolean;
+  hoverPicker?: React.MutableRefObject<(() => SelectionRef | null) | null>;
+  voiceTarget?: SelectionRef | null;
+  onPendingSelectionChange?: (pending: boolean) => void;
   onSelect?: (id: string) => void;
   compact?: boolean;
   dimensions?: boolean;
@@ -145,10 +149,12 @@ function PartMesh({
   compact,
   activePartIds,
   animation,
-}: Props & { part: Part; animation: React.MutableRefObject<AssemblyFrame> }) {
+  focused = false,
+  marker,
+}: Props & { part: Part; animation: React.MutableRefObject<AssemblyFrame>; focused?: boolean; marker?: number }) {
   const ref = useRef<THREE.Mesh>(null);
   const rot = part.rotation || [0, 0, 0];
-  const isSelected = selected === part.id || !!selectedPartIds?.includes(part.id);
+  const isSelected = selectedPartIds !== undefined ? selectedPartIds.includes(part.id) : selected === part.id;
   const metal = /steel|alumin|metal/i.test(part.material),
     reference = part.role === "reference",
     ghost =
@@ -240,17 +246,19 @@ function PartMesh({
       {(!reference || referencePreview || isSelected) && (
         <Edges
           threshold={24}
-          lineWidth={isSelected ? 2 : 1}
+          lineWidth={focused ? 3 : isSelected ? 2 : 1}
           color={
             isSelected
               ? colors.focus
+              : focused
+                ? colors.action
               : referencePreview
                 ? part.color
                 : colors.text
           }
           transparent
           opacity={
-            isSelected
+            isSelected || focused
               ? 1
               : ghost
                 ? 0.07
@@ -260,6 +268,11 @@ function PartMesh({
           }
         />
       )}
+      {(marker || focused) && <Html position={[0, 0, 0]} center zIndexRange={[2, 0]} style={{ pointerEvents: "none" }}>
+        <span className={"part-marker" + (isSelected ? " is-checked" : "") + (focused ? " is-focused" : "")} data-part-marker={part.id} data-checked={isSelected}>
+          {marker && <span>{marker}</span>}{marker && isSelected && <span aria-hidden="true">✓</span>}{focused && <span>{part.name}</span>}
+        </span>
+      </Html>}
     </mesh>
   );
 }
@@ -458,6 +471,48 @@ function Camera({
     />
   );
 }
+function HoverBridge({ enabled, onHover, picker }: { enabled: boolean; onHover: (id: string | null) => void; picker: React.MutableRefObject<(() => string | null) | null> }) {
+  const { gl, scene, camera } = useThree();
+  const latest = useRef(onHover); latest.current = onHover;
+  useFrame(() => { picker.current?.(); });
+  useEffect(() => {
+    const canvas = gl.domElement, ray = new THREE.Raycaster(), point = new THREE.Vector2();
+    let dragging = false, pointer: { x: number; y: number } | null = null;
+    const clear = () => { pointer = null; latest.current(null); };
+    const down = () => { dragging = true; clear(); };
+    const up = () => { dragging = false; clear(); };
+    const hit = () => {
+      if (!enabled || dragging || !pointer) return null;
+      const bounds = canvas.getBoundingClientRect();
+      point.set((pointer.x - bounds.left) / bounds.width * 2 - 1, -(pointer.y - bounds.top) / bounds.height * 2 + 1);
+      const meshes: THREE.Object3D[] = [];
+      scene.updateMatrixWorld(true); camera.updateMatrixWorld(true);
+      scene.traverseVisible(object => { if ((object as THREE.Mesh).isMesh && typeof object.userData.partId === "string") meshes.push(object); });
+      ray.setFromCamera(point, camera);
+      const id = ray.intersectObjects(meshes, false)[0]?.object.userData.partId || null;
+      latest.current(id); return id;
+    };
+    picker.current = hit;
+    const move = (event: PointerEvent) => {
+      if (!enabled || dragging || event.buttons || event.pointerType === "touch") { clear(); return; }
+      pointer = { x: event.clientX, y: event.clientY }; hit();
+    };
+    const wheel = (event: WheelEvent) => {
+      if (!enabled || dragging) { clear(); return; }
+      pointer = { x: event.clientX, y: event.clientY };
+      latest.current(null); // The next frame and speech onset recast after the camera zoom.
+    };
+    canvas.addEventListener("pointermove", move);
+    canvas.addEventListener("pointerdown", down);
+    canvas.addEventListener("pointerleave", clear);
+    canvas.addEventListener("pointercancel", up);
+    canvas.addEventListener("wheel", wheel);
+    window.addEventListener("pointerup", up);
+    clear();
+    return () => { picker.current = null; canvas.removeEventListener("pointermove", move); canvas.removeEventListener("pointerdown", down); canvas.removeEventListener("pointerleave", clear); canvas.removeEventListener("pointercancel", up); canvas.removeEventListener("wheel", wheel); window.removeEventListener("pointerup", up); clear(); };
+  }, [enabled, gl, scene, camera, picker]);
+  return null;
+}
 type PolygonPicker = ((points: ScreenPoint[]) => string[]) | null;
 function SelectionBridge({ picker }: { picker: React.MutableRefObject<PolygonPicker> }) {
   const { gl, scene, camera, size, invalidate } = useThree();
@@ -474,8 +529,27 @@ export default function ModelCanvas(props: Props) {
   const { compact, playing = false, dimensions = false } = props;
   const [circleMode, setCircleMode] = useState(false);
   const [candidates, setCandidates] = useState<string[]>([]);
+  useEffect(() => { props.onPendingSelectionChange?.(candidates.length > 1); }, [candidates.length, props.onPendingSelectionChange]);
+  const [checked, setChecked] = useState<string[]>([]);
+  const [focusedCandidate, setFocusedCandidate] = useState<string | null>(null);
+  const [hovered, setHovered] = useState<string | null>(null);
+  const setHover = (id: string | null) => {
+    setHovered(id);
+  };
+  const dismiss = () => { setCandidates([]); setChecked([]); setFocusedCandidate(null); setSelectionMessage(""); };
+  const displayIds = candidates.length ? checked : props.selectedPartIds ?? (props.selected ? [props.selected] : []);
   const [selectionMessage, setSelectionMessage] = useState("");
   const picker = useRef<PolygonPicker>(null);
+  const hoverHit = useRef<(() => string | null) | null>(null);
+  useEffect(() => {
+    if (!props.hoverPicker) return;
+    props.hoverPicker.current = () => {
+      if (!props.hoverEnabled || circleMode || candidates.length || !props.selectionContext) return null;
+      const id = hoverHit.current?.();
+      return id ? { ...props.selectionContext, partIds: [id], source: "hover" } : null;
+    };
+    return () => { if (props.hoverPicker) props.hoverPicker.current = null; };
+  }, [props.hoverPicker, props.hoverEnabled, circleMode, candidates.length, props.selectionContext?.designId, props.selectionContext?.revision]);
   const animation = useRef<AssemblyFrame>({ progress: props.exploded ? 1 : 0, seconds: 0, poses: new Map() });
   const canSelect = !!(props.onSelect || props.onSelection);
   const choose = (ids: string[], source: SelectionSource) => {
@@ -484,12 +558,18 @@ export default function ModelCanvas(props: Props) {
     if (existing.length > 1 && (!props.onSelection || !props.selectionContext)) {
       setSelectionMessage("Choose one of the circled parts before continuing."); return;
     }
-    setCircleMode(false); setCandidates([]);
+    setCircleMode(false); setCandidates([]); setChecked([]); setFocusedCandidate(null);
     setSelectionMessage(existing.length === 1 ? `${props.parts.find(part => part.id === existing[0])!.name} selected.` : `${existing.length} parts selected.`);
     props.onSelect?.(existing[0]);
     if (props.selectionContext) props.onSelection?.({ ...props.selectionContext, partIds: existing, source });
   };
-  useEffect(() => { setCircleMode(false); setCandidates([]); setSelectionMessage(""); }, [props.selectionContext?.designId, props.selectionContext?.revision]);
+  useEffect(() => { setCircleMode(false); setCandidates([]); setChecked([]); setFocusedCandidate(null); setSelectionMessage(""); }, [props.selectionContext?.designId, props.selectionContext?.revision]);
+  useEffect(() => {
+    setCandidates([]); setChecked([]); setFocusedCandidate(null);
+    const ids = props.selectedPartIds ?? (props.selected ? [props.selected] : []);
+    setSelectionMessage(ids.length === 1 ? `${props.parts.find(part => part.id === ids[0])?.name || "Part"} selected.` : ids.length ? `${ids.length} parts selected.` : "");
+  }, [props.selected, props.selectedPartIds]);
+  useEffect(() => { setHover(null); }, [props.selectionContext?.designId, props.selectionContext?.revision, props.hoverEnabled, props.exploded, props.reset, props.camera]);
   const [ready, setReady] = useState(false),
     [failed, setFailed] = useState(false);
   // Once mounted, synchronous part/pose updates retain the rendered view.
@@ -512,6 +592,8 @@ export default function ModelCanvas(props: Props) {
     <div
       className={"model-canvas" + (compact ? " compact" : "") + (!compact && canSelect ? " is-selectable" : "") + (props.selected ? " has-selection" : "")}
       role={failed || canSelect ? "region" : "img"}
+      data-highlighted-parts={displayIds.join(",")}
+      data-hovered-part={hovered || ""}
       data-ready={failed ? "error" : ready ? "true" : "false"}
       aria-busy={!ready && !failed}
       aria-label={
@@ -538,6 +620,7 @@ export default function ModelCanvas(props: Props) {
           <AssemblyAnimation parts={props.parts} exploded={!!props.exploded} playing={playing && !circleMode}
             speed={props.speed ?? 1} reduced={reduced} frozen={circleMode} frame={animation} />
           <SelectionBridge picker={picker} />
+          <HoverBridge enabled={!!props.hoverEnabled && !circleMode && !candidates.length} onHover={setHover} picker={hoverHit} />
           <FrameSignal parts={parts} onReady={() => setReady(true)} />
           <color attach="background" args={[colors.surface]} />
           <StudioLight />
@@ -567,7 +650,10 @@ export default function ModelCanvas(props: Props) {
                 animation={animation}
                 playing={playing && !reduced && !circleMode}
                 onSelect={canSelect && !circleMode ? id => choose([id], "click") : undefined}
-                selectedPartIds={candidates.length ? candidates : props.selectedPartIds}
+                selected={undefined}
+                selectedPartIds={displayIds}
+                focused={focusedCandidate === part.id || (props.voiceTarget?.partIds[0] || hovered) === part.id}
+                marker={candidates.includes(part.id) ? candidates.indexOf(part.id) + 1 : undefined}
                 part={part}
               />
             ))}
@@ -611,8 +697,9 @@ export default function ModelCanvas(props: Props) {
         onCancel={() => setCircleMode(false)}
         onCircle={points => {
           try {
-            const ids = picker.current?.(points) || [];
-            setCircleMode(false); setCandidates(ids.length > 1 ? ids : []);
+            const picked = picker.current?.(points) || [];
+            const ids = props.parts.filter(part => picked.includes(part.id)).map(part => part.id);
+            setCircleMode(false); setCandidates(ids.length > 1 ? ids : []); setChecked(ids); setFocusedCandidate(null);
             if (ids.length === 1) choose(ids, "circle");
             else setSelectionMessage(ids.length ? "Confirm which visible parts you want to edit." : "No visible part inside that circle. Try a larger circle or use the parts list.");
           } catch {
@@ -623,8 +710,8 @@ export default function ModelCanvas(props: Props) {
       </div>
       {!compact && canSelect && <SpatialSelectionTools
         parts={props.parts} selectedIds={props.selectedPartIds || (props.selected ? [props.selected] : [])}
-        circleMode={circleMode} onCircleMode={enabled => { setCircleMode(enabled); setCandidates([]); setSelectionMessage(""); }}
-        circleAvailable={ready && !failed} candidates={candidates} onChoose={choose} onDismiss={() => { setCandidates([]); setSelectionMessage(""); }} message={selectionMessage}
+        circleMode={circleMode} onCircleMode={enabled => { setHover(null); setCircleMode(enabled); dismiss(); }}
+        circleAvailable={ready && !failed} candidates={candidates} checked={checked} onChecked={setChecked} onFocusPart={setFocusedCandidate} onChoose={choose} onDismiss={dismiss} message={selectionMessage}
       />}
       {ready &&
         !failed &&

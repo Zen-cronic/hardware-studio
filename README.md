@@ -45,7 +45,7 @@ Yjs/Hocuspocus shares annotations; authoritative commands handle engineering cha
 
 ## Develop a design
 
-Select or circle a visible part to edit its supported dimensions, holes and walls. Preview the change before accepting it. Proposed versions let collaborators and scoped agents experiment without changing the main design; acceptance requires review of both current revisions.
+Select or circle a visible part to edit its supported dimensions, holes and walls. Preview the change before accepting it. Turn on Voice, hover over a named part, then speak your request and review the proposal before accepting. Proposed versions let collaborators and scoped agents experiment without changing the main design; acceptance requires review of both current revisions.
 
 The engineering workspace runs linear-elastic finite-element studies on the actual selected solid, shows displacement and stress fields, and compares results using identical setups. Review the component-local fixed end, loaded end and force direction before running. Enter a declared payload or force, material values and mesh settings explicitly. An unconverged result can be refined using its recorded inputs; changing the setup form does not change that earlier study, and outdated results require a new review. Manufacturing checks compare recognized features with editable FDM, milling or turning profiles. Rigid-body studies use explicit connections and entered masses, with rectangular-envelope inertia and visible motion limits.
 
@@ -59,9 +59,9 @@ Product video export creates a 20-second, 1080p, 30 fps MP4 from one frozen desi
 
 These are editable prototype designs, not validated load-bearing products or machine-ready instructions. Bought parts use simplified envelopes; confirm vendor dimensions and part availability. Review fasteners, fits, material, electrical protection, stability and process setup. STEP solid validation does not prove assembly fit or real-world performance. Wiring/control guides require review against the exact selected components. No machine-specific G-code is generated.
 
-Visual input asks for missing dimensions. It cannot reliably infer hidden geometry, tolerances, torque or wiring from a photograph. Voice support depends on the browser; typed input remains available. The default catalog motion and water/sensor illustrations are explanatory kinematics. The separate mechanism study runs rigid-body dynamics from explicitly entered masses, joints, gravity and drive limits; it excludes bending, collisions and friction.
+Visual input asks for missing dimensions. It cannot reliably infer hidden geometry, tolerances, torque or wiring from a photograph. Voice uses browser speech recognition to transcribe one request at a time; it does not provide spoken replies, and real microphone recognition quality has not been verified. Typed input remains available. The default catalog motion and water/sensor illustrations are explanatory kinematics. The separate mechanism study runs rigid-body dynamics from explicitly entered masses, joints, gravity and drive limits; it excludes bending, collisions and friction.
 
-When no AI key is available, explicit local dimension commands remain available and are identified in the proposal. Generated appearance assets and environments are optional; Meshy/Skybox accounts are not bundled. No real supplier quote is requested by this application.
+When no AI key is available, explicit whole-design dimension commands remain available and are identified in the proposal. Selected-part requests return a clarification; supported part controls remain available. Generated appearance assets and environments are optional; Meshy/Skybox accounts are not bundled. No real supplier quote is requested by this application.
 
 ## Services and data
 

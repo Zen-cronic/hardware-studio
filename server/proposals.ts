@@ -114,6 +114,11 @@ export async function propose(
           "Image interpretation needs an AI connection. You can still enter measured dimensions.",
         questions: ["What measured dimensions should this reference change?"],
       };
+    if (body.selection) return {
+      ...localProposal(snapshot, "", body.actor),
+      explanation: "This targeted request needs an AI connection; use the part controls to change a measured dimension.",
+      questions: ["Which dimension would you like to change in the part controls?"],
+    };
     return localProposal(snapshot, body.prompt, body.actor);
   }
   const model = process.env.OPENAI_MODEL || "gpt-5.4-mini";

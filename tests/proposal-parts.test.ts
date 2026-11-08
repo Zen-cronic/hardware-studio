@@ -22,3 +22,18 @@ test.each([{id:'missing',size:[10,10,10]},{id:'upper-arm',holes:[]},{id:'upper-a
  const dir=mkdtempSync(join(tmpdir(),'proposal-part-')),store=new Store(join(dir,'s.sqlite'));
  try{const {snapshot}=store.create('custom','Camera arm',deskArmParts());vi.stubGlobal('fetch',vi.fn(async()=>new Response(JSON.stringify({choices:[{message:{content:JSON.stringify({changes:{},partChanges:[update],questions:[]})}}],usage:{prompt_tokens:0,completion_tokens:0}}),{status:200})));await expect(propose(store,snapshot,{prompt:'Change the link',actor:'Owner'},'test-credential')).rejects.toThrow();expect(store.get(snapshot.design.id).design.revision).toBe(0);}finally{store.close();rmSync(dir,{recursive:true,force:true});}
 });
+
+test('targeted local requests never replace an assembly, while explicit whole-design fallback remains available', async()=>{
+ const dir=mkdtempSync(join(tmpdir(),'targeted-local-')),store=new Store(join(dir,'s.sqlite'));
+ try {
+  const {snapshot}=store.create('custom','Camera arm',deskArmParts());
+  const selection={designId:snapshot.design.id,revision:0,partIds:['upper-arm'],source:'hover' as const};
+  const request={prompt:'Make this box 40 x 20 x 30 mm',actor:'Owner'};
+  const targeted=await propose(store,snapshot,{...request,selection},'');
+  expect(targeted.command.customParts).toBeUndefined();expect(targeted.command.changes).toEqual({});
+  expect(targeted.explanation).toContain('part controls');
+  const whole=await propose(store,snapshot,request,'');expect(whole.command.customParts).toHaveLength(1);
+  await expect(propose(store,snapshot,{...request,selection:{...selection,revision:1}},'')).rejects.toThrow('Select the part again');
+  await expect(propose(store,snapshot,{...request,selection:{...selection,partIds:['removed']}},'')).rejects.toThrow('no longer');
+ } finally {store.close();rmSync(dir,{recursive:true,force:true});}
+});

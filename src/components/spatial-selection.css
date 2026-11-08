@@ -72,3 +72,18 @@
     margin-top: 6px;
   }
 }
+
+.part-marker { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; padding: 3px 7px; border: 1px solid var(--border); border-radius: 5px; background: var(--panel); color: var(--text); font-size: var(--s-xs); }
+.part-marker.is-checked { border-color: var(--focus); }
+.part-marker.is-focused { outline: 2px solid var(--action); outline-offset: 2px; }
+.part-marker > span:first-child, .candidate-number { font-family: var(--font-mono); }
+.candidate-number { display: inline-flex; justify-content: center; min-width: 20px; border: 1px solid var(--border); border-radius: 4px; }
+.voice-status { color: var(--text); font-size: var(--s-xs); margin: 0; max-width: 360px; }
+.voice-control { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+@media (max-width: 820px) { .scene-heading { flex-wrap: wrap; gap: 8px; } .voice-status { max-width: 230px; } }
+:root .studio-main > .scene-panel > .scene-heading:has(.voice-control) { justify-content: flex-start; align-items: center; right: 250px; flex-wrap: wrap; pointer-events: none; }
+:root .scene-heading:has(.voice-control) .scene-heading-actions { pointer-events: auto; }
+@media (max-width: 820px) {
+  :root .studio-main > .scene-panel > .scene-heading:has(.voice-control) { display: flex; position: static; padding: 0; width: 100%; pointer-events: auto; }
+  :root .scene-heading:has(.voice-control) > .eyebrow { display: none; }
+}

@@ -47,18 +47,16 @@ export function CircleSelectionOverlay({ onCircle, onCancel }: {
   </div>;
 }
 
-export function SpatialSelectionTools({ parts, selectedIds, circleMode, onCircleMode, candidates, onChoose, onDismiss, message, circleAvailable = true }: {
+export function SpatialSelectionTools({ parts, selectedIds, circleMode, onCircleMode, candidates, checked, onChecked, onFocusPart, onChoose, onDismiss, message, circleAvailable = true }: {
   parts: Part[]; selectedIds: string[]; circleMode: boolean; onCircleMode: (enabled: boolean) => void;
-  candidates: string[]; onChoose: (ids: string[], source: SelectionSource) => void;
+  candidates: string[]; checked: string[]; onChecked: (ids: string[]) => void; onFocusPart: (id: string | null) => void; onChoose: (ids: string[], source: SelectionSource) => void;
   onDismiss: () => void; message?: string; circleAvailable?: boolean;
 }) {
-  const [checked, setChecked] = useState<string[]>([]);
   const circleButton = useRef<HTMLButtonElement>(null), previousCircleMode = useRef(circleMode);
   useEffect(() => {
     if (previousCircleMode.current && !circleMode) circleButton.current?.focus();
     previousCircleMode.current = circleMode;
   }, [circleMode]);
-  useEffect(() => { setChecked(candidates); }, [candidates]);
   const names = new Map(parts.map(p => [p.id, p.name]));
   return <div className="spatial-selection-tools">
     <div className="spatial-selection-actions">
@@ -81,8 +79,8 @@ export function SpatialSelectionTools({ parts, selectedIds, circleMode, onCircle
       <strong style={{ fontSize: "var(--s-sm)" }}>Which parts do you mean?</strong>
       <p style={{ fontSize: "var(--s-xs)", color: colors.muted, margin: "5px 0 8px" }}>The circle contains {candidates.length} visible parts. Confirm the ones to edit.</p>
       <div style={{ maxHeight: 200, overflowY: "auto" }}>
-        {candidates.map(id => <label key={id} style={{ display: "flex", gap: 8, alignItems: "center", minHeight: 36, fontSize: "var(--s-xs)" }}>
-          <input type="checkbox" checked={checked.includes(id)} onChange={event => setChecked(old => event.target.checked ? [...old, id] : old.filter(value => value !== id))} />{names.get(id) || id}
+        {candidates.map((id, index) => <label key={id} onMouseEnter={() => onFocusPart(id)} onMouseLeave={() => onFocusPart(null)} onFocus={() => onFocusPart(id)} onBlur={() => onFocusPart(null)} style={{ display: "flex", flexDirection: "row", gap: 8, alignItems: "center", minHeight: 36, fontSize: "var(--s-xs)" }}>
+          <input type="checkbox" style={{ width: 16, height: 16, flex: "0 0 auto", margin: 0 }} checked={checked.includes(id)} aria-label={names.get(id) || id} onChange={event => onChecked(event.target.checked ? [...checked, id] : checked.filter(value => value !== id))} /><span className="candidate-number" aria-hidden="true">{index + 1}</span>{names.get(id) || id}
         </label>)}
       </div>
       <div style={{ display: "flex", gap: 6, marginTop: 10 }}>
