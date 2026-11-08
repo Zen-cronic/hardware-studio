@@ -15,7 +15,7 @@ import { homedir } from "node:os";
 import { startCadWorker } from "./cad-worker";
 import { AiProviderAdmission } from "./ai-admission";
 import { ResourceAdmission, type ResourceTicket } from "./resource-admission";
-import { resourceConfig, aiBudgetConfig, aiProviderConfig, type AiBudgetPolicy } from "./config";
+import { resourceConfig, aiBudgetConfig, aiProviderConfig, designAdmissionConfig, type AiBudgetPolicy, type DesignAdmissionPolicy } from "./config";
 import type { WebSocket } from "ws";
 import { CATALOG } from "../src/shared/catalog";
 import { DesignError } from "../src/shared/engine";
@@ -49,13 +49,14 @@ interface Options {
   resources?: ResourceAdmission;
   aiPolicy?: AiBudgetPolicy;
   aiProvider?: AiProviderAdmission;
+  designPolicy?: DesignAdmissionPolicy;
 }
 export async function createApp(options: Options = {}) {
   const dataDir = resolve(options.dataDir || process.env.DATA_DIR || ".data");
   mkdirSync(dataDir, { recursive: true });
   const resources = options.resources || new ResourceAdmission({ dataDir, ...resourceConfig(process.env) });
   const aiProvider = options.aiProvider || new AiProviderAdmission(aiProviderConfig(process.env).concurrency);
-  const store = new Store(options.dbPath || join(dataDir, "studio.sqlite"), options.aiPolicy || aiBudgetConfig(process.env), aiProvider);
+  const store = new Store(options.dbPath || join(dataDir, "studio.sqlite"), options.aiPolicy || aiBudgetConfig(process.env), aiProvider, options.designPolicy || designAdmissionConfig(process.env));
   const app = Fastify({ logger: false, bodyLimit: 13_000_000 });
   const python =
     options.python ||
@@ -188,12 +189,15 @@ export async function createApp(options: Options = {}) {
     }
   }
   app.setErrorHandler((error, request, reply) => {
-    if (error instanceof HttpError)
+    if (error instanceof HttpError) {
+      if (error.retryAfterSeconds !== undefined) reply.header("Retry-After", error.retryAfterSeconds);
       return reply.code(error.status).send({
         error: error.message,
         code: error.code,
         conflicts: error.conflicts,
+        ...(error.retryAfterSeconds !== undefined ? { retryAfterSeconds: error.retryAfterSeconds } : {}),
       });
+    }
     if (error instanceof DesignError)
       return reply.code(422).send({
         error: error.message,

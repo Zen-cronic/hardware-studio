@@ -51,3 +51,22 @@ export function aiProviderConfig(env: Record<string, string | undefined>) {
     throw new Error("AI_PROVIDER_CONCURRENCY must be an integer from 1 to 16.");
   return { concurrency };
 }
+
+export interface DesignAdmissionPolicy {
+  maxDesigns: number;
+  creationsPerWindow: number;
+  windowSeconds: number;
+}
+export function designAdmissionConfig(env: Record<string, string | undefined>): DesignAdmissionPolicy {
+  const integer = (key: string, fallback: number, min: number, max = Number.MAX_SAFE_INTEGER) => {
+    const raw = env[key] ?? String(fallback), value = Number(raw);
+    if (!/^\d+$/.test(raw) || !Number.isSafeInteger(value) || value < min || value > max)
+      throw new Error(`${key} must be an integer from ${min} to ${max}.`);
+    return value;
+  };
+  return {
+    maxDesigns: integer("MAX_SAVED_DESIGNS", 0, 0),
+    creationsPerWindow: integer("DESIGN_CREATIONS_PER_WINDOW", 0, 0),
+    windowSeconds: integer("DESIGN_CREATION_WINDOW_SECONDS", 3600, 1, 604800),
+  };
+}

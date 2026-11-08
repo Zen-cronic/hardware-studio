@@ -1,6 +1,6 @@
 import Database from "better-sqlite3";
 import { AiProviderAdmission } from "./ai-admission";
-import { aiBudgetConfig, type AiBudgetPolicy } from "./config";
+import { aiBudgetConfig, designAdmissionConfig, type AiBudgetPolicy, type DesignAdmissionPolicy } from "./config";
 import { randomBytes, createHash } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
@@ -26,6 +26,7 @@ export class HttpError extends Error {
     message: string,
     public code = "REQUEST_ERROR",
     public conflicts: string[] = [],
+    public retryAfterSeconds?: number,
   ) {
     super(message);
   }
@@ -45,8 +46,11 @@ interface OperationRow {
 }
 export class Store {
   db: Database.Database;
-  constructor(path: string, private aiPolicy: AiBudgetPolicy = aiBudgetConfig({}), readonly aiProvider = new AiProviderAdmission()) {
+  constructor(path: string, private aiPolicy: AiBudgetPolicy = aiBudgetConfig({}), readonly aiProvider = new AiProviderAdmission(), private designPolicy: DesignAdmissionPolicy = designAdmissionConfig({}), private now: () => number = Date.now) {
     if (!Number.isFinite(aiPolicy.budgetUsd) || aiPolicy.budgetUsd < 0 || !Number.isFinite(aiPolicy.reservationUsd) || aiPolicy.reservationUsd < 1) throw new Error("Invalid AI budget configuration.");
+    if (![designPolicy.maxDesigns, designPolicy.creationsPerWindow].every(value => Number.isSafeInteger(value) && value >= 0) ||
+      !Number.isSafeInteger(designPolicy.windowSeconds) || designPolicy.windowSeconds < 1 || designPolicy.windowSeconds > 604800)
+      throw new Error("Invalid design admission configuration.");
     if (path !== ":memory:") mkdirSync(dirname(path), { recursive: true });
     this.db = new Database(path);
     this.db.pragma("journal_mode = WAL");
@@ -55,6 +59,9 @@ export class Store {
       "CREATE TABLE IF NOT EXISTS designs(id TEXT PRIMARY KEY,snapshot TEXT NOT NULL,editor_token TEXT NOT NULL,viewer_token TEXT NOT NULL); CREATE TABLE IF NOT EXISTS operations(design_id TEXT NOT NULL,command_id TEXT NOT NULL,payload_hash TEXT NOT NULL,result TEXT NOT NULL,before_snapshot TEXT NOT NULL,command TEXT NOT NULL,PRIMARY KEY(design_id,command_id)); CREATE TABLE IF NOT EXISTS builds(id TEXT PRIMARY KEY,design_id TEXT NOT NULL,job TEXT NOT NULL,archive TEXT); CREATE TABLE IF NOT EXISTS documents(id TEXT PRIMARY KEY,content BLOB NOT NULL); CREATE TABLE IF NOT EXISTS ai_usage(id TEXT PRIMARY KEY,at TEXT NOT NULL,status TEXT NOT NULL,reserved REAL NOT NULL,spent REAL NOT NULL,input_tokens INTEGER,output_tokens INTEGER);",
     );
     this.db.exec(`
+      CREATE TABLE IF NOT EXISTS design_admission (
+        id INTEGER PRIMARY KEY CHECK(id=1), window_end_ms INTEGER NOT NULL, count INTEGER NOT NULL
+      );
       CREATE TABLE IF NOT EXISTS proposed_versions (
         id TEXT PRIMARY KEY, parent_design_id TEXT NOT NULL REFERENCES designs(id),
         proposed_design_id TEXT NOT NULL UNIQUE REFERENCES designs(id),
@@ -88,20 +95,35 @@ export class Store {
     return this.insert({ design, derived: deriveDesign(design), history: [] });
   }
   insert(snapshot: Snapshot): { snapshot: Snapshot; access: Access } {
-    const access = {
-      editorToken: randomBytes(24).toString("base64url"),
-      viewerToken: randomBytes(24).toString("base64url"),
-    };
-    this.db
-      .prepare("INSERT INTO designs VALUES(?,?,?,?)")
-      .run(
-        snapshot.design.id,
-        JSON.stringify(snapshot),
-        access.editorToken,
-        access.viewerToken,
+    return this.db.transaction(() => {
+      const { maxDesigns, creationsPerWindow, windowSeconds } = this.designPolicy;
+      if (maxDesigns > 0) {
+        const { count } = this.db.prepare("SELECT COUNT(*) AS count FROM designs").get() as { count: number };
+        if (count >= maxDesigns)
+          throw new HttpError(503, "Saved-design capacity is full. Existing designs remain available; ask the host to increase capacity.", "DESIGN_CAPACITY");
+      }
+      const now = this.now();
+      const prior = creationsPerWindow > 0 ? this.db.prepare("SELECT window_end_ms,count FROM design_admission WHERE id=1").get() as
+        { window_end_ms: number; count: number } | undefined : undefined;
+      const current = prior && now < prior.window_end_ms ? prior : { window_end_ms: now + windowSeconds * 1000, count: 0 };
+      if (creationsPerWindow > 0 && current.count >= creationsPerWindow) {
+        const retry = Math.max(1, Math.ceil((current.window_end_ms - now) / 1000));
+        throw new HttpError(429, `New designs are temporarily limited. Try again in ${retry} seconds; existing designs remain available.`, "DESIGN_RATE_LIMIT", [], retry);
+      }
+      const access = {
+        editorToken: randomBytes(24).toString("base64url"),
+        viewerToken: randomBytes(24).toString("base64url"),
+      };
+      this.db.prepare("INSERT INTO designs VALUES(?,?,?,?)").run(
+        snapshot.design.id, JSON.stringify(snapshot), access.editorToken, access.viewerToken,
       );
-    return { snapshot: { ...snapshot, role: "editor" }, access };
+      if (creationsPerWindow > 0)
+        this.db.prepare("INSERT INTO design_admission VALUES(1,?,?) ON CONFLICT(id) DO UPDATE SET window_end_ms=excluded.window_end_ms,count=excluded.count")
+          .run(current.window_end_ms, current.count + 1);
+      return { snapshot: { ...snapshot, role: "editor" as const }, access };
+    }).immediate();
   }
+
   get(id: string): Snapshot {
     const row = this.db.prepare("SELECT * FROM designs WHERE id=?").get(id) as
       | DesignRow

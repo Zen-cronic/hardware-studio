@@ -88,7 +88,7 @@ export class ImportJobs {
    const linkedId=randomUUID(),linkedJob={...job,id:randomUUID(),importId:linkedId};this.saveJob(linkedJob);
    this.saveRecord({...record,id:linkedId,designId:result.snapshot.design.id,originalImportId:record.originalImportId||record.id,latestJobId:linkedJob.id});
    this.store.db.prepare('INSERT INTO import_acceptances VALUES(?,?,?)').run(job.id,job.result!.inputHash,JSON.stringify(result));return result;
-  })();
+  }).immediate();
  }
  private process(){
   if(this.active||this.stopping)return;const next=this.queue.shift();if(!next)return;const {job,record,ticket}=next;
