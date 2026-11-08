@@ -13,8 +13,9 @@ import {
 import { resolve, join } from "node:path";
 import { homedir } from "node:os";
 import { startCadWorker } from "./cad-worker";
+import { AiProviderAdmission } from "./ai-admission";
 import { ResourceAdmission, type ResourceTicket } from "./resource-admission";
-import { resourceConfig, aiBudgetConfig, type AiBudgetPolicy } from "./config";
+import { resourceConfig, aiBudgetConfig, aiProviderConfig, type AiBudgetPolicy } from "./config";
 import type { WebSocket } from "ws";
 import { CATALOG } from "../src/shared/catalog";
 import { DesignError } from "../src/shared/engine";
@@ -47,12 +48,14 @@ interface Options {
   python?: string;
   resources?: ResourceAdmission;
   aiPolicy?: AiBudgetPolicy;
+  aiProvider?: AiProviderAdmission;
 }
 export async function createApp(options: Options = {}) {
   const dataDir = resolve(options.dataDir || process.env.DATA_DIR || ".data");
   mkdirSync(dataDir, { recursive: true });
   const resources = options.resources || new ResourceAdmission({ dataDir, ...resourceConfig(process.env) });
-  const store = new Store(options.dbPath || join(dataDir, "studio.sqlite"), options.aiPolicy || aiBudgetConfig(process.env));
+  const aiProvider = options.aiProvider || new AiProviderAdmission(aiProviderConfig(process.env).concurrency);
+  const store = new Store(options.dbPath || join(dataDir, "studio.sqlite"), options.aiPolicy || aiBudgetConfig(process.env), aiProvider);
   const app = Fastify({ logger: false, bodyLimit: 13_000_000 });
   const python =
     options.python ||
@@ -267,15 +270,16 @@ export async function createApp(options: Options = {}) {
     store.authorize(id, tokenOf(r));
     return store.fork(id);
   });
-  app.post("/api/designs/:id/propose", async (r) => {
+  app.post("/api/designs/:id/propose", async (r, reply) => {
     const id = designId(r);
     store.authorize(id, tokenOf(r), true);
-    return propose(
-      store,
-      store.get(id),
-      r.body as any,
-      options.aiKey ?? process.env.OPENAI_API_KEY,
-    );
+    const controller = new AbortController();
+    const onClose = () => { if (!reply.raw.writableEnded) controller.abort(); };
+    reply.raw.once("close", onClose);
+    try {
+      return await propose(store, store.get(id), r.body as any,
+        options.aiKey ?? process.env.OPENAI_API_KEY, controller.signal);
+    } finally { reply.raw.off("close", onClose); }
   });
   app.post("/api/designs/:id/build", async (r) => {
     const id = designId(r);
@@ -391,6 +395,11 @@ export async function createApp(options: Options = {}) {
       return reply.sendFile("index.html");
     });
   }
+  // preClose runs before HTTP draining and any agent onClose waits.
+  app.addHook("preClose", async () => {
+    aiProvider.stop();
+    agentRuntime.agents.stop();
+  });
   app.addHook("onClose", async () => {
     stopping = true;
     resources.close();
@@ -399,6 +408,7 @@ export async function createApp(options: Options = {}) {
     worker?.cancel();
     await activeDone;
     await otherQueues;
+    await aiProvider.close();
     for (const { job, ticket } of jobs.splice(0)) {
       ticket.release();
       store.setBuild({ ...job, status: "failed", error: "Build interrupted. Please start a new package." });

@@ -44,3 +44,10 @@ export function aiBudgetConfig(env: Record<string, string | undefined>): AiBudge
   };
   return { budgetUsd: amount("AI_BUDGET_USD", 50), reservationUsd: amount("AI_REQUEST_RESERVATION_USD", 1, true) };
 }
+
+export function aiProviderConfig(env: Record<string, string | undefined>) {
+  const raw = env.AI_PROVIDER_CONCURRENCY ?? "2", concurrency = Number(raw);
+  if (!/^\d+$/.test(raw) || !Number.isSafeInteger(concurrency) || concurrency < 1 || concurrency > 16)
+    throw new Error("AI_PROVIDER_CONCURRENCY must be an integer from 1 to 16.");
+  return { concurrency };
+}

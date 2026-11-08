@@ -106,9 +106,12 @@ export class AgentService {
     return run;
   }
   async wait(runId: string) { await this.running.get(runId); return this.stored(runId); }
-  async close() {
+  stop() {
     this.stopping = true;
     for (const controller of this.controllers.values()) controller.abort();
+  }
+  async close() {
+    this.stop();
     await Promise.allSettled(this.running.values());
   }
   private async execute(runId: string, ownerToken: string, signal: AbortSignal) {
@@ -142,7 +145,7 @@ export class AgentService {
             (role === "engineer" ? " Engineering study result: " + JSON.stringify(studySummary(analysis)).slice(0, 3500) : "") +
             (attempt ? " A concurrent edit conflicted with your previous proposal. Re-read this current snapshot and reconcile without overwriting another edit blindly." : "");
           const proposal: Proposal = await (this.options.proposal || propose)(this.versions.store, snapshot,
-            { prompt: prompt.slice(0, 6000), actor: agentActor(issued.credential) }, this.options.apiKey);
+            { prompt: prompt.slice(0, 6000), actor: agentActor(issued.credential) }, this.options.apiKey, signal);
           if (signal.aborted) throw new HttpError(409, "Agent run cancelled.", "CANCELLED");
           if (proposal.source !== "ai") throw new HttpError(503, "A live model is required for this agent run.", "AI_REQUIRED");
           const questions = proposal.questions || [];

@@ -1,4 +1,5 @@
 import Database from "better-sqlite3";
+import { AiProviderAdmission } from "./ai-admission";
 import { aiBudgetConfig, type AiBudgetPolicy } from "./config";
 import { randomBytes, createHash } from "node:crypto";
 import { mkdirSync } from "node:fs";
@@ -44,7 +45,7 @@ interface OperationRow {
 }
 export class Store {
   db: Database.Database;
-  constructor(path: string, private aiPolicy: AiBudgetPolicy = aiBudgetConfig({})) {
+  constructor(path: string, private aiPolicy: AiBudgetPolicy = aiBudgetConfig({}), readonly aiProvider = new AiProviderAdmission()) {
     if (!Number.isFinite(aiPolicy.budgetUsd) || aiPolicy.budgetUsd < 0 || !Number.isFinite(aiPolicy.reservationUsd) || aiPolicy.reservationUsd < 1) throw new Error("Invalid AI budget configuration.");
     if (path !== ":memory:") mkdirSync(dirname(path), { recursive: true });
     this.db = new Database(path);
