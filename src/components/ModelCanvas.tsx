@@ -151,7 +151,8 @@ function PartMesh({
   animation,
   focused = false,
   marker,
-}: Props & { part: Part; animation: React.MutableRefObject<AssemblyFrame>; focused?: boolean; marker?: number }) {
+  labelPortal,
+}: Props & { part: Part; animation: React.MutableRefObject<AssemblyFrame>; focused?: boolean; marker?: number; labelPortal: React.RefObject<HTMLElement> }) {
   const ref = useRef<THREE.Mesh>(null);
   const rot = part.rotation || [0, 0, 0];
   const isSelected = selectedPartIds !== undefined ? selectedPartIds.includes(part.id) : selected === part.id;
@@ -268,7 +269,7 @@ function PartMesh({
           }
         />
       )}
-      {(marker || focused) && <Html position={[0, 0, 0]} center zIndexRange={[2, 0]} style={{ pointerEvents: "none" }}>
+      {(marker || focused) && <Html portal={labelPortal} position={[0, 0, 0]} center zIndexRange={[2, 0]} style={{ pointerEvents: "none" }}>
         <span className={"part-marker" + (isSelected ? " is-checked" : "") + (focused ? " is-focused" : "")} data-part-marker={part.id} data-checked={isSelected}>
           {marker && <span>{marker}</span>}{marker && isSelected && <span aria-hidden="true">✓</span>}{focused && <span>{part.name}</span>}
         </span>
@@ -527,6 +528,9 @@ function SelectionBridge({ picker }: { picker: React.MutableRefObject<PolygonPic
 }
 export default function ModelCanvas(props: Props) {
   const { compact, playing = false, dimensions = false } = props;
+  // Keep Html roots on one DOM owner while Canvas connects its event target.
+  // Inferring that target can recreate a root on the same label container.
+  const labelPortal = useRef<HTMLDivElement>(null!);
   const [circleMode, setCircleMode] = useState(false);
   const [candidates, setCandidates] = useState<string[]>([]);
   useEffect(() => { props.onPendingSelectionChange?.(candidates.length > 1); }, [candidates.length, props.onPendingSelectionChange]);
@@ -604,6 +608,7 @@ export default function ModelCanvas(props: Props) {
       }
     >
       <div className="model-canvas-viewport">
+      <div ref={labelPortal} className="model-label-layer" style={{ position: "absolute", inset: 0, pointerEvents: "none" }} />
       <CanvasBoundary onFailure={() => setFailed(true)}>
         <Canvas
           shadows={!compact}
@@ -648,6 +653,7 @@ export default function ModelCanvas(props: Props) {
                 {...props}
                 parts={props.parts}
                 animation={animation}
+                labelPortal={labelPortal}
                 playing={playing && !reduced && !circleMode}
                 onSelect={canSelect && !circleMode ? id => choose([id], "click") : undefined}
                 selected={undefined}
@@ -670,6 +676,7 @@ export default function ModelCanvas(props: Props) {
             )}
             {dimensions && (
               <Html
+                portal={labelPortal}
                 position={[center[0], box.min.y - 5, box.max.z + 15]}
                 center
               >
