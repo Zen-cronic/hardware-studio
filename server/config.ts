@@ -46,7 +46,7 @@ export function aiBudgetConfig(env: Record<string, string | undefined>): AiBudge
       throw new Error(`${key} must be a ${positive ? "at least one" : "nonnegative"} dollar amount.`);
     return value;
   };
-  return { budgetUsd: amount("AI_BUDGET_USD", 50), reservationUsd: amount("AI_REQUEST_RESERVATION_USD", 1, true) };
+  return { budgetUsd: amount("AI_BUDGET_USD", 10), reservationUsd: amount("AI_REQUEST_RESERVATION_USD", 1, true) };
 }
 
 export function aiProviderConfig(env: Record<string, string | undefined>) {

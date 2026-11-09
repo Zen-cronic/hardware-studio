@@ -4,6 +4,7 @@ import { deriveDesign, readSetFor, validateDesign } from "../src/shared/engine";
 import type { Snapshot, Proposal, Part } from "../src/shared/types";
 import { Store, HttpError } from "./store";
 import { assertCurrentSelection, getSelectionControls, type SelectionRef } from "../src/shared/selection";
+import { selectedAiKey, selectedAiModel, providerRequest, providerHeaders, providerJson, validateInputCount, providerUsage, providerText, FRONTIER_PRICING } from "./ai-provider";
 function localProposal(
   snapshot: Snapshot,
   prompt: string,
@@ -77,7 +78,7 @@ export async function propose(
   store: Store,
   snapshot: Snapshot,
   body: { prompt: string; actor: string; image?: string; images?: string[]; selection?: SelectionRef },
-  apiKey = process.env.OPENAI_API_KEY,
+  apiKey = selectedAiKey(),
   signal?: AbortSignal,
 ): Promise<Proposal> {
   if (
@@ -121,13 +122,7 @@ export async function propose(
     };
     return localProposal(snapshot, body.prompt, body.actor);
   }
-  const model = process.env.OPENAI_MODEL || "gpt-5.4-mini";
-  if (model !== "gpt-5.4-mini")
-    throw new HttpError(
-      503,
-      "AI is unavailable until its spending limit is configured. You can still edit measurements.",
-      "AI_MODEL_UNPRICED",
-    );
+  selectedAiModel();
   const requestId = randomUUID();
   const d = snapshot.design;
   const system =
@@ -147,55 +142,26 @@ export async function propose(
     ticket.signal.throwIfAborted();
     store.reserveAi(requestId);
     reserved = true;
+    const request = providerRequest(system, body.prompt, images);
+    const headers = providerHeaders(request.provider, apiKey);
+    validateInputCount(await providerJson(request.countUrl, request.count, headers, ticket.signal));
+    ticket.signal.throwIfAborted();
     possiblyCharged = true;
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: "Bearer " + apiKey,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: "system", content: system },
-          {
-            role: "user",
-            content: [
-              { type: "text", text: body.prompt },
-              ...images.map((url) => ({
-                type: "image_url",
-                image_url: { url, detail: "auto" },
-              })),
-            ],
-          },
-        ],
-        response_format: { type: "json_object" },
-        max_completion_tokens: 4096,
-      }),
-      signal: ticket.signal,
-    });
-    if (!response.ok) {
-      possiblyCharged = false;
-      await response.body?.cancel();
-      throw new HttpError(
-        502,
-        "The design assistant is temporarily unavailable. Keep working with measurements or retry.",
-        "AI_UNAVAILABLE",
-      );
+    let data: any;
+    try {
+      data = await providerJson(request.url, request.body, headers, ticket.signal);
+    } catch (error) {
+      if (error instanceof HttpError && error.code === "AI_UNAVAILABLE") possiblyCharged = false;
+      throw error;
     }
-    const data = (await response.json()) as any;
-    const usage = data.usage || {};
-    store.recordAi(requestId, usage.prompt_tokens, usage.completion_tokens);
+    const usage = providerUsage(request.provider, data);
+    store.recordAi(requestId, usage.input, usage.output, "complete", FRONTIER_PRICING[request.provider]);
     ticket.signal.throwIfAborted();
     let parsed: any;
     try {
-      parsed = JSON.parse(data.choices?.[0]?.message?.content || "");
+      parsed = JSON.parse(providerText(request.provider, data));
     } catch {
-      throw new HttpError(
-        502,
-        "The assistant returned an incomplete proposal. Please try a more specific request.",
-        "AI_INVALID",
-      );
+      throw new HttpError(502, "The assistant returned an incomplete proposal. Please try a more specific request.", "AI_INVALID");
     }
     const changes = parsed.changes;
     if (

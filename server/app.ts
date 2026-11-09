@@ -1,3 +1,4 @@
+import { selectedAiKey } from "./ai-provider";
 import Fastify, { type FastifyRequest } from "fastify";
 import websocket from "@fastify/websocket";
 import fastifyStatic from "@fastify/static";
@@ -104,7 +105,7 @@ export async function createApp(options: Options = {}) {
         send(ws, { type: "snapshot", snapshot: { ...snapshot, role: p.role } });
   }
   const agentRuntime = registerVersionRoutes(app, {
-    store, broadcast, aiKey: options.aiKey ?? process.env.OPENAI_API_KEY, studies: id => engineering.list(id),
+    store, broadcast, aiKey: options.aiKey ?? selectedAiKey(), studies: id => engineering.list(id),
     analyze: async (snapshot, input, signal) => {
       const runStudy = async (request: Record<string, unknown>) => {
         const job = engineering.submit(snapshot, request);
@@ -222,7 +223,7 @@ export async function createApp(options: Options = {}) {
   });
   app.get("/api/health", async () => ({
     ok: true,
-    ai: Boolean(options.aiKey ?? process.env.OPENAI_API_KEY),
+    ai: Boolean(options.aiKey ?? selectedAiKey()),
     cad: existsSync(python),
   }));
   app.get("/api/catalog", async () => CATALOG);
@@ -289,7 +290,7 @@ export async function createApp(options: Options = {}) {
     reply.raw.once("close", onClose);
     try {
       return await propose(store, store.get(id), r.body as any,
-        options.aiKey ?? process.env.OPENAI_API_KEY, controller.signal);
+        options.aiKey ?? selectedAiKey(), controller.signal);
     } finally { reply.raw.off("close", onClose); }
   });
   app.post("/api/designs/:id/build", async (r) => {

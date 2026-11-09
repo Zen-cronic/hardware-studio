@@ -1,0 +1,23 @@
+# Design assistant providers
+
+The server supports two explicit configurations: `AI_PROVIDER=openai` with `OPENAI_MODEL=gpt-6-astra`, or `AI_PROVIDER=anthropic` with `ANTHROPIC_MODEL=claude-opus-5-5`. These are the defaults for their respective providers. Other models are rejected until their pricing and request contract are reviewed. Set only the selected provider's corresponding API credential in the runtime's private environment. Changing provider requires restarting the process; it never switches automatically after an error. Without the selected credential, measured local edits remain available.
+
+Both providers return proposals through the same geometry validation and acceptance flow. No model output automatically changes the source design. Image references are untrusted observations, and unknown dimensions require clarification. The provider receives the request, images, and relevant current design geometry; keys remain server-side. OpenAI Responses uses `store:false`. Claude uses Messages and the provider's normal retention policy; this integration does not promise zero retention.
+
+## Request and spending bounds
+
+Every paid request first reserves at least US$1 in the existing SQLite ledger, shared by direct edits and agent roles. A token-count preflight includes the full design context and images. Counts above 18,000 or missing/invalid counts are rejected before inference. Output is capped at 8,192 tokens, including reasoning. Both models use low reasoning effort; no temperature, forced tool call, fast tier, or external tool is enabled. Astra explicitly selects the standard service tier. Requests are short-context; long-context pricing is excluded by the input admission cap.
+
+Verified base pricing per million tokens on November 9, 2026 is $10 input/$50 output for Astra and $4 input/$20 output for Opus. The application deliberately records **conservative estimated costs**, using $25/$50 for Astra and $8/$20 for Opus. These input rates include each model's highest documented cache-write price; cache-read savings are never credited. Claude input accounting includes normal input, cache writes and cache reads. Existing ledger amounts are preserved rather than repriced retrospectively.
+
+At the admission cap, conservative estimates are $0.8596 for Astra and $0.30784 for Opus, below the $1 reservation. The remaining headroom covers small token-count differences; counting is a provider estimate, not an independent invoice guarantee. Missing or malformed usage and ambiguous network/body failures keep the full reservation. A known rejected HTTP request releases it. Truncated or invalid proposals still record returned usage because generation has already occurred. A restart preserves unresolved reservations. Actual billed amounts may be lower and should be reconciled in provider dashboards.
+
+The default allowance is $10. Production starts disabled until explicitly configured. The budget is per durable ledger, not an account-wide cross-host limiter: divide an approved total among independent local/staging/production instances. Provider switching on the same instance never resets the shared balance. Never delete or reset the ledger to restore quota. Rotating a credential also does not change the allowance.
+
+## Verification
+
+On November 9 both selected model metadata endpoints returned HTTP200 using authorized credentials. Synthetic measured turntable proposals passed against Opus 5.5 and GPT-6 Astra; source designs stayed unchanged. Conservative recorded smoke usage was $0.01156 and $0.020525 respectively ($0.032085 total). OpenAI's JSON mode requires the word JSON in the input messages as well as the instruction contract; the request builder and regression test cover that requirement.
+
+Automated tests cover request shapes, image encoding, thinking/text block selection, provider selection, unknown models, malformed usage, cache categories, input caps, auth failures, truncation, shared aggregate budget, cancellation, timeouts, streamed bodies and geometry preservation. Smoke tests establish small text requests, not all image workloads, account quotas or maximum-size assemblies.
+
+Official references: [Astra model and pricing](https://developers.openai.com/api/docs/models/gpt-6-astra), [OpenAI pricing](https://developers.openai.com/api/docs/pricing), [Responses token counting](https://developers.openai.com/api/docs/guides/token-counting), [Opus 5.5 model and pricing](https://platform.claude.com/docs/en/models/opus-5-5/overview), [Opus migration contract](https://platform.claude.com/docs/en/models/opus-5-5/migration-guide), [Claude token counting](https://platform.claude.com/docs/en/build-with-claude/token-counting).

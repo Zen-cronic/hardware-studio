@@ -23,7 +23,7 @@ afterEach(async () => {
 const temp = () => { const dir = mkdtempSync(join(tmpdir(), "studio-ai-admission-")); dirs.push(dir); return dir; };
 const body = { prompt: "Set rpm to 9", actor: "Maker" };
 const payload = (proposal: unknown = { changes: { rpm: 9 }, questions: [] }) => ({
-  usage: { prompt_tokens: 100, completion_tokens: 20 }, choices: [{ message: { content: JSON.stringify(proposal) } }],
+  status: "completed", usage: { input_tokens: 100, output_tokens: 20 }, output: [{ type: "message", content: [{ type: "output_text", text: JSON.stringify(proposal) }] }],
 });
 const response = (data: unknown = payload()) => new Response(JSON.stringify(data), { status: 200 });
 const usage = (store: Store) => store.db.prepare("SELECT status,reserved,spent FROM ai_usage ORDER BY rowid").all() as { status: string; reserved: number; spent: number }[];
@@ -53,7 +53,7 @@ function provider(settleOnAbort = true) {
     });
     return pending.promise;
   });
-  vi.stubGlobal("fetch", fetch);
+  vi.stubGlobal("fetch", (url: string, init: RequestInit) => url.endsWith("/input_tokens") ? Promise.resolve(response({ input_tokens: 1000 })) : fetch(url, init));
   return { calls, fetch };
 }
 async function runtime(concurrency = 2) {
@@ -165,26 +165,26 @@ describe("shared provider admission", () => {
     ["success", () => response(), "complete", 0],
     ["HTTP failure", () => new Response("unavailable", { status: 503 }), "failed", 0],
     ["unreadable body", () => new Response("not-json"), "failed", 1],
-    ["invalid JSON proposal", () => response({ ...payload(), choices: [{ message: { content: "not-json" } }] }), "complete", 0],
+    ["invalid JSON proposal", () => response({ ...payload(), output: [{ type: "message", content: [{ type: "output_text", text: "not-json" }] }] }), "complete", 0],
     ["invalid measurements", () => response(payload({ changes: { rpm: "fast" }, questions: [] })), "complete", 0],
     ["invalid geometry", () => response(payload({ changes: { rpm: -100 }, questions: [] })), "complete", 0],
-    ["missing usage", () => response({ choices: payload().choices }), "unpriced", 1],
+    ["missing usage", () => response({ status: "completed", output: payload().output }), "unpriced", 1],
   ] as const)("releases after %s and preserves its accounting", async (name, reply, status, reserved) => {
     const { store, owner } = setup(undefined, 1);
-    vi.stubGlobal("fetch", vi.fn(async () => reply()));
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => url.endsWith("/input_tokens") ? response({ input_tokens: 1000 }) : reply()));
     const result = propose(store, owner.snapshot, body, "synthetic");
     if (name === "success" || name === "missing usage") await expect(result).resolves.toHaveProperty("source", "ai");
     else await expect(result).rejects.toThrow();
     expect(store.aiProvider.stats().active).toBe(0);
     expect(usage(store)[0]).toMatchObject({ status, reserved });
     expect(store.get(owner.snapshot.design.id).design.revision).toBe(0);
-    vi.stubGlobal("fetch", vi.fn(async () => response()));
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => url.endsWith("/input_tokens") ? response({ input_tokens: 1000 }) : response()));
     await expect(propose(store, owner.snapshot, body, "synthetic")).resolves.toHaveProperty("source", "ai");
   });
 
   it("holds a failed HTTP response until its body cancellation settles", async () => {
     const { store, owner } = setup(undefined, 1), cancelled = deferred<void>();
-    vi.stubGlobal("fetch", vi.fn(async () => new Response(new ReadableStream({ cancel: () => cancelled.promise }), { status: 503 })));
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => url.endsWith("/input_tokens") ? response({ input_tokens: 1000 }) : new Response(new ReadableStream({ cancel: () => cancelled.promise }), { status: 503 })));
     const pending = propose(store, owner.snapshot, body, "synthetic").catch((error) => error);
     await vi.waitFor(() => expect(usage(store)).toHaveLength(1));
     await expect(propose(store, owner.snapshot, body, "synthetic")).rejects.toMatchObject({ code: "AI_BUSY" });
@@ -195,6 +195,7 @@ describe("shared provider admission", () => {
   it("keeps unknown network failure reservations without leaking capacity", async () => {
     const { store, owner } = setup(undefined, 1), mock = provider();
     const pending = propose(store, owner.snapshot, body, "synthetic").catch((error) => error);
+    await vi.waitFor(() => expect(mock.calls).toHaveLength(1));
     mock.calls[0].fail(new TypeError("Network failure")); await pending;
     expect(store.aiProvider.stats().active).toBe(0); expect(usage(store)[0]).toMatchObject({ status: "failed", reserved: 1 });
   });
@@ -203,6 +204,7 @@ describe("shared provider admission", () => {
     vi.useFakeTimers();
     const { store, owner } = setup(undefined, 1), mock = provider();
     const pending = propose(store, owner.snapshot, body, "synthetic").catch((error) => error);
+    await vi.advanceTimersByTimeAsync(0);
     if (headersReceived) mock.calls[0].headers();
     await vi.advanceTimersByTimeAsync(60_000);
     expect(await pending).toMatchObject({ status: 504, code: "AI_TIMEOUT" });
@@ -274,7 +276,7 @@ describe("shared provider admission", () => {
     expect(after.aiProvider.stats().active).toBe(0);
     const original = usage(after)[0], mock = provider();
     const pending = propose(after, after.get(owner.snapshot.design.id), body, "synthetic").catch((error) => error);
-    expect(mock.calls).toHaveLength(1); mock.calls[0].fail(new TypeError("Interrupted")); await pending;
+    await vi.waitFor(() => expect(mock.calls).toHaveLength(1)); mock.calls[0].fail(new TypeError("Interrupted")); await pending;
     expect(usage(after)[0]).toEqual(original); expect(usage(after)[0].status).toBe("reserved");
     after.close(); stores.splice(stores.indexOf(after), 1);
     const exhausted = new Store(path, policy, new AiProviderAdmission(1)); stores.push(exhausted);

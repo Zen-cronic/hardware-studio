@@ -39,8 +39,8 @@ test("shutdown rejects every waiter, retains running capacity until completion a
  gate.close();await failure;await expect(reserved.wait()).rejects.toThrow(/interrupted/);
  expect(()=>gate.reserve()).toThrow(/restarting/);expect(gate.stats()).toEqual({active:1,admitted:1,waiting:0});active.release();expect(gate.stats().admitted).toBe(0);
 });
-test("settings preserve local AI defaults and reject invalid or unsafe resource/budget inputs",()=>{
- expect(resourceConfig({})).toEqual({concurrency:1,queueLimit:8,minFreeDiskBytes:0});expect(aiBudgetConfig({})).toEqual({budgetUsd:50,reservationUsd:1});
+test("settings cap default AI allowance and reject invalid or unsafe resource/budget inputs",()=>{
+ expect(resourceConfig({})).toEqual({concurrency:1,queueLimit:8,minFreeDiskBytes:0});expect(aiBudgetConfig({})).toEqual({budgetUsd:10,reservationUsd:1});
  expect(resourceConfig({MIN_FREE_DISK_BYTES:"5368709120"}).minFreeDiskBytes).toBe(5368709120);
  expect(aiBudgetConfig({AI_BUDGET_USD:"0"}).budgetUsd).toBe(0);
  for(const env of [{HEAVY_WORKER_CONCURRENCY:"0"},{HEAVY_WORKER_QUEUE_LIMIT:"-1"},{MIN_FREE_DISK_BYTES:"2.5"},{MIN_FREE_DISK_BYTES:"Infinity"}])expect(()=>resourceConfig(env)).toThrow();

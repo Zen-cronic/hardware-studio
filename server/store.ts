@@ -390,7 +390,7 @@ export class Store {
       })
       .immediate();
   }
-  recordAi(id: string, input: unknown, output: unknown, status = "complete") {
+  recordAi(id: string, input: unknown, output: unknown, status = "complete", pricing = { input: 0.75, output: 4.5 }) {
     if (
       typeof input !== "number" ||
       typeof output !== "number" ||
@@ -404,7 +404,7 @@ export class Store {
         .run(id);
       return;
     }
-    const spent = (input * 0.75) / 1e6 + (output * 4.5) / 1e6;
+    const spent = (input * pricing.input) / 1e6 + (output * pricing.output) / 1e6;
     this.db
       .prepare(
         "UPDATE ai_usage SET reserved=0,spent=?,input_tokens=?,output_tokens=?,status=? WHERE id=?",
