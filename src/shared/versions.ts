@@ -90,3 +90,44 @@ export interface AgentPreview {
   parts: Part[];
   warnings: string[];
 }
+
+export interface RecordedPartChange extends PartChange {
+  beforeSize?: Part["size"];
+  afterSize?: Part["size"];
+  holesUnchanged?: { count: number; diameters: number[] };
+}
+export interface RecordedAgentOperation {
+  operationId: string;
+  agentId: string;
+  label: string;
+  action: "edit" | "undo";
+  fromRevision: number;
+  toRevision: number;
+  hasChanges: boolean;
+  parameters: VersionDiff["parameters"];
+  parts: RecordedPartChange[];
+}
+export interface RecordedStudyOutcome {
+  id: string;
+  revision: number;
+  partId?: string;
+  type: "strength" | "manufacturing" | "mechanism";
+  status: "queued" | "running" | "ready" | "failed" | "cancelled";
+  stale: boolean;
+  staleReason?: "earlier_revision" | "different_revision" | "source_changed";
+  partName?: string;
+  profile?: { name?: string; minWallMm?: number; minHoleMm?: number; maxHoleAspect?: number; toolDiameterMm?: number; toolReachMm?: number; buildEnvelopeMm?: number[] };
+  assumptions?: string[];
+  unassessed?: string[];
+  resultStatus?: string;
+  findingCount?: number;
+  checksPerformed?: string[];
+}
+export interface VersionOutcomes {
+  versionId: string;
+  proposedRevision: number;
+  status: ProposedVersion["status"];
+  contributions: { role: AgentRole; operations: RecordedAgentOperation[] }[];
+  studies: RecordedStudyOutcome[];
+  studyLimit: number;
+}

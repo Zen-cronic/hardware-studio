@@ -103,7 +103,7 @@ export async function createApp(options: Options = {}) {
         send(ws, { type: "snapshot", snapshot: { ...snapshot, role: p.role } });
   }
   const agentRuntime = registerVersionRoutes(app, {
-    store, broadcast, aiKey: options.aiKey ?? process.env.OPENAI_API_KEY,
+    store, broadcast, aiKey: options.aiKey ?? process.env.OPENAI_API_KEY, studies: id => engineering.list(id),
     analyze: async (snapshot, input, signal) => {
       const runStudy = async (request: Record<string, unknown>) => {
         const job = engineering.submit(snapshot, request);

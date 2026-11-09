@@ -7,6 +7,8 @@ import type {
   AgentPreview, AgentRole, ProposedVersion, VersionDiff, VersionView,
 } from "../src/shared/versions";
 import { HttpError, Store, validateCommand } from "./store";
+import { projectAgentOutcomes, type RecordedOperationRow } from "./agent-outcomes";
+import type { EngineeringJob } from "./engineering-jobs";
 import { AgentService, registerAgentRoutes, type AnalysisTool } from "./agents";
 
 function canonical(value: unknown): string {
@@ -240,6 +242,21 @@ export class VersionService {
     return (this.store.db.prepare("SELECT event FROM agent_events WHERE version_id=? ORDER BY rowid DESC LIMIT 200").all(id) as { event: string }[])
       .reverse().map((r) => JSON.parse(r.event));
   }
+  outcomes(id: string, token: string, studies: (designId: string) => EngineeringJob[]) {
+    this.authorize(id, token);
+    return this.store.db.transaction(() => {
+      const version = this.record(id), proposed = this.store.get(version.proposedDesignId);
+      const credentials = (this.store.db.prepare("SELECT * FROM agent_credentials WHERE version_id=? ORDER BY created_at")
+        .all(id) as CredentialRow[]).map(credentialFrom);
+      const events = (this.store.db.prepare("SELECT event FROM agent_events WHERE version_id=? ORDER BY rowid")
+        .all(id) as { event: string }[]).map(row => JSON.parse(row.event) as AgentEvent);
+      const operations = this.store.db.prepare("SELECT command_id,command,before_snapshot,result FROM operations WHERE design_id=? ORDER BY rowid")
+        .all(version.proposedDesignId) as RecordedOperationRow[];
+      return projectAgentOutcomes({ versionId: id, proposedDesignId: version.proposedDesignId,
+        proposedRevision: proposed.design.revision, currentParts: proposed.derived.parts, status: version.status, credentials, events, operations,
+        studies: studies(version.proposedDesignId) }, compareSnapshots);
+    })();
+  }
   preview(id: string, token: string, input: AgentCommandInput): AgentPreview {
     const credential = this.agent(id, token), version = this.requireOpen(id), before = this.store.get(version.proposedDesignId);
     const command: Command = { ...input, actor: agentActor(credential) };
@@ -287,6 +304,7 @@ export interface VersionRouteOptions {
   broadcast?: (id: string, snapshot: Snapshot) => void;
   aiKey?: string;
   analyze?: AnalysisTool;
+  studies?: (designId: string) => EngineeringJob[];
   allowedOrigins?: string[];
 }
 export function registerVersionRoutes(app: FastifyInstance, options: VersionRouteOptions) {
@@ -295,6 +313,7 @@ export function registerVersionRoutes(app: FastifyInstance, options: VersionRout
   app.post("/api/designs/:id/proposed-versions", async (r, reply) => reply.code(201).send(versions.create(idOf(r), versionTokenOf(r), r.body as any)));
   app.get("/api/designs/:id/proposed-versions", async (r) => versions.list(idOf(r), versionTokenOf(r)));
   app.get("/api/proposed-versions/:id", async (r) => versions.view(idOf(r), versionTokenOf(r)));
+  app.get("/api/proposed-versions/:id/outcomes", async (r) => versions.outcomes(idOf(r), versionTokenOf(r), options.studies || (() => [])));
   app.post("/api/proposed-versions/:id/accept", async (r) => versions.accept(idOf(r), versionTokenOf(r), r.body as AcceptVersionInput));
   app.post("/api/proposed-versions/:id/reject", async (r) => versions.reject(idOf(r), versionTokenOf(r)));
   app.post("/api/proposed-versions/:id/agent-credentials", async (r, reply) => reply.code(201).send(versions.issueAgent(idOf(r), versionTokenOf(r), r.body as any)));
