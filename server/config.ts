@@ -13,11 +13,15 @@ export function serverConfig(env: Record<string, string | undefined>) {
       throw new Error(`${name} must be an IP address or localhost.`);
     return value;
   };
+  const collabTransport = env.COLLAB_TRANSPORT ?? "separate";
+  if (collabTransport !== "separate" && collabTransport !== "shared")
+    throw new Error("COLLAB_TRANSPORT must be separate or shared.");
   const apiPort = port("PORT", 4174);
   const collabPort = port("COLLAB_PORT", 4175);
-  if (apiPort === collabPort)
+  if (collabTransport === "separate" && apiPort === collabPort)
     throw new Error("PORT and COLLAB_PORT must differ.");
   return {
+    collabTransport: collabTransport as "separate" | "shared",
     port: apiPort,
     host: host("HOST", "127.0.0.1"),
     collabPort,

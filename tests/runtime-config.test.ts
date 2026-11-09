@@ -8,6 +8,7 @@ import {
 describe("listener configuration", () => {
   it("keeps local defaults and allows separate explicit listeners", () => {
     expect(serverConfig({})).toEqual({
+      collabTransport: "separate",
       port: 4174,
       host: "127.0.0.1",
       collabPort: 4175,
@@ -21,11 +22,17 @@ describe("listener configuration", () => {
         COLLAB_PORT: "8081",
       }),
     ).toEqual({
+      collabTransport: "separate",
       host: "0.0.0.0",
       port: 8080,
       collabHost: "::1",
       collabPort: 8081,
     });
+  });
+  it("explicitly enables one shared listener and rejects unknown transports", () => {
+    expect(serverConfig({ COLLAB_TRANSPORT: "shared", PORT: "4175" }).collabTransport).toBe("shared");
+    for (const value of ["", "SHARED", "proxy", "shared "])
+      expect(() => serverConfig({ COLLAB_TRANSPORT: value })).toThrow(/COLLAB_TRANSPORT/);
   });
   it("rejects malformed or overlapping listeners before startup", () => {
     for (const key of ["PORT", "COLLAB_PORT"]) {

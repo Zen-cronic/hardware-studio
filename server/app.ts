@@ -1,8 +1,8 @@
 import Fastify, { type FastifyRequest } from "fastify";
 import websocket from "@fastify/websocket";
 import fastifyStatic from "@fastify/static";
-import { Server as CollaborationServer } from "@hocuspocus/server";
-import * as Y from "yjs";
+import { createCollaborationServer, NOTES_MESSAGE_LIMIT, ROOM_MESSAGE_LIMIT } from "./collaboration";
+export { createCollaborationServer } from "./collaboration";
 import { randomUUID } from "node:crypto";
 import {
   existsSync,
@@ -50,6 +50,7 @@ interface Options {
   aiPolicy?: AiBudgetPolicy;
   aiProvider?: AiProviderAdmission;
   designPolicy?: DesignAdmissionPolicy;
+  collabTransport?: "separate" | "shared";
 }
 export async function createApp(options: Options = {}) {
   const dataDir = resolve(options.dataDir || process.env.DATA_DIR || ".data");
@@ -212,7 +213,13 @@ export async function createApp(options: Options = {}) {
         "The request could not be completed. Your last saved design is unchanged.",
     });
   });
-  await app.register(websocket, { options: { maxPayload: 65536 } });
+  const collaboration = options.collabTransport === "shared" ? createCollaborationServer(store) : undefined;
+  // Close document transports and await their final stores before SQLite closes.
+  if (collaboration) app.addHook("preClose", async () => { await collaboration.destroy(); });
+  await app.register(websocket, { options: { maxPayload: collaboration ? NOTES_MESSAGE_LIMIT : ROOM_MESSAGE_LIMIT } });
+  if (collaboration) app.get("/collab", { websocket: true }, (socket, request) => {
+    collaboration.handleConnection(socket, request.raw);
+  });
   app.get("/api/health", async () => ({
     ok: true,
     ai: Boolean(options.aiKey ?? process.env.OPENAI_API_KEY),
@@ -359,6 +366,9 @@ export async function createApp(options: Options = {}) {
       send(ws, { type: "snapshot", snapshot: { ...store.get(id), role } });
       peers(id);
       ws.on("message", (raw) => {
+        // The shared transport permits larger Notes frames, but rooms keep their own bound.
+        const length = Array.isArray(raw) ? raw.reduce((sum, part) => sum + part.byteLength, 0) : raw.byteLength;
+        if (length > ROOM_MESSAGE_LIMIT) { ws.close(1009, "Collaboration message is too large."); return; }
         try {
           const msg = JSON.parse(raw.toString());
           if (msg.type !== "presence") return;
@@ -421,44 +431,5 @@ export async function createApp(options: Options = {}) {
     for (const room of rooms.values()) for (const ws of room.keys()) ws.close();
     store.close();
   });
-  return { app, store, broadcast, python };
-}
-export function createCollaborationServer(
-  store: Store,
-  port = 4175,
-  address = "127.0.0.1",
-) {
-  return new CollaborationServer({
-    port,
-    address,
-    quiet: true,
-    debounce: 500,
-    maxDebounce: 1500,
-    async onAuthenticate({ documentName, token, connectionConfig }) {
-      const role = store.authorize(documentName, token);
-      connectionConfig.readOnly = role === "viewer";
-      return { role };
-    },
-    async onLoadDocument({ documentName, document }) {
-      const row = store.db
-        .prepare("SELECT content FROM documents WHERE id=?")
-        .get(documentName) as { content: Buffer } | undefined;
-      if (row) Y.applyUpdate(document, new Uint8Array(row.content));
-      return document;
-    },
-    async beforeHandleMessage({ update }) {
-      if (update.byteLength > 1_000_000)
-        throw new Error("Shared notes are too large.");
-    },
-    async onStoreDocument({ documentName, document }) {
-      const content = Y.encodeStateAsUpdate(document);
-      if (content.byteLength > 2_000_000)
-        throw new Error("Shared notes are too large.");
-      store.db
-        .prepare(
-          "INSERT INTO documents VALUES(?,?) ON CONFLICT(id) DO UPDATE SET content=excluded.content",
-        )
-        .run(documentName, Buffer.from(content));
-    },
-  });
+  return { app, store, broadcast, python, collaboration };
 }

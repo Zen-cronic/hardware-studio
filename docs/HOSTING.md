@@ -4,11 +4,19 @@ Run one persistent instance with Node 24, the documented Python environment and 
 
 Build with `npm ci && npm run build`. After building, `npm ci --omit=dev` keeps the `tsx` runtime used by `npm start`. Native dependencies still need a supported platform and their install scripts. Set `CAD_PYTHON` to the installed Python interpreter and `DATA_DIR` to an absolute writable persistent directory. Keep the private environment outside the source and never put API keys in `VITE_` variables.
 
-Defaults are API `127.0.0.1:4174` and annotations `127.0.0.1:4175`. `HOST`, `PORT`, `COLLAB_HOST` and `COLLAB_PORT` can change these explicitly. Ports must differ and be from 1 to 65535. Use loopback when the proxy is on the same host; use the appropriate private interface when it is in a different container. Bind `0.0.0.0` only when the host's network policy is ready for it.
+Defaults are API `127.0.0.1:4174` and annotations `127.0.0.1:4175`. `HOST`, `PORT`, `COLLAB_HOST` and `COLLAB_PORT` can change these explicitly. Ports must be from 1 to 65535 and must differ when using separate listeners. Use loopback when the proxy is on the same host; use the appropriate private interface when it is in a different container. Bind `0.0.0.0` only when the host's network policy is ready for it.
+
+## Optional shared listener
+
+Set `COLLAB_TRANSPORT=shared` to serve the API, room WebSockets and shared Notes/sketches through the API listener. `/api/rooms/…` and `/collab` both use `HOST` and `PORT`; no separate Notes listener starts. This is useful for a host that exposes one application port. The default `COLLAB_TRANSPORT=separate` retains ports 4174 and 4175. Unknown values fail before opening the database. `COLLAB_HOST` and `COLLAB_PORT` remain validated settings but do not bind a listener in shared mode.
+
+For a local HTTP shared-listener build, set `VITE_COLLAB_PATH=/collab` at build time. HTTPS already uses `/collab`. A shared-listener host can forward every HTTP/WebSocket route to the one API port; do not retain an old `/collab` proxy pointing to an unused port 4175. This does not select a provider, enable TLS or establish production readiness.
+
+Room messages retain their 64 KiB bound before parsing. Notes allows messages up to 1,000,000 bytes and persisted documents up to 2,000,000 bytes. Editor and viewer capabilities apply in both transport modes. The application owns termination signals; it closes raw collaboration sockets, waits for document loading and pending stores/unloads, and only then closes SQLite. This includes unauthenticated sockets and updates still within the Notes save debounce. Shutdown remains subject to the host's termination grace period; verify host restart and reconnection behavior separately.
 
 ## One HTTPS origin
 
-Terminate TLS at the reverse proxy. Send ordinary HTTP and `/api/rooms/…` WebSocket upgrades to the API listener. Send `/collab` WebSocket upgrades to the annotation listener. Preserve the path and query string, upgrade headers, and long-lived socket connections. Do not log capability-bearing query strings or editor invitation fragments.
+For the default separate-listener mode, terminate TLS at the reverse proxy. Send ordinary HTTP and `/api/rooms/…` WebSocket upgrades to the API listener. Send `/collab` WebSocket upgrades to the annotation listener. Preserve the path and query string, upgrade headers, and long-lived socket connections. Do not log capability-bearing query strings or editor invitation fragments.
 
 An HTTPS page automatically connects annotations to `wss://<page-origin>/collab`, including a nondefault HTTPS port. A local HTTP page retains the direct port 4175 default. To use an HTTP proxy or another same-origin path, set `VITE_COLLAB_PATH=/collab` before building; it is a build-time setting. External origins, queries, fragments and traversal are rejected. The development server also proxies `/collab` when that build-time setting is used.
 

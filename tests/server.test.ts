@@ -376,6 +376,7 @@ describe("Yjs shared notes", () => {
       created = s.create("turntable");
     const service = createCollaborationServer(s, 0);
     await service.listen();
+    expect(service.httpServer.address()).toMatchObject({ address: "127.0.0.1", family: "IPv4" });
     const url = "ws://127.0.0.1:" + service.address.port;
     const docs = [new Y.Doc(), new Y.Doc(), new Y.Doc()];
     const providers: HocuspocusProvider[] = [];
