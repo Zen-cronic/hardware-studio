@@ -12,7 +12,6 @@ services:
     dockerfilePath: ./deploy/render.Dockerfile
     dockerContext: .
     healthCheckPath: /api/health
-    maxShutdownDelaySeconds: 120
     disk:
       name: hardware-studio-data
       mountPath: /var/data
@@ -40,7 +39,11 @@ services:
         value: '3600'
       - key: AI_REQUEST_RESERVATION_USD
         value: '1'
+      - key: AI_PROVIDER
+        value: openai
       - key: OPENAI_MODEL
-        value: gpt-5.4-mini
+        value: gpt-6-astra
+      - key: ANTHROPIC_MODEL
+        value: claude-opus-5-5
       - key: AI_BUDGET_USD
         value: '0'
