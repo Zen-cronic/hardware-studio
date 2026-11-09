@@ -10,6 +10,7 @@ import MechanismWorkbench from "./components/MechanismWorkbench";
 import ImportWorkbench from "./components/ImportWorkbench";
 import StrengthSetupPreview from './components/StrengthSetupPreview';
 import AgentOutcomes from "./components/AgentOutcomes";
+import ProofCard from "./components/ProofCard";
 import type { VersionOutcomes } from "./shared/versions";
 import StrengthOutcome from './components/StrengthOutcome';
 import { strengthRequest, refinementRequest, forceMagnitude, endLabel, directionLabel, planarAxis, type Axis, type Side, type Direction, type LoadMode, type StudyJob } from './lib/strengthSetup';
@@ -100,6 +101,9 @@ export default function Development({id,navigate}:{id:string;navigate:Navigate})
  {version&&<><p>Main r{version.main.design.revision} → proposed r{version.proposed.design.revision}</p>{version.version.status==="open"&&version.mainChangedSinceBase&&<p className="workspace-alert">The main design changed since this version began. Review both designs again before acceptance.</p>}
  {version.access&&<button className="button wide" onClick={()=>{remember(version.proposed,version.access);navigate(pathFor(version.proposed.design.id,version.access.editorToken));}}>Edit proposed design</button>}
  <AgentOutcomes outcomes={outcomes?.versionId===version.version.id?outcomes:null} revision={version.proposed.design.revision} runs={runs}/>
+ <ProofCard versionId={version.version.id} token={token} refreshKey={`${version.version.status}:${version.proposed.design.revision}:${snapshot.design.revision}`}
+  onTestProposed={version.access&&version.version.status==='open'?()=>{remember(version.proposed,version.access);navigate('/develop/'+version.proposed.design.id+'#token='+encodeURIComponent(version.access.editorToken));}:undefined}
+  onTestOriginal={isEditor&&version.version.status==='open'&&snapshot.design.revision===version.version.baseRevision?partId=>{if(partId)setSelected(partId);setView('engineering');setSceneMode('model');setStudySetupOpen(true);}:undefined}/>
  <details><summary>{version.version.status==="accepted"?"Accepted design comparison":"Full design comparison"}</summary><h3>{version.version.status==="accepted"?"Accepted changes":"Changes to review"}</h3><div className="version-changes">{!version.diff.hasChanges&&<p>No geometry changes yet.</p>}{version.diff.parameters.map((p:any)=><p key={p.key}><strong>{p.key}</strong>: {p.before} → {p.after}</p>)}{version.diff.parts.map((p:any)=><p key={p.partId}><strong>{p.name}</strong>: {p.type}{p.fields.length?" ("+p.fields.join(", ")+")":""}</p>)}{version.diff.metrics.map((m:any)=><p key={m.label}>{m.label}: {m.before} → {m.after} {m.unit}</p>)}</div></details>
  {version.version.status==='open'&&<><details><summary>Ask design and engineering agents</summary><label className="study-field">Goal for the design and engineering agents<textarea value={goal} onChange={e=>setGoal(e.target.value)} rows={4}/></label><button className="button wide" disabled={busy||!isEditor||!goal.trim()||runs.some(r=>['queued','running'].includes(r.status))} onClick={()=>void action(async()=>{await api('/proposed-versions/'+version.version.id+'/agent-runs',token,{goal});})}><Play size={16}/>Run design + engineering agents</button>
  {runs.filter(r=>['queued','running'].includes(r.status)).map(r=><button key={r.id} className="button small" onClick={()=>void action(async()=>{await api('/proposed-versions/'+version.version.id+'/agent-runs/'+r.id+'/cancel',token,{});})}>Stop agents</button>)}
