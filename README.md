@@ -4,6 +4,8 @@
 
 Try a working hardware design, customize it together, and export a package that stays tied to the accepted design.
 
+Live app: https://hardware-studio-8bev.onrender.com (guided path at https://hardware-studio-8bev.onrender.com/judge).
+
 ## Run locally
 
 Node 24, Python 3.12, pyenv-virtualenv and Poetry are used.
@@ -19,7 +21,7 @@ npm run build
 npm start
 ```
 
-Create the Python environment only once. Set OPENAI_API_KEY in the private .env for language/visual proposals. Open http://127.0.0.1:4174. Annotation collaboration listens locally on port 4175. For development use npm run dev at http://127.0.0.1:5173.
+Create the Python environment only once. For language/visual proposals, set the selected provider's key in the private .env: `OPENAI_API_KEY` for the default `AI_PROVIDER=openai`, or `ANTHROPIC_API_KEY` with `AI_PROVIDER=anthropic` (see [docs/AI-PROVIDERS.md](docs/AI-PROVIDERS.md)). Open http://127.0.0.1:4174. Annotation collaboration listens locally on port 4175. For development use npm run dev at http://127.0.0.1:5173.
 
 ## Start here
 
@@ -65,7 +67,7 @@ When no AI key is available, explicit whole-design dimension commands remain ava
 
 ## Services and data
 
-- OpenAI: language and image input produces typed proposals for review.
+- OpenAI `gpt-6-astra` (default) or Anthropic `claude-opus-5-5` (explicit alternative, no automatic fallback): language and image input produces typed proposals for review.
 - CadQuery/Open Cascade: constructs and verifies exact CAD solids.
 - React Three Fiber/Three.js: interactive viewport and kinematic preview.
 - Yjs/Hocuspocus: collaborative annotations and presence.
