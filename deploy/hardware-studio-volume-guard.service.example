@@ -1,0 +1,27 @@
+[Unit]
+Description=Hardware Studio optional mounted-data service
+After=network.target
+RequiresMountsFor=/var/lib/hardware-studio
+
+[Service]
+Type=simple
+User=hardware-studio
+Group=hardware-studio
+WorkingDirectory=/srv/hardware-studio/current
+EnvironmentFile=/etc/hardware-studio/mounted-data.env
+Environment=PATH=/opt/node-v24.22.1-linux-x64/bin:/srv/hardware-studio/.pyenv/versions/.victoria-hardware/bin:/usr/local/bin:/usr/bin:/bin
+ExecStartPre=/opt/node-v24.22.1-linux-x64/bin/node /srv/hardware-studio/current/scripts/data-volume-guard.mjs
+ExecStart=/opt/node-v24.22.1-linux-x64/bin/node --import tsx /srv/hardware-studio/current/server/index.ts
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=300
+KillMode=mixed
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/hardware-studio
+
+[Install]
+WantedBy=multi-user.target
