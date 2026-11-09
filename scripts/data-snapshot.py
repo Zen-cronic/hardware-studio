@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 import hashlib
 import json
 import os
+import re
 from pathlib import Path, PurePosixPath
 import shutil
 import sqlite3
@@ -29,6 +30,19 @@ def digest(path: Path) -> str:
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
+def package_python_version(value: str) -> bool:
+    parts = PurePosixPath(value).parts
+    return len(parts) == 4 and parts[0] == "builds" and parts[2:] == ("package", ".python-version")
+
+
+def validate_package_python_version(path: Path, relative: str) -> None:
+    # CAD exports carry this non-secret named-environment selector as source metadata.
+    # Never allow arbitrary dotfiles or executable/configuration content through it.
+    if package_python_version(relative):
+        if path.stat().st_size > 67 or re.fullmatch(rb"\.[A-Za-z0-9][A-Za-z0-9._-]{0,63}\r?\n?", path.read_bytes()) is None:
+            raise SnapshotError("Exported Python version must name one private project environment")
+
+
 def safe_relative(value: str) -> str:
     if not isinstance(value, str) or "\\" in value:
         raise SnapshotError("Invalid manifest path")
@@ -37,9 +51,10 @@ def safe_relative(value: str) -> str:
         raise SnapshotError("Invalid manifest path")
     if value != DATABASE and (len(path.parts) < 2 or path.parts[0] not in ROOTS):
         raise SnapshotError("Unexpected data path")
-    for part in path.parts:
+    for index, part in enumerate(path.parts):
         low = part.lower()
-        if low.startswith(".") or low.endswith((".pem", ".key", ".p12", ".pfx")) or low in {"credentials", "id_rsa", "id_ed25519"}:
+        allowed_selector = index == 3 and package_python_version(value)
+        if (low.startswith(".") and not allowed_selector) or low.endswith((".pem", ".key", ".p12", ".pfx")) or low in {"credentials", "id_rsa", "id_ed25519"}:
             raise SnapshotError("Private configuration is not a data artifact")
     return value
 
@@ -65,7 +80,9 @@ def inventory(root: Path) -> list[str]:
             for item in files:
                 file = Path(current) / item
                 regular(file)
-                result.append(safe_relative(file.relative_to(root).as_posix()))
+                relative = safe_relative(file.relative_to(root).as_posix())
+                validate_package_python_version(file, relative)
+                result.append(relative)
     return sorted(result)
 
 

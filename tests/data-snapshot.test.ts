@@ -23,7 +23,7 @@ function run(operation: string, source: string, destination?: string, stopped = 
 async function fixture() {
   const root = mkdtempSync(join(tmpdir(), "studio-snapshot-")); roots.push(root);
   const source = join(root, "source"), backup = join(root, "backup"), restored = join(root, "restored");
-  const runtime = await createApp({ dataDir: source, serveStatic: false, aiKey: "" });
+  const runtime = await createApp({ dataDir: source, serveStatic: false, aiKey: "", aiPolicy: { budgetUsd: 50, reservationUsd: 1 } });
   const item = runtime.store.create("turntable", "Snapshot fixture");
   const id = item.snapshot.design.id;
   runtime.store.apply(id, { id: "widen", actor: "Maker", baseRevision: 0, changes: { diameter: 280 }, readSet: item.snapshot.design.params });
@@ -156,4 +156,50 @@ test("malformed manifest structures fail cleanly before creating restored data",
     const result = run("restore", f.backup, f.restored);
     expect(result.status).toBe(1); expect(result.output).not.toContain("Traceback"); expect(existsSync(f.restored)).toBe(false);
   }
+});
+
+
+test("real exported CAD source metadata survives backup and relocation without relaxing private-file rejection", async () => {
+  const f = await fixture();
+  const packageDirectory = join(f.source, "builds", "package-one", "package");
+  rmSync(packageDirectory, { recursive: true });
+  const input = join(f.root, "cad-input.json"); writeFileSync(input, JSON.stringify(f.item.snapshot));
+  const built = spawnSync(python, ["-m", "cad.build", "--input", input, "--output", packageDirectory], { encoding: "utf8", timeout: 60000 });
+  expect(built.status, built.stderr || built.stdout).toBe(0);
+  const selector = join(packageDirectory, ".python-version");
+  const originalSelector = readFileSync(selector), originalArchive = readFileSync(f.archive);
+  expect(originalSelector.toString().trim()).toBe(".victoria-hardware");
+  expect(run("backup", f.source, f.backup).status).toBe(0);
+  expect(run("verify", f.backup).status).toBe(0);
+  renameSync(f.source, f.source + "-offline");
+  expect(run("restore", f.backup, f.restored).status).toBe(0);
+  expect(readFileSync(join(f.restored, "builds/package-one/package/.python-version"))).toEqual(originalSelector);
+  expect(readFileSync(join(f.restored, "builds/package-one/package/package.zip"))).toEqual(originalArchive);
+  // Even a hash-consistent modified manifest may not turn the narrow selector into config.
+  const copiedSelector = join(f.backup, "builds/package-one/package/.python-version");
+  const manifestFile = join(f.backup, "manifest.json"), manifest = JSON.parse(readFileSync(manifestFile, "utf8"));
+  const bad = "PRIVATE_KEY=synthetic-test-only\n"; writeFileSync(copiedSelector, bad);
+  manifest.files["builds/package-one/package/.python-version"] = { bytes: Buffer.byteLength(bad), sha256: sha(bad) };
+  writeFileSync(manifestFile, JSON.stringify(manifest));
+  const secondRestore = join(f.root, "second-restore");
+  expect(run("restore", f.backup, secondRestore).output).toContain("must name one");
+  expect(existsSync(secondRestore)).toBe(false);
+}, 90000);
+
+test("Python selector exception rejects other locations, hidden parents, invalid contents and keys", async () => {
+  const f = await fixture();
+  const exact = join(f.source, "builds/package-one/package/.python-version");
+  for (const content of ["PRIVATE_KEY=synthetic-test-only\n", ".valid\n.second\n", "." + "a".repeat(70), "../../outside", "3.12.16"]) {
+    writeFileSync(exact, content);
+    expect(run("backup", f.source, f.backup).output).toContain("must name one");
+    expect(existsSync(f.backup)).toBe(false);
+  }
+  rmSync(exact);
+  for (const relative of ["builds/package-one/.python-version", "imports/source-one/.python-version", "builds/.hidden/package/.python-version", "builds/package-one/package/.env", "builds/package-one/package/private.key"]) {
+    const path = join(f.source, relative); mkdirSync(join(path, ".."), { recursive: true }); writeFileSync(path, ".victoria-hardware\n");
+    expect(run("backup", f.source, f.backup).output).toContain("Private configuration");
+    expect(existsSync(f.backup)).toBe(false); rmSync(path);
+  }
+  symlinkSync(f.original, exact);
+  expect(run("backup", f.source, f.backup).output).toContain("symlinks");
 });
