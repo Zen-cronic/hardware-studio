@@ -1,0 +1,56 @@
+# Generated standalone configuration; review and validate on the selected host before use.
+# No includes: do not merge into a configuration with inherited logging/cache overrides.
+worker_processes auto;
+error_log /dev/null crit;
+events { worker_connections 1024; }
+http {
+  access_log off;
+  error_log /dev/null crit;
+  server_tokens off;
+  map $http_upgrade $connection_upgrade {
+    default upgrade;
+    '' close;
+  }
+  client_max_body_size 13000000;
+  proxy_http_version 1.1;
+  proxy_set_header Host $http_host;
+  proxy_set_header Upgrade $http_upgrade;
+  proxy_set_header Connection $connection_upgrade;
+  proxy_set_header Authorization $http_authorization;
+  proxy_pass_request_headers on;
+  proxy_pass_request_body on;
+  proxy_read_timeout 3600s;
+  proxy_send_timeout 3600s;
+  proxy_buffering off;
+  proxy_request_buffering off;
+  proxy_ignore_headers X-Accel-Buffering;
+  proxy_cache off;
+  proxy_store off;
+  proxy_next_upstream off;
+  proxy_redirect off;
+  add_header Cache-Control "no-store" always;
+  server {
+    listen 80;
+    server_name studio.example.invalid;
+    return 308 https://studio.example.invalid$request_uri;
+  }
+  server {
+    listen 443 ssl;
+    server_name studio.example.invalid;
+    ssl_certificate /etc/tls/cert.pem;
+    ssl_certificate_key /etc/tls/key.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    location = /collab {
+      proxy_pass http://127.0.0.1:4175;
+    }
+    location ^~ /collab/ {
+      proxy_pass http://127.0.0.1:4175;
+    }
+    location ^~ /api/rooms/ {
+      proxy_pass http://127.0.0.1:4174;
+    }
+    location / {
+      proxy_pass http://127.0.0.1:4174;
+    }
+  }
+}
