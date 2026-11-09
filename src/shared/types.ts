@@ -154,6 +154,8 @@ export interface BuildJob {
   revision: number;
   status: "queued" | "running" | "ready" | "failed";
   downloadUrl?: string;
+  // SHA-256 of the downloadable archive, recorded when the package is ready.
+  archiveSha256?: string;
   error?: string;
 }
 export interface Presence {

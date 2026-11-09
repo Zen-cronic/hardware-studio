@@ -4,12 +4,13 @@ import websocket from "@fastify/websocket";
 import fastifyStatic from "@fastify/static";
 import { createCollaborationServer, NOTES_MESSAGE_LIMIT, ROOM_MESSAGE_LIMIT } from "./collaboration";
 export { createCollaborationServer } from "./collaboration";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import {
   existsSync,
   mkdirSync,
   writeFileSync,
   createReadStream,
+  readFileSync,
 } from "node:fs";
 import { resolve, join } from "node:path";
 import { homedir } from "node:os";
@@ -106,6 +107,7 @@ export async function createApp(options: Options = {}) {
   }
   const agentRuntime = registerVersionRoutes(app, {
     store, broadcast, aiKey: options.aiKey ?? selectedAiKey(), studies: id => engineering.list(id),
+    latestBuild: id => store.latestBuild(id),
     analyze: async (snapshot, input, signal) => {
       const runStudy = async (request: Record<string, unknown>) => {
         const job = engineering.submit(snapshot, request);
@@ -167,6 +169,7 @@ export async function createApp(options: Options = {}) {
           ...job,
           status: "ready",
           downloadUrl: "/api/builds/" + job.id + "/download",
+          archiveSha256: createHash("sha256").update(readFileSync(archive)).digest("hex"),
         },
         archive,
       );
