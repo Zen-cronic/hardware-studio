@@ -1,4 +1,4 @@
-import { afterEach, expect, it } from "vitest";
+import { afterEach, expect, it, vi } from "vitest";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -18,6 +18,7 @@ afterEach(async () => {
   for (const runtime of apps.splice(0)) await runtime.app.close();
   docs.splice(0).forEach(d => d.destroy());
   directories.splice(0).forEach(d => rmSync(d, { recursive: true, force: true }));
+  vi.restoreAllMocks();
 });
 async function start(dataDir?: string) {
   dataDir ??= mkdtempSync(join(tmpdir(), "studio-shared-listener-"));
@@ -104,15 +105,66 @@ it("accepts Notes above 64 KiB and flushes the latest update before restart", as
 
 it("preserves the room 64 KiB and Notes 1 MB message bounds", async () => {
   const run = await start(), made = run.store.create("turntable");
-  const room = await socket(`${run.ws}/api/rooms/${made.snapshot.design.id}?token=${made.access.editorToken}`);
+  const id = made.snapshot.design.id;
+  const peer = await socket(`${run.ws}/api/rooms/${id}?token=${made.access.viewerToken}`);
+  const room = await socket(`${run.ws}/api/rooms/${id}?token=${made.access.editorToken}`);
+  const presenceFrame = (size: number, marker: string) => {
+    const empty = JSON.stringify({ type: "presence", selection: "" });
+    return JSON.stringify({ type: "presence", selection: marker + "x".repeat(size - Buffer.byteLength(empty) - marker.length) });
+  };
+  const boundary = presenceFrame(65_536, "accepted-boundary");
+  expect(Buffer.byteLength(boundary)).toBe(65_536);
+  room.ws.send(boundary);
+  await expect.poll(() => peer.messages.some(m => m.type === "presence" && m.peers.some((p: any) => p.selection?.startsWith("accepted-boundary")))).toBe(true);
+  peer.messages.length = 0;
   const roomClose = new Promise<number>(resolve => room.ws.once("close", resolve));
-  room.ws.send(JSON.stringify({ type: "presence", selection: "x".repeat(70_000) }));
+  const oversized = presenceFrame(65_537, "must-not-apply");
+  expect(Buffer.byteLength(oversized)).toBe(65_537);
+  room.ws.send(oversized);
   expect(await roomClose).toBe(1009);
+  await expect.poll(() => peer.messages.some(m => m.type === "presence" && m.peers.length === 1)).toBe(true);
+  expect(peer.messages.some(m => m.type === "presence" && m.peers.some((p: any) => p.selection?.startsWith("must-not-apply")))).toBe(false);
+
+  // This opaque binary frame proves transport delivery at the exact Notes
+  // limit, not validity as a Hocuspocus/Yjs application message.
+  const boundaryServerReady = new Promise<WebSocket>(resolve => run.app.websocketServer.once("connection", resolve));
+  const boundaryNotes = await socket(`${run.ws}/collab`);
+  const boundaryServer = await boundaryServerReady;
+  const boundaryErrors: Error[] = [];
+  boundaryServer.on("error", error => boundaryErrors.push(error));
+  const delivered = new Promise<number>(resolve => boundaryServer.once("message", raw => resolve(Array.isArray(raw) ? raw.reduce((sum, part) => sum + part.byteLength, 0) : raw.byteLength)));
+  boundaryNotes.ws.send(Buffer.alloc(1_000_000));
+  expect(await delivered).toBe(1_000_000);
+  expect(boundaryErrors.some(error => (error as NodeJS.ErrnoException).code === "WS_ERR_UNSUPPORTED_MESSAGE_LENGTH")).toBe(false);
+  const boundaryClosed = new Promise<void>(resolve => boundaryNotes.ws.once("close", () => resolve()));
+  boundaryNotes.ws.close();
+  await boundaryClosed;
+
+  // Observe the real server receiver and existing close/terminate behavior without
+  // replacing the error handler. ws initiates 1009, then Fastify terminates the
+  // socket; whether the client receives that close frame is transport timing.
+  const serverSocketReady = new Promise<WebSocket>(resolve => run.app.websocketServer.once("connection", resolve));
   const notes = await socket(`${run.ws}/collab`);
-  const notesClose = new Promise<number>(resolve => notes.ws.once("close", resolve));
-  notes.ws.send(Buffer.alloc(1_000_001));
-  // Fastify terminates the transport after ws rejects an oversized frame.
-  expect(await notesClose).toBe(1006);
+  const serverSocket = await serverSocketReady;
+  const serverMessages: unknown[] = [], receiverErrors: Error[] = [];
+  serverSocket.on("message", message => serverMessages.push(message));
+  serverSocket.on("error", error => receiverErrors.push(error));
+  const close = vi.spyOn(serverSocket, "close"), terminate = vi.spyOn(serverSocket, "terminate");
+  try {
+    const notesClose = new Promise<number>(resolve => notes.ws.once("close", resolve));
+    notes.ws.send(Buffer.alloc(1_000_001));
+    const clientCode = await notesClose;
+    expect(receiverErrors).toHaveLength(1);
+    expect(receiverErrors[0]).toMatchObject({ code: "WS_ERR_UNSUPPORTED_MESSAGE_LENGTH", message: "Max payload size exceeded" });
+    expect(close).toHaveBeenCalledWith(1009);
+    expect(terminate).toHaveBeenCalled();
+    expect(serverMessages).toHaveLength(0);
+    expect(run.collaboration?.hocuspocus.getDocumentsCount()).toBe(0);
+    expect(run.store.db.prepare("SELECT COUNT(*) AS count FROM documents").get()).toEqual({ count: 0 });
+    expect([1006, 1009]).toContain(clientCode);
+  } finally {
+    close.mockRestore(); terminate.mockRestore();
+  }
   expect((await run.app.inject("/api/health")).statusCode).toBe(200);
 });
 
