@@ -1,0 +1,46 @@
+# Preparation only. Review Render's plan before approving resource creation.
+previews:
+  generation: 'off'
+services:
+  - type: web
+    name: hardware-studio
+    runtime: docker
+    plan: 1c-2g
+    region: ohio
+    branch: main
+    autoDeployTrigger: 'off'
+    dockerfilePath: ./deploy/render.Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    maxShutdownDelaySeconds: 120
+    disk:
+      name: hardware-studio-data
+      mountPath: /var/data
+      sizeGB: 10
+    envVars:
+      - key: DATA_DIR
+        value: /var/data/hardware-studio
+      - key: HOST
+        value: 0.0.0.0
+      - key: COLLAB_TRANSPORT
+        value: shared
+      - key: HEAVY_WORKER_CONCURRENCY
+        value: '1'
+      - key: HEAVY_WORKER_QUEUE_LIMIT
+        value: '2'
+      - key: AI_PROVIDER_CONCURRENCY
+        value: '1'
+      - key: MIN_FREE_DISK_BYTES
+        value: '5368709120'
+      - key: MAX_SAVED_DESIGNS
+        value: '500'
+      - key: DESIGN_CREATIONS_PER_WINDOW
+        value: '60'
+      - key: DESIGN_CREATION_WINDOW_SECONDS
+        value: '3600'
+      - key: AI_REQUEST_RESERVATION_USD
+        value: '1'
+      - key: OPENAI_MODEL
+        value: gpt-5.4-mini
+      - key: AI_BUDGET_USD
+        value: '0'
