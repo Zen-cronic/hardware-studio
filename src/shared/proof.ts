@@ -53,6 +53,8 @@ export interface ProofSide {
     displacementChange?: number;
     stressChange?: number;
     error?: string;
+    // Recorded study inputs, used to start the other side with the same setup.
+    setup?: any;
   };
 }
 
@@ -256,7 +258,7 @@ export function describeSide(role: ProofSide["role"], revision: number, study: P
   const levels: any[] = Array.isArray(convergence?.levels) ? convergence.levels : [];
   const elements = levels.at(-1)?.elements ?? result?.mesh?.elementCount;
   const side: ProofSide = { role, label, revision, state: "no_result", hasNumbers: hasNumbers(result), summary: "",
-    study: { id: study.id, revision: study.revision, createdAt: study.createdAt,
+    study: { id: study.id, revision: study.revision, createdAt: study.createdAt, ...(study.setup ? { setup: study.setup } : {}),
       ...(result?.status ? { resultStatus: result.status } : {}),
       ...(Number.isFinite(elements) ? { elements } : {}),
       ...(Number.isFinite(convergence?.displacementRelativeChange) ? { displacementChange: convergence.displacementRelativeChange } : {}),

@@ -1,4 +1,5 @@
 import type { Part, Vec3 } from '../shared/types';
+import type { ProofCard } from '../shared/proof';
 
 export const GRAVITY = 9.80665;
 export type Axis = 'x' | 'y' | 'z';
@@ -87,3 +88,49 @@ export function refinementRequest(job: StudyJob, revision: number, isEditor: boo
 
 export const endLabel = (axis: Axis, side: Side) => `${side === 'min' ? '−' : '+'}${axis.toUpperCase()} end`;
 export const directionLabel = (direction: Direction) => `Local ${direction[0] === '-' ? '−' : '+'}${direction[1].toUpperCase()}`;
+
+export type StrengthForm = {
+  material: Record<string, any>; axis: Axis; supportSide: Side; loadSide: Side; direction: Direction;
+  mode: LoadMode; value: string; meshSize: string; refinements: number;
+};
+export type StrengthPrefill =
+  | { ok: true; form: StrengthForm; setup: any; revision: number; studyId: string; message: string }
+  | { ok: false; message: string };
+
+// Maps a recorded strength setup back to the study form, only when the form can reproduce it exactly.
+export function formFromSetup(setup: any, part?: Part): StrengthForm | undefined {
+  const support = setup?.supports?.[0], load = setup?.loads?.[0], vector = load?.forceN;
+  if (!part || setup?.partId !== part.id || setup?.importId || setup?.supports?.length !== 1 || setup?.loads?.length !== 1) return undefined;
+  if (!['x', 'y', 'z'].includes(support?.axis) || support.axis !== load?.axis || support.min || support.max || load.min || load.max) return undefined;
+  if (!Array.isArray(vector) || vector.length !== 3 || vector.some((v: unknown) => typeof v !== 'number' || !Number.isFinite(v))) return undefined;
+  const active = vector.map((v: number, i: number) => [v, i] as const).filter(([v]) => v !== 0);
+  if (active.length !== 1) return undefined;
+  const [component, index] = active[0], magnitude = Math.abs(component);
+  const direction = `${component < 0 ? '-' : '+'}${'xyz'[index]}` as Direction;
+  // Prefer the payload the maker typed, but only when it reproduces the recorded force bit for bit.
+  const payload = magnitude / GRAVITY;
+  const usePayload = payload > 0 && payload <= 1000 && Number(String(payload)) * GRAVITY === magnitude;
+  const form: StrengthForm = {
+    material: structuredClone(setup.material), axis: support.axis, supportSide: support.side, loadSide: load.side, direction,
+    mode: usePayload ? 'payload' : 'force', value: String(usePayload ? payload : magnitude),
+    meshSize: String(setup.mesh?.maxSizeMm), refinements: setup.mesh?.refinements,
+  };
+  try {
+    const rebuilt = strengthRequest({ revision: 0, part, ...form });
+    const same = ['material', 'supports', 'loads', 'mesh'].every(key => JSON.stringify((rebuilt as any)[key]) === JSON.stringify(setup[key]));
+    return same ? form : undefined;
+  } catch { return undefined; }
+}
+
+// Chooses the original study the before/after proof compares against and maps its setup.
+export function prefillFromProof(card: Pick<ProofCard, 'partId' | 'sides'> | null, part?: Part): StrengthPrefill {
+  const fallback = 'The study form uses the default setup.';
+  if (!part) return { ok: false, message: 'Select a physical component. ' + fallback };
+  const side = card?.sides.original;
+  if (!card || card.partId !== part.id || !side?.study) return { ok: false, message: `The original design has no strength study for ${part.name}. ${fallback}` };
+  if (side.stale) return { ok: false, message: `The original study is out of date. ${side.staleNote || ''} ${fallback}`.replace(/\s+/g, ' ') };
+  const form = formFromSetup(side.study.setup, part);
+  if (!form) return { ok: false, message: `The original study's setup cannot be shown in this form. ${fallback}` };
+  return { ok: true, form, setup: side.study.setup, revision: side.study.revision, studyId: side.study.id,
+    message: `Same setup as the original study on r${side.study.revision}: material, fixed end, force and mesh. You can still change it.` };
+}

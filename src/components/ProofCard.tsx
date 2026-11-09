@@ -42,7 +42,7 @@ function SideCell({ side }: { side: ProofSide }) {
 
 export default function ProofCard({ versionId, token, refreshKey, onTestProposed, onTestOriginal }: {
   versionId: string; token: string; refreshKey: string;
-  onTestProposed?: () => void; onTestOriginal?: (partId?: string) => void;
+  onTestProposed?: (partId?: string) => void; onTestOriginal?: (partId?: string) => void;
 }) {
   const [card, setCard] = useState<Proof | null>(null), [part, setPart] = useState(""), [error, setError] = useState("");
   useEffect(() => {
@@ -114,7 +114,7 @@ export default function ProofCard({ versionId, token, refreshKey, onTestProposed
     {metrics.some((m) => !m.inVerdict) && <p className="outcome-secondary">Peak element stress can spike at sharp corners and fixed edges, so the verdict uses displacement and 95th-percentile stress.</p>}
     {(needsOriginal && onTestOriginal) || (needsProposed && onTestProposed) ? <div className="study-actions">
       {needsOriginal && onTestOriginal && <button className="button small" onClick={() => onTestOriginal(card.partId)}>Test the original</button>}
-      {needsProposed && onTestProposed && <button className="button small" onClick={onTestProposed}>Test the proposed design</button>}
+      {needsProposed && onTestProposed && <button className="button small" onClick={() => onTestProposed(card.partId)}>Test the proposed design</button>}
     </div> : null}
     <details open={conditions.state === "different"}>
       <summary>Test conditions</summary>
