@@ -185,7 +185,8 @@ describe("authoritative revisions", () => {
     expect(image.command.changes).toEqual({});
   });
   it("limits aggregate AI reservations across concurrent requests", () => {
-    const s = memory();
+    const s = new Store(":memory:", { budgetUsd: 50, reservationUsd: 1 });
+    stores.push(s);
     for (let i = 0; i < 50; i++) s.reserveAi("r" + i);
     expect(() => s.reserveAi("overflow")).toThrow(/limit/);
     s.recordAi("r0", 1000, 100);
