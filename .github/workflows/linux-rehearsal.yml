@@ -1,0 +1,75 @@
+name: Linux runtime rehearsal
+
+on:
+  workflow_dispatch:
+    inputs:
+      included_capacity_verified:
+        description: 'Included compute allowance checked immediately before this run'
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: linux-runtime-rehearsal
+  cancel-in-progress: false
+
+jobs:
+  runtime:
+    if: ${{ inputs.included_capacity_verified }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      OPENAI_API_KEY: ''
+      AI_BUDGET_USD: '0'
+      AI_REQUEST_RESERVATION_USD: '1'
+      AI_PROVIDER_CONCURRENCY: '1'
+      HEAVY_WORKER_CONCURRENCY: '1'
+      HEAVY_WORKER_QUEUE_LIMIT: '2'
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONUNBUFFERED: '1'
+      OMP_NUM_THREADS: '2'
+      OPENBLAS_NUM_THREADS: '2'
+      MKL_NUM_THREADS: '2'
+    steps:
+      - name: Check out selected source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24.22.1'
+          package-manager-cache: false
+      - name: Install reviewed native runtime
+        run: bash scripts/linux-rehearsal-bootstrap.sh
+      - name: Build exact source and check Linux dependencies
+        run: |
+          set -euo pipefail
+          git rev-parse HEAD
+          npm run build
+          node scripts/runtime-preflight.mjs --require-linux
+      - name: Run cancellation and recovery regressions
+        run: >-
+          npx --no-install vitest run --maxWorkers=1
+          tests/cad-worker.test.ts tests/clip-worker.test.ts
+          tests/build-recovery.test.ts tests/data-snapshot.test.ts
+          tests/resource-admission.test.ts
+      - name: Check real CAD, numerical and reconstruction outputs
+        run: |
+          set -euo pipefail
+          poetry run pytest -q tests/cad_exports_test.py::test_every_example_exports_reopened_exact_geometry tests/engineering_test.py::test_cantilever_oracle_and_equilibrium tests/engineering_test.py::test_unsupported_inputs_do_not_return_engineering_success tests/reconstruction_test.py::test_step_rotated_holes_counterbore_and_real_shrink tests/reconstruction_test.py::test_unsupported_details_preserve_source_preview
+      - name: Exercise actual application jobs and restored downloads
+        run: npx --no-install tsx scripts/runtime-workloads.ts --require-linux
+      - name: Record scope
+        if: always()
+        run: |
+          {
+            echo '### Linux runtime rehearsal'
+            echo "Source: $GITHUB_SHA"
+            echo 'Read step logs for actual checks, hashes, timings and failures.'
+            echo 'No provider key, cache upload, artifact upload, deployment or public URL.'
+            echo 'This runner does not establish systemd, persistent-host capacity, HTTPS or uptime.'
+          } >> "$GITHUB_STEP_SUMMARY"
