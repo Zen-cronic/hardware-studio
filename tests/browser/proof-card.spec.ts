@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { createApp } from "../../server/app";
 import { PROPOSED_RESULT, SETUP, saveStudy, seedProof, studyRecord } from "../helpers/proof-fixture";
+import { openLoadSetup, openMeshSetup } from "./workspace-tools";
 
 test.use({ channel: "chrome" });
 const PORT = Number(process.env.PROOF_CARD_PORT || 4311);
@@ -145,6 +146,63 @@ for (const width of [1440, 375])
       await card.getByRole("button", { name: "Test the proposed design", exact: true }).click();
       await expect(page).toHaveURL(new RegExp(`/develop/${f.view.version.proposedDesignId}`));
       await expect(page.getByRole("heading", { name: "Test a component", exact: true })).toBeVisible();
+      expect(errors).toEqual([]);
+      expect(external).toEqual([]);
+    } finally { await context.close(); await app.close(); rmSync(dataDir, { recursive: true, force: true }); }
+  });
+
+for (const width of [1440, 375])
+  test(`testing the proposed design starts from the original study's setup and compares without manual edits at ${width}px`, async ({ browser }, info) => {
+    test.setTimeout(240000);
+    const dataDir = mkdtempSync(join(tmpdir(), "proof-card-browser-"));
+    const { app, store } = await createApp({ dataDir, aiKey: "" });
+    const f = seedProof(store, undefined, { studies: false });
+    const mainId = f.owner.snapshot.design.id, headers = { authorization: "Bearer " + f.owner.access.editorToken };
+    await app.listen({ host: "127.0.0.1", port: PORT });
+    const context = await browser.newContext({ viewport: { width, height: width === 375 ? 812 : 1000 }, reducedMotion: "reduce" });
+    const page = await context.newPage();
+    const errors: string[] = []; page.on("pageerror", (e) => errors.push(e.message));
+    const external = await isolate(page);
+    try {
+      // The original study runs on the real solver with a 4 mm starting mesh.
+      const submitted = await page.request.post(`${ORIGIN}/api/designs/${mainId}/studies`, { headers, data: { type: "strength", revision: 0, ...structuredClone(SETUP) } });
+      expect(submitted.status()).toBe(202);
+      const original = await submitted.json();
+      await expect.poll(async () => (await (await page.request.get(`${ORIGIN}/api/studies/${original.id}`, { headers })).json()).result?.convergence?.status, { timeout: 120000 }).toBe("converged");
+      let card = await openVersion(page, mainId, f.owner.access.editorToken);
+      await expect(card.locator(".proof-verdict")).toContainText("Needs a proposed study");
+      await card.getByRole("button", { name: "Test the proposed design", exact: true }).click();
+      await expect(page).toHaveURL(new RegExp(`/develop/${f.view.version.proposedDesignId}\\?part=upper-arm&proof=${f.view.version.id}`));
+      const hint = page.locator(".setup-prefill");
+      await expect(hint).toHaveText("Same setup as the original study on r0: material, fixed end, force and mesh. You can still change it.");
+      await expect(page.getByRole("combobox", { name: "Component", exact: true })).toHaveValue("upper-arm");
+      await openLoadSetup(page);
+      await expect(page.getByRole("spinbutton", { name: "Test payload (kg)", exact: true })).toHaveValue("0.5");
+      await expect(page.getByRole("combobox", { name: "Fixed end", exact: true })).toHaveValue("min");
+      await expect(page.getByRole("combobox", { name: "Loaded end", exact: true })).toHaveValue("max");
+      await expect(page.getByRole("combobox", { name: "Force direction", exact: true })).toHaveValue("-y");
+      await openMeshSetup(page);
+      const mesh = page.getByRole("spinbutton", { name: "Starting mesh size (mm)", exact: true });
+      await expect(mesh).toHaveValue("4");
+      await expect(page.getByRole("combobox", { name: "Mesh refinements", exact: true })).toHaveValue("2");
+      // An edit stays possible and is called out, then the copied value is restored.
+      await mesh.fill("8");
+      await expect(hint).toHaveText("Changed from the original study on r0: Mesh settings. The before and after proof will show these as different conditions.");
+      await mesh.fill("4");
+      await expect(hint).toContainText("Same setup as the original study on r0");
+      await hint.scrollIntoViewIfNeeded();
+      await shoot(page.locator(".development-controls"), `natural-flow-prefilled-form-${width}.png`, (n) => info.outputPath(n));
+      await page.getByRole("checkbox", { name: /I reviewed this component/ }).check();
+      await page.getByRole("button", { name: "Run study", exact: true }).click();
+      await expect(page.getByRole("heading", { name: "Mesh convergence passed", exact: true })).toBeVisible({ timeout: 120000 });
+      card = await openVersion(page, mainId, f.owner.access.editorToken);
+      await expect(card.locator(".proof-verdict")).toContainText("Improved under the same conditions");
+      await expect(card.locator(".proof-verdict")).toContainText("maximum displacement −70.14% and 95th-percentile stress −50.85%");
+      await expect(card.locator(".proof-checks")).toContainText("Same conditions");
+      await expect(card.getByRole("table", { name: "Measured results for Upper arm link" }).getByRole("row", { name: /Mesh check/ })).toContainText("ConvergedConverged");
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      await card.scrollIntoViewIfNeeded();
+      await shoot(card, `natural-flow-proof-${width}.png`, (n) => info.outputPath(n));
       expect(errors).toEqual([]);
       expect(external).toEqual([]);
     } finally { await context.close(); await app.close(); rmSync(dataDir, { recursive: true, force: true }); }

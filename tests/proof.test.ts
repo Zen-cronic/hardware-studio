@@ -13,6 +13,8 @@ import { Store } from "../server/store";
 import { createApp } from "../server/app";
 import { ResourceAdmission } from "../server/resource-admission";
 import { ORIGINAL_RESULT, PROPOSED_RESULT, SETUP, saveStudy, savedStudies, seedProof, studyRecord } from "./helpers/proof-fixture";
+import { formFromSetup, prefillFromProof, strengthRequest } from "../src/lib/strengthSetup";
+import { deskArmParts } from "../src/shared/desk-arm";
 
 const stores: Store[] = [], dirs: string[] = [];
 afterEach(() => {
@@ -299,4 +301,51 @@ console.log(JSON.stringify({ok:true,archive}));
       expect(createHash("sha256").update(download.rawPayload).digest("hex")).toBe(card.export.build.archiveSha256);
     } finally { await app.close(); }
   }, 30000);
+});
+
+describe("prefill from the original study", () => {
+  const upper = deskArmParts().find((p) => p.id === "upper-arm")!;
+  const rebuild = (setup: any) => { const form = formFromSetup(setup, upper)!; return strengthRequest({ revision: 1, part: upper, ...form }); };
+  it("maps the recorded setup back to the form and reproduces it exactly", () => {
+    expect(formFromSetup(SETUP, upper)).toEqual({ material: SETUP.material, axis: "x", supportSide: "min", loadSide: "max", direction: "-y", mode: "payload", value: "0.5", meshSize: "4", refinements: 2 });
+    expect(compareConditions(SETUP, rebuild(SETUP)).state).toBe("same");
+  });
+  it.each([0.1, 0.3, 1.7, 7, 9.80665, 123.456, 2500])("reproduces a %s N force bit for bit", (force) => {
+    const setup = { ...structuredClone(SETUP), loads: [{ axis: "x", side: "max", forceN: [0, 0, force] }], mesh: { maxSizeMm: 2.8, refinements: 1 } };
+    expect(rebuild(setup).loads).toEqual(setup.loads);
+    expect(rebuild(setup).mesh).toEqual(setup.mesh);
+  });
+  it("refuses setups the form cannot reproduce", () => {
+    expect(formFromSetup({ ...SETUP, loads: [{ axis: "x", side: "max", forceN: [1, -4, 0] }] }, upper)).toBeUndefined();
+    expect(formFromSetup({ ...SETUP, supports: [{ axis: "y", side: "min" }] }, upper)).toBeUndefined();
+    expect(formFromSetup({ ...SETUP, importId: "imported" }, upper)).toBeUndefined();
+    expect(formFromSetup({ ...SETUP, partId: "lower-arm" }, upper)).toBeUndefined();
+    expect(formFromSetup({ ...SETUP, mesh: { maxSizeMm: 0.01, refinements: 2 } }, upper)).toBeUndefined();
+  });
+  it("uses the same original study the proof compares against", () => {
+    const f = fixture();
+    // A newer original study with a coarser mesh does not match the proposed study.
+    const newer = saveStudy(f.store, studyRecord(f.owner.snapshot, { createdAt: "2026-11-01T12:00:00.000Z", setup: { ...structuredClone(SETUP), mesh: { maxSizeMm: 8, refinements: 2 } }, result: ORIGINAL_RESULT }));
+    const card = f.versions.proof(f.view.version.id, f.owner.access.editorToken, savedStudies(f.store), () => null, "upper-arm");
+    const prefill = prefillFromProof(card, upper);
+    expect(card.sides.original.study!.id).toBe(f.original!.id);
+    expect(prefill).toMatchObject({ ok: true, studyId: f.original!.id, revision: 0, form: { meshSize: "4" } });
+    // Without a proposed study, both follow the newest current original study.
+    f.store.db.prepare("DELETE FROM engineering_jobs WHERE id=?").run(f.after!.id);
+    const alone = f.versions.proof(f.view.version.id, f.owner.access.editorToken, savedStudies(f.store), () => null, "upper-arm");
+    expect(alone.sides.original.study!.id).toBe(newer.id);
+    expect(prefillFromProof(alone, upper)).toMatchObject({ ok: true, studyId: newer.id, form: { meshSize: "8" } });
+  });
+  it("falls back to the default setup and says why", () => {
+    const f = fixture({ studies: false });
+    const empty = f.versions.proof(f.view.version.id, f.owner.access.editorToken, savedStudies(f.store), () => null, "upper-arm");
+    expect(prefillFromProof(empty, upper)).toEqual({ ok: false, message: "The original design has no strength study for Upper arm link. The study form uses the default setup." });
+    saveStudy(f.store, studyRecord(f.owner.snapshot, { snapshotHash: "different-geometry", result: ORIGINAL_RESULT }));
+    const stale = f.versions.proof(f.view.version.id, f.owner.access.editorToken, savedStudies(f.store), () => null, "upper-arm");
+    const message = prefillFromProof(stale, upper);
+    expect(message.ok).toBe(false);
+    expect(message.message).toBe("The original study is out of date. The geometry behind the original study changed after it ran. The study form uses the default setup.");
+    expect(prefillFromProof(null, upper).ok).toBe(false);
+    expect(prefillFromProof(stale, undefined).message).toContain("Select a physical component.");
+  });
 });
