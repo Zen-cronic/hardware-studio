@@ -5,6 +5,7 @@ import { droneParts } from "../src/shared/drone";
 import { createSelection } from "../src/shared/selection";
 import { validateDesign } from "../src/shared/engine";
 import { partFeatures } from "../src/shared/surface";
+import { normalizeSpokenNumbers } from "../src/shared/spoken-numbers";
 import { askWhichPart, clarifyCandidates, isClarification, namedFeature, resolveAnswer } from "../src/lib/clarify";
 
 function drone() {
@@ -28,6 +29,10 @@ describe("asking which part, without the assistant", () => {
     expect(askWhichPart(snapshot, "make the arms 6 mm thick", "Maker", "q2")).toBeNull();
     expect(askWhichPart(snapshot, "make all the arm plates 6 mm thick", "Maker", "q3")).toBeNull();
     expect(askWhichPart(snapshot, "make the battery smaller", "Maker", "q4")).toBeNull();
+    // A free-form wish names no measurement: it goes to the assistant instead of a local question.
+    expect(askWhichPart(snapshot, "Make room for a bigger camera", "Maker", "q5")).toBeNull();
+    // Spoken number words are read as a measurement once normalised.
+    expect(askWhichPart(snapshot, normalizeSpokenNumbers("make the arm six millimetres thick"), "Maker", "q6")?.questions?.[0]).toMatch(/^Which arm:/);
   });
 
   it("binds an answer by name, by the pointer at speech onset or by place on screen", () => {
@@ -96,6 +101,17 @@ describe("demo requests decided locally", () => {
     const fresh = drone();
     const single = await propose(fresh.store, fresh.snapshot, { prompt: "make this arm 6 mm thick", actor: "Maker", selection: face(fresh.snapshot, "arm-front-right", "face+y") }, "");
     expect(single.target?.partIds).toEqual(["arm-front-right"]);
+    expect((store.db.prepare("SELECT COUNT(*) AS n FROM ai_usage").get() as { n: number }).n).toBe(0);
+  });
+
+  it("reads spoken number words on the server before the local rules", async () => {
+    const { store, snapshot } = drone();
+    const top = face(snapshot, "arm-front-right", "face+y");
+    const group = await propose(store, snapshot, { prompt: "make these arms six millimetres thick", actor: "Maker", selection: top }, "");
+    expect(group).toMatchObject({ source: "local", target: { label: "4 arms" } });
+    const single = await propose(store, snapshot, { prompt: "make this arm five point five millimeters thick", actor: "Maker", selection: top }, "");
+    expect(single.source).toBe("local");
+    expect(single.command.customParts!.find(p => p.id === "arm-front-right")!.size[1]).toBe(5.5);
     expect((store.db.prepare("SELECT COUNT(*) AS n FROM ai_usage").get() as { n: number }).n).toBe(0);
   });
 

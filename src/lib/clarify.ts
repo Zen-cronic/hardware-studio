@@ -67,6 +67,8 @@ const qualifier = (name: string) => (name.split(",").slice(1).join(",").trim() |
  * design has several of ("the arm" on a quadcopter), the parts to choose between.
  */
 export function partCandidates(snapshot: Snapshot, prompt: string): { noun: string; candidates: ClarifyCandidate[] } | null {
+  // Only a measured or stiffness request asks "which one"; free-form wishes go to the assistant.
+  if (!/\d/.test(prompt) && !/\b(thick|thicker|thinner|thickness|wide|wider|narrower|width|long|longer|shorter|length|tall|taller|stiffer|stronger)\b/i.test(prompt)) return null;
   const words = prompt.toLowerCase().match(/[a-z]+/g) || [];
   if (words.some(w => ["all", "every", "each", "both"].includes(w))) return null;
   const parts = snapshot.derived.parts.filter(p => p.role !== "reference");

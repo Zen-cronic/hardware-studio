@@ -22,8 +22,9 @@ async function checkAndApply(page: Page, name: string, improved = true) {
   const sentence = (await result.locator(".check-sentence").textContent())!;
   await result.getByText("How we checked", { exact: true }).click();
   const numbers = await result.locator(".check-numbers").innerText();
+  // Speech says "percent"; the card keeps "%".
   const change = sentence.match(/bends \d+% (less|more)/)![0];
-  await expect.poll(async () => (await spoken(page)).join(" ")).toContain(change);
+  await expect.poll(async () => (await spoken(page)).join(" ")).toContain(change.replace("%", " percent"));
   if (evidence) { await page.screenshot({ path: `${evidence}/${name}.png` }); writeFileSync(`${evidence}/${name}.txt`, sentence + "\n" + numbers + "\n" + await result.locator("details p").first().innerText() + "\n"); }
   await page.getByTestId("apply-proposal").click();
   await expect(page.getByText("Design updated. Parts and assembly now match.")).toBeVisible({ timeout: 20000 });
@@ -54,6 +55,25 @@ test("drone: 'these arms 6 mm thick' moves all four arms locally, is checked und
   expect(after.derived.parts.filter((p: any) => /^arm-/.test(p.id)).map((p: any) => p.size[1])).toEqual([6, 6, 6, 6]);
   const versions = await (await request.get(`/api/designs/${created.snapshot.design.id}/proposed-versions`, { headers: { authorization: "Bearer " + created.access.editorToken } })).json();
   expect(versions[0].status).toBe("accepted");
+  expect(errors).toEqual([]);
+});
+
+test("camera arm: 'make this link six millimetres thick', spoken in words, is checked under the 0.5 kg payload and applied", async ({ page, request }) => {
+  const errors: string[] = []; page.on("pageerror", e => errors.push(e.message));
+  const proposals: any[] = [];
+  page.on("response", async response => { if (response.url().endsWith("/propose")) proposals.push(await response.json()); });
+  const parts = deskArmParts();
+  const created = await openDesign(page, request, parts, "Articulated camera arm", true);
+  await pointAt(page, "upper-arm", "face+y", UPPER_TOP, parts);
+  await say(page, "make this link six millimetres thick");
+  await expect(page.getByTestId("proposal-target")).toHaveText("Applied to: Upper arm link, top face");
+  await expect(page.getByRole("region", { name: "Proposed change" })).toContainText("local Y dimension → 6 mm");
+  expect(proposals.map(p => p.source)).toEqual(["local"]);
+  expect(proposals[0].command.customParts.find((p: any) => p.id === "upper-arm").size).toEqual([110, 6, 24]);
+  const sentence = await checkAndApply(page, "check-arm-link");
+  expect(sentence).toMatch(/^Under the same 0\.5 kg camera payload \(4\.9 N\), downward at the free end, Upper arm link bends 70% less \(0\.25 mm to 0\.076 mm\) and its typical stress drops \d+%\.$/);
+  const after = await (await request.get(`/api/designs/${created.snapshot.design.id}`, { headers: { authorization: "Bearer " + created.access.editorToken } })).json();
+  expect(after.derived.parts.find((p: any) => p.id === "upper-arm").size[1]).toBe(6);
   expect(errors).toEqual([]);
 });
 
