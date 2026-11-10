@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Snapshot } from "../shared/types";
+import { plainEditSummary } from "../shared/plain-change";
 import {
   applySemanticEdit, assertCurrentSelection, getSelectionControls, selectionSuggestions,
   type SelectionRef, type SemanticEdit, type SemanticEditPreview,
@@ -58,7 +59,7 @@ export default function ContextualGuide({ snapshot, selection, onPrompt, onPrevi
         try {
           const intent: SemanticEdit = control.intent.type === "hole" ? { ...control.intent, diameter: number } : { ...control.intent, value: number };
           const result = applySemanticEdit(snapshot, selection, intent);
-          setError(""); onPreview(result);
+          setError(""); onPreview({ ...result, explanation: plainEditSummary(snapshot, selection.partIds[0], intent, result.affectedPartIds.length, result.command.summary || result.explanation) });
         } catch (issue) { setError(issue instanceof Error ? issue.message : "That edit could not be validated."); }
       }}>
         <label style={{ display: "grid", gap: 6, fontSize: "var(--s-xs)" }}>Dimension or behavior

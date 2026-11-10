@@ -38,7 +38,7 @@ test("hold Space over an arm, the target freezes at speech onset, the reply is s
   const proposal = page.getByRole("region", { name: "Proposed change" });
   await expect(proposal).toBeVisible();
   await expect(page.getByTestId("proposal-target")).toHaveText("Applied to: Arm, front right, top face");
-  await expect(proposal).toContainText("local Y dimension → 6 mm");
+  await expect(proposal).toContainText("Arm, front right: 4 → 6 mm thick");
 
   // The assistant circle glides onto the arm and the reply is spoken in short sentences.
   const agent = page.locator('[data-companion="agent"]');
@@ -54,11 +54,11 @@ test("hold Space over an arm, the target freezes at speech onset, the reply is s
   expect(centre.x).toBeGreaterThanOrEqual(rect.left - 3); expect(centre.x).toBeLessThanOrEqual(rect.right + 3);
   expect(centre.y).toBeGreaterThanOrEqual(rect.top - 3); expect(centre.y).toBeLessThanOrEqual(rect.bottom + 3);
   const spoken: string[] = await page.evaluate(() => (window as any).__spoken);
-  expect(spoken[0]).toBe("Arm, front right: local Y dimension to 6 millimetres.");
+  expect(spoken[0]).toBe("Arm, front right: 4 to 6 millimetres thick.");
   expect(spoken.length).toBeGreaterThan(1);
   expect(spoken.every(line => line.length <= 141)).toBe(true);
-  // The dock shows the short form; only speech says the unit in full.
-  await expect(page.getByTestId("agent-reply")).toContainText("local Y dimension → 6 mm");
+  // The dock confirms in a few words; the card holds the change and speech says it in full.
+  await expect(page.getByTestId("agent-reply")).toHaveText("Change ready to review.");
   await shot(page, "companion-agent-landed");
 
   // Accepting keeps the existing flow; the assistant circle leaves with the proposal.
@@ -145,10 +145,10 @@ test("a question asked before any assistant call is spoken, circles fly to each 
   // "The front left one" settles it: a measured edit of that arm, decided locally.
   await say("the front left one");
   await expect(page.getByTestId("proposal-target")).toHaveText("Applied to: Arm, front left, top face");
-  await expect(page.getByRole("region", { name: "Proposed change" })).toContainText("local Y dimension → 6 mm");
+  await expect(page.getByRole("region", { name: "Proposed change" })).toContainText("Arm, front left: 4 → 6 mm thick");
   expect(proposals).toHaveLength(1);
   expect(proposals[0].source).toBe("local");
-  await expect.poll(spoken).toContain("Arm, front left: local Y dimension to 6 millimetres.");
+  await expect.poll(spoken).toContain("Arm, front left: 4 to 6 millimetres thick.");
   await page.getByRole("button", { name: "Dismiss proposal", exact: true }).click();
 
   // A named-feature conflict: the server asks first (no assistant), circles mark each hole, "the left one" picks one.
@@ -165,7 +165,7 @@ test("a question asked before any assistant call is spoken, circles fly to each 
   const leftmost = holeX.indexOf(Math.min(...holeX));
   await say("the left one", async () => { await page.mouse.move(5, 5); });
   await expect(page.getByTestId("proposal-target")).toHaveText(new RegExp(`^Applied to: Arm, front right, Ø[\\d.]+ mm hole ${leftmost + 1}$`));
-  await expect(page.getByRole("region", { name: "Proposed change" })).toContainText(`hole ${leftmost + 1} diameter → 4 mm`);
+  await expect(page.getByRole("region", { name: "Proposed change" })).toContainText(new RegExp(`hole ${leftmost + 1}, [\\d.]+ → 4 mm across`));
   expect(proposals.every(p => p.source === "local")).toBe(true);
   expect(errors).toEqual([]);
 });

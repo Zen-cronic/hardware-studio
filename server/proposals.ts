@@ -7,6 +7,7 @@ import { applySemanticEdit, assertCurrentSelection, getSelectionControls, resolv
 import { localSurfaceEdit, surfaceConflict, targetContext, type ResolvedSurfaceTarget } from "../src/shared/surface";
 import { askWhichHole, localGroupEdit } from "../src/shared/group-edit";
 import { normalizeSpokenNumbers } from "../src/shared/spoken-numbers";
+import { plainEditSummary } from "../src/shared/plain-change";
 import { DesignError } from "../src/shared/engine";
 import { selectedAiKey, selectedAiModel, providerRequest, providerHeaders, providerJson, validateInputCount, providerUsage, providerText, FRONTIER_PRICING } from "./ai-provider";
 function localProposal(
@@ -74,9 +75,19 @@ function localProposal(
     source: "local",
     explanation: questions.length
       ? "I need a specific dimension to make this change."
-      : "Review these measured changes before applying them.",
+      : plainChanges(d, changes, customParts),
     questions,
   };
+}
+/** "Platter diameter: 220 → 240 mm." One plain line per measured change. */
+function plainChanges(d: Snapshot["design"], changes: Record<string, number>, customParts?: Part[]): string {
+  const specs = productForDesign(d).parameters;
+  const lines = Object.entries(changes).map(([key, value]) => {
+    const spec = specs.find(p => p.key === key);
+    return `${spec?.label || key}: ${d.params[key]} → ${value}${spec?.unit && spec.unit !== "×" ? " " + spec.unit : spec?.unit || ""}.`;
+  });
+  if (customParts?.length === 1) lines.push(`New box: ${customParts[0].size.join(" × ")} mm.`);
+  return lines.join(" ") || "Check the change below, then apply it.";
 }
 function emptyCommand(snapshot: Snapshot, actor: string, prompt: string) {
   return { id: randomUUID(), baseRevision: snapshot.design.revision, actor, changes: {}, readSet: { ...snapshot.design.params }, summary: prompt.slice(0, 180) };
@@ -116,7 +127,7 @@ export function editMatchesTarget(edit: SemanticEdit, pointed: ResolvedSurfaceTa
 function boundProposal(snapshot: Snapshot, selection: SelectionRef, edit: SemanticEdit, body: { prompt: string; actor: string }, source: Proposal["source"], target: ProposalTarget, explanation?: string): Proposal {
   try {
     const preview = applySemanticEdit(snapshot, selection, edit, body.actor);
-    return { source, target, questions: [], explanation: explanation || preview.explanation,
+    return { source, target, questions: [], explanation: explanation || plainEditSummary(snapshot, selection.partIds[0], edit, preview.affectedPartIds.length, preview.command.summary || preview.explanation),
       command: { ...preview.command, summary: body.prompt.slice(0, 180) } };
   } catch (error) {
     if (!(error instanceof DesignError)) throw error;

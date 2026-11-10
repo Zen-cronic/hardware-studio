@@ -899,7 +899,8 @@ export default function Studio({
                     {(proposal.target?.label || proposalBinding) && <p className="proposal-target" data-testid="proposal-target">
                       {Object.keys(proposal.command.changes || {}).length || proposal.command.customParts ? "Applied to" : "Pointing at"}: <strong>{proposal.target?.label || targetLabel(snapshot, proposalBinding)}</strong>
                     </p>}
-                    <p>{proposal.explanation}</p>
+                    {/* A local size change is shown by its before and after row; the sentence is what gets spoken. */}
+                    {!(proposal.source === "local" && Object.keys(proposal.command.changes || {}).length) && <p className="proposal-summary">{proposal.explanation}</p>}
                     {proposal.questions?.map((q) => (
                       <p className="measurement-question" key={q}>
                         <Ruler size={16} />
@@ -929,12 +930,6 @@ export default function Studio({
                         ),
                       )}
                     </dl>
-                    {proposal.command.customParts && (
-                      <p>
-                        {proposal.command.customParts.length} parts in the
-                        proposed design.
-                      </p>
-                    )}
                     {!clarifying && !readOnly && <ProposalCheck ref={checkRef} snapshot={snapshot} proposal={proposal} token={token} actor={actor}
                       partId={proposalBinding?.partIds.find(id => proposal.target?.partIds.includes(id))} disabled={busy} onSay={voice.say} onError={setError} />}
                     <button
@@ -1209,7 +1204,7 @@ export default function Studio({
           )}
           {tab === "design" && (
             <div className={"assistant-dock" + (proposal ? " has-proposal" : "")} data-slot="agent-dock" role="region" aria-label="Assistant">
-              {readOnly ? <p className="assistant-readonly">Make your own copy to ask for changes.</p> : <AgentDock voice={voice} reply={proposal ? replyLines(proposal).join(" ") : undefined}
+              {readOnly ? <p className="assistant-readonly">Make your own copy to ask for changes.</p> : <AgentDock voice={voice} reply={proposal ? (clarifying ? replyLines(proposal).join(" ") : "Change ready to review.") : undefined}
                 disabled={busy || promptBusy || !!proposal || pendingCircleSelection}
                 disabledReason={promptBusy ? "Working through the design…" : "Review or dismiss this proposal, then hold to talk again."} className="in-assistant" />}
               <div className="assistant-actions">

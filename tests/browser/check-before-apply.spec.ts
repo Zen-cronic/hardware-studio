@@ -67,7 +67,7 @@ test("camera arm: 'make this link six millimetres thick', spoken in words, is ch
   await pointAt(page, "upper-arm", "face+y", UPPER_TOP, parts);
   await say(page, "make this link six millimetres thick");
   await expect(page.getByTestId("proposal-target")).toHaveText("Applied to: Upper arm link, top face");
-  await expect(page.getByRole("region", { name: "Proposed change" })).toContainText("local Y dimension → 6 mm");
+  await expect(page.getByRole("region", { name: "Proposed change" })).toContainText(/Upper arm link: [\d.]+ → 6 mm thick/);
   expect(proposals.map(p => p.source)).toEqual(["local"]);
   expect(proposals[0].command.customParts.find((p: any) => p.id === "upper-arm").size).toEqual([110, 6, 24]);
   const sentence = await checkAndApply(page, "check-arm-link");
@@ -92,7 +92,7 @@ test("camera arm: 'make the hole 8 mm' asks which hole, 'this one' answers, chec
   if (evidence) await page.screenshot({ path: `${evidence}/arm-which-hole.png` });
   await say(page, "this one", async () => { await pointAt(page, "upper-arm", "hole-0", HOLE_RIM, parts); });
   await expect(page.getByTestId("proposal-target")).toHaveText("Applied to: Upper arm link, Ø6.4 mm hole 1");
-  await expect(proposal).toContainText("hole 1 diameter → 8 mm");
+  await expect(proposal).toContainText(/Upper arm link: hole 1, [\d.]+ → 8 mm across/);
   expect(proposals.map(p => p.source)).toEqual(["local", "local"]);
   // A wider hole near the fixed end may weaken the link; the card says so either way.
   const sentence = await checkAndApply(page, "check-arm-hole", false);
