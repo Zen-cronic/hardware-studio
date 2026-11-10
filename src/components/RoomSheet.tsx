@@ -69,10 +69,12 @@ export default function RoomSheet({ designId, token, readOnly, onClose }: {
           <div className="room-sheet-phone">
             {link ? <>
               {qr ? <img className="room-qr" src={qr} width={240} height={240} alt="Code to open this design in AR on a phone" /> : <div className="room-qr" />}
-              <p><Smartphone size={16} aria-hidden="true" /> Scan with your phone camera. It opens this design at real size in your room, on iPhone and Android.</p>
+              <p className="room-scan"><Smartphone size={16} aria-hidden="true" /> Scan with your phone camera. It opens this design at real size in your room, on iPhone and Android.</p>
+              {/* On a phone the code is not needed: open the room view here. */}
+              <a className="button primary room-open-link" href={link}>Open it in your room</a>
               <button className="button small" onClick={async () => { try { await navigator.clipboard.writeText(link); setCopied(true); } catch { setCopied(false); } }}>
                 {copied ? <Check size={15} /> : <Copy size={15} />} {copied ? "Link copied" : "Copy view link"}</button>
-              <p className="subtle">The code opens a view-only link.{revision !== null && state === "ready" ? ` Model from revision ${revision}.` : ""}</p>
+              <p className="subtle">The code and the link are view-only.{revision !== null && state === "ready" ? ` Model from revision ${revision}.` : ""}</p>
             </> : <p className="subtle">The view-only link is available in the browser that created this design. Open the design there to show the code.</p>}
           </div>
         </div>

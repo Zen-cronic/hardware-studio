@@ -14,8 +14,12 @@
 .room-sheet-phone { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
 .room-sheet-phone p { margin: 0; font-size: var(--s-sm); }
 .room-qr { width: 240px; height: 240px; border-radius: 8px; border: 1px solid var(--line); background: var(--white); }
+.room-sheet-preview .room-model { min-height: 0; }
+.room-open-link { display: none; }
 @media (max-width: 720px) {
   .room-sheet-body { grid-template-columns: 1fr; }
   .room-sheet-preview { height: 280px; }
+  .room-sheet .room-qr, .room-sheet .room-scan { display: none; }
+  .room-open-link { display: inline-flex; min-height: 44px; }
   .room-qr { width: 200px; height: 200px; }
 }

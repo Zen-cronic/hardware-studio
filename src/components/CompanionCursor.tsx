@@ -192,11 +192,13 @@ export interface AgentDockProps {
 /** Hold-to-talk mic, live words, the spoken reply as text, and a mute toggle. */
 export function AgentDock({ voice, reply, disabled = false, disabledReason, className = "" }: AgentDockProps) {
   const listening = voice.phase !== "idle";
+  const [touch, setTouch] = useState(false);
+  useEffect(() => { try { setTouch(matchMedia("(pointer: coarse)").matches); } catch { /* No media queries. */ } }, []);
   const status = !voice.supported ? "Voice needs a browser with speech recognition. You can type instead."
     : listening ? (voice.transcript ? `“${voice.transcript}”` : "Listening… release to send.")
     : reply ? reply
     : disabled && disabledReason ? disabledReason
-    : "Hold Space or the mic, point at a part and say what to change.";
+    : touch ? "Tap a part, then hold the mic and say what to change." : "Hold Space or the mic, point at a part and say what to change.";
   return (
     <div className={"agent-dock " + className} data-testid="agent-dock" data-phase={voice.phase} role="group" aria-label="Talk to the design assistant">
       <button type="button" className={"agent-mic" + (listening ? " is-listening" : "")} data-testid="hold-to-talk"

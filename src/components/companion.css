@@ -50,7 +50,7 @@ body:has(.companion-circle.is-user.is-shown) .surface-label.is-hover { visibilit
 /* Stay clear of the selected-part card, which spans the bottom of the view. */
 .scene-panel:has(> .part-selection) > .agent-dock { bottom: 184px; }
 @media (max-width: 820px) {
-  .scene-panel > .agent-dock { bottom: 64px; width: calc(100% - 24px); }
+  .scene-panel > .agent-dock { bottom: 84px; width: calc(100% - 24px); }
   .scene-panel:has(> .part-selection) > .agent-dock { bottom: 168px; }
 }
 @media (prefers-reduced-motion: reduce) { .agent-mic-ring { animation: none; } }
