@@ -10,6 +10,7 @@ import { HttpError, Store, validateCommand } from "./store";
 import { projectAgentOutcomes, type RecordedOperationRow } from "./agent-outcomes";
 import { studySourceHash, type EngineeringJob } from "./engineering-jobs";
 import { buildProofCard, type ProofCard } from "../src/shared/proof";
+import { checkFreshness } from "../src/shared/check-freshness";
 import type { BuildJob } from "../src/shared/types";
 import { AgentService, registerAgentRoutes, type AnalysisTool } from "./agents";
 
@@ -335,7 +336,19 @@ export function registerVersionRoutes(app: FastifyInstance, options: VersionRout
   app.get("/api/proposed-versions/:id/outcomes", async (r) => versions.outcomes(idOf(r), versionTokenOf(r), options.studies || (() => [])));
   app.get("/api/proposed-versions/:id/proof", async (r) => versions.proof(idOf(r), versionTokenOf(r), options.studies || (() => []),
     options.latestBuild || (() => null), (r.query as { part?: unknown })?.part as string | undefined));
-  app.post("/api/proposed-versions/:id/accept", async (r) => versions.accept(idOf(r), versionTokenOf(r), r.body as AcceptVersionInput));
+  app.post("/api/proposed-versions/:id/accept", async (r) => {
+    const body = r.body as AcceptVersionInput & { acceptStaleChecks?: boolean };
+    // Checks shown for an earlier revision, or still running, do not describe what is accepted.
+    // acceptStaleChecks: true is the explicit override for scripted callers that accept anyway.
+    if (options.studies && body?.acceptStaleChecks !== true) {
+      const view = versions.view(idOf(r), versionTokenOf(r));
+      if (view.version.status === "open") {
+        const freshness = checkFreshness(options.studies(view.version.proposedDesignId), view.proposed.design.revision);
+        if (freshness.blocked) throw new HttpError(409, freshness.reason, "CHECKS_STALE");
+      }
+    }
+    return versions.accept(idOf(r), versionTokenOf(r), body);
+  });
   app.post("/api/proposed-versions/:id/reject", async (r) => versions.reject(idOf(r), versionTokenOf(r)));
   app.post("/api/proposed-versions/:id/agent-credentials", async (r, reply) => reply.code(201).send(versions.issueAgent(idOf(r), versionTokenOf(r), r.body as any)));
   app.get("/api/proposed-versions/:id/agent-credentials", async (r) => versions.credentials(idOf(r), versionTokenOf(r)));

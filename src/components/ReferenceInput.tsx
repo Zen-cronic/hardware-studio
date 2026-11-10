@@ -5,8 +5,9 @@ import { useDialog } from "../lib/useDialog";
 type Recognition = any;
 export function VoiceButton({
   onText,
-  onError, onSpeechStart, onListeningChange, disabled = false,
+  onError, onSpeechStart, onListeningChange, disabled = false, label = "Voice",
 }: {
+  label?: string;
   onSpeechStart?: () => void;
   onListeningChange?: (active: boolean) => void;
   disabled?: boolean;
@@ -135,7 +136,7 @@ export function VoiceButton({
       aria-label={listening ? "Stop listening" : "Speak an instruction"}
       title={listening ? "Stop listening" : "Speak an instruction"}
     >
-      <Mic size={17} /><span>{listening ? "Voice on" : "Voice"}</span>
+      <Mic size={17} /><span>{listening ? "Voice on" : label}</span>
     </button>
   );
 }

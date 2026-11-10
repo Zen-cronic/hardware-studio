@@ -53,3 +53,8 @@
 :root .proof-verdict[data-tone=warn],:root .proof-checks [data-tone=warn] {border-color:var(--warning);}
 :root .proof-table th,:root .proof-table td {border-color:var(--line);}
 :root .proof-stale,:root .proof-not-comparable {color:var(--warning);}
+
+/* Accept stays off while the checks shown describe an older revision */
+:root .stale-checks,:root .is-outdated {border:1px solid var(--warning)!important;background:color-mix(in srgb,var(--warning) 10%,var(--panel));color:var(--text);}
+:root .stale-checks>svg,:root .outdated-note svg {color:var(--warning);}
+:root .proposal-check .check-result {background:var(--panel);}

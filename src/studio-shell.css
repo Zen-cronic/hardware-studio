@@ -51,27 +51,35 @@
 :root .part-selection {background:var(--panel);border:1px solid var(--line);color:var(--text);}
 :root .stage-overlay {position:absolute;inset:0;z-index:4;pointer-events:none;}
 
-/* Assistant dock: the main control on the design stage */
-:root .agent-dock {position:absolute;z-index:5;left:50%;bottom:20px;transform:translateX(-50%);width:min(860px,calc(100% - 300px));display:flex;align-items:center;gap:14px;padding:10px;background:var(--panel);border:1px solid var(--primary);border-radius:20px;color:var(--text);}
-:root .agent-voice {display:flex;align-items:center;gap:10px;flex:none;}
-:root .agent-voice .voice-control {display:flex;align-items:center;}
-:root .agent-voice .voice-control>.button {width:56px;height:56px;min-height:56px;padding:0;border-radius:50%;justify-content:center;background:var(--primary);color:var(--on-primary);border:1px solid var(--primary);}
-:root .agent-voice .voice-control>.button:hover {background:var(--primary-hover);}
-:root .agent-voice .voice-control>.button>span {position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);}
-:root .agent-voice .voice-control>.button svg {width:24px;height:24px;}
-:root .agent-voice .voice-control>.button.recording {background:var(--action);color:var(--on-action);border-color:var(--white);}
-:root .agent-voice .voice-status {position:absolute;left:16px;right:16px;bottom:calc(100% + 8px);margin:0;padding:6px 12px;border-radius:10px;background:var(--bg);border:1px solid var(--line);font-size:var(--s-sm);color:var(--text);}
-:root .agent-voice-label {display:flex;flex-direction:column;font-weight:700;font-size:var(--s-base);line-height:1.15;}
-:root .agent-voice-label small {font-weight:400;font-size:var(--s-xs);color:var(--muted);}
-:root .agent-dock-idle,:root .agent-dock-reply {display:flex;align-items:center;gap:12px;flex:1;min-width:0;padding-left:14px;border-left:1px solid var(--line);}
-:root .agent-dock p {margin:0;flex:1;color:var(--text);font-size:var(--s-sm);line-height:1.4;}
-:root .agent-dock-reply p {display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
-:root .agent-dock-reply strong {color:var(--warm);margin-right:2px;}
-:root .agent-dot {flex:none;width:14px;height:14px;border-radius:50%;border:3px solid var(--warm);}
-:root .agent-dock-reply .agent-dot {background:var(--warm);}
-:root .agent-example {flex:none;min-height:40px;max-width:260px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--primary);font-weight:600;font-size:var(--s-sm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* Assistant dock: the main control on the design stage. It holds the hold-to-talk dock
+   (mic, live words and the spoken reply, mute), the example request and the click-to-talk fallback. */
+:root .assistant-dock {position:absolute;z-index:6;left:50%;bottom:20px;transform:translateX(-50%);width:min(900px,calc(100% - 300px));display:flex;align-items:center;gap:12px;padding:8px 10px 8px 8px;background:var(--panel);border:1px solid var(--primary);border-radius:22px;color:var(--text);}
+:root .assistant-dock .agent-dock.in-assistant {flex:1;min-width:0;max-width:none;min-height:0;padding:0;gap:12px;background:transparent;border:0;border-radius:0;box-shadow:none;}
+:root .assistant-dock .agent-mic {width:56px;height:56px;background:var(--primary);color:var(--on-primary);}
+:root .assistant-dock .agent-mic svg {width:24px;height:24px;}
+:root .assistant-dock .agent-mic:hover {background:var(--primary-hover);}
+:root .assistant-dock .agent-mic.is-listening {background:var(--action);color:var(--on-action);box-shadow:inset 0 0 0 2px var(--primary);}
+:root .assistant-dock .agent-mic-ring {border-color:var(--primary);}
+:root .assistant-dock .agent-dock-status {color:var(--text);font-size:var(--s-sm);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+:root .assistant-dock .agent-dock[data-phase="speaking"] .agent-dock-status,:root .assistant-dock .agent-dock[data-phase="thinking"] .agent-dock-status {color:var(--warm);}
+:root .assistant-dock .agent-mute {width:40px;height:40px;border-color:var(--line);}
+:root .assistant-actions {display:flex;align-items:center;gap:8px;flex:none;}
+:root .assistant-readonly {margin:0;padding:0 8px;flex:1;color:var(--muted);font-size:var(--s-sm);}
+:root .agent-example {flex:none;min-height:40px;max-width:240px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--primary);font-weight:600;font-size:var(--s-sm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 :root .agent-example:hover {border-color:var(--border);color:var(--text);}
-:root .agent-dock .button {flex:none;min-height:40px;}
+:root .assistant-actions .button {flex:none;min-height:40px;}
+:root .assistant-actions .voice-control>.button {min-height:40px;padding:0 12px;background:transparent;border-color:var(--line);color:var(--muted);font-size:var(--s-sm);}
+:root .assistant-actions .voice-control>.button:hover {color:var(--text);border-color:var(--border);}
+:root .assistant-actions .voice-control>.button.recording {color:var(--on-action);background:var(--action);border-color:var(--primary);}
+:root .assistant-dock .voice-status {position:absolute;left:16px;right:16px;bottom:calc(100% + 8px);margin:0;padding:6px 12px;border-radius:10px;background:var(--bg);border:1px solid var(--line);font-size:var(--s-sm);color:var(--text);}
+
+/* The assistant's circle uses the assistant colour; your pointer stays light blue */
+:root .companion-circle.is-user .companion-dot {border-color:var(--primary);box-shadow:0 0 0 4px color-mix(in srgb,var(--primary) 22%,transparent);}
+:root .companion-ring {border-color:var(--primary);}
+:root .companion-label {background:var(--panel);color:var(--text);border-color:var(--primary);box-shadow:none;}
+:root .companion-circle.is-agent .companion-dot {background:var(--warm);border-color:var(--bg);box-shadow:0 0 0 4px color-mix(in srgb,var(--warm) 25%,transparent);}
+:root .companion-circle.is-agent .companion-ring {border-color:var(--warm);}
+:root .companion-label.is-agent {background:var(--warm);color:var(--on-warm);border-color:var(--warm);}
 
 /* Proposal and pointing chips in the assistant panel use the assistant colour */
 :root .proposal {background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--warm);border-radius:12px;color:var(--text);}
@@ -96,7 +104,7 @@
   :root .studio-header .room-entry span,:root .studio-header .files-entry span,:root .studio-header .back-to-work {font-size:0;gap:0;}
 }
 @media (max-width:1100px) {
-  :root .agent-dock {width:calc(100% - 32px);bottom:72px;}
+  :root .assistant-dock {width:calc(100% - 32px);bottom:72px;}
   :root .agent-example {display:none;}
 }
 @media (max-width:820px) {
@@ -104,7 +112,10 @@
   :root .studio-header .action-share span,:root .studio-more>.button span {display:none;}
   :root .studio-header .files-entry,:root .studio-header .panel-visibility-controls {display:none;}
   :root .studio-header .design-title h1 {font-size:var(--s-base);}
-  :root .agent-dock {display:none;}
+  :root .assistant-dock {bottom:76px;width:calc(100% - 16px);padding:6px;gap:6px;}
+  :root .assistant-actions>.agent-example,:root .assistant-actions>.button {display:none;}
+  :root .assistant-actions .voice-control>.button {padding:0 10px;}
+  :root .assistant-dock .agent-mic {width:48px;height:48px;}
   :root .studio-more-panel {position:fixed;top:68px;right:8px;left:8px;width:auto;}
   :root .studio-viewer-toolbar {left:50%;right:auto;top:auto;bottom:14px;transform:translateX(-50%);}
   :root .room-sheet {top:auto;bottom:16px;right:16px;left:16px;width:auto;}

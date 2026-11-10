@@ -7,7 +7,7 @@ import { DroneStage } from "./HeroDrone";
 const STEPS = [
   { title: "Point at a part", body: "Move over the model. A circle shows exactly which part and feature you mean.", line: "Pointing at the front-left arm" },
   { title: "Say what to change", body: "Hold to talk and say it plainly. The assistant answers out loud and points at the parts it will change.", line: "“Make these arms stiffer.”" },
-  { title: "Check that it still holds", body: "The same strength test runs before and after, under the same load, so you see the difference before you accept anything.", line: "Arms 4 mm to 6 mm, checked under the same load" },
+  { title: "Check that it still holds", body: "The same strength test runs before and after, under the same load, so you see the difference before you accept anything.", line: "Arms 4 mm to 6 mm: 70% less bending under the same thrust" },
   { title: "Accept the change", body: "One click updates the parts, the assembly steps and the build files together.", line: "All four arms now 6 mm, files updated" },
   { title: "See it in your room", body: "Open it on your phone and place it at real size. Then download the files to build it.", line: "Real size, on your desk" },
 ];

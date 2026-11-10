@@ -66,7 +66,7 @@ describe("target serialization and validation", () => {
     const snapshot = arm(), selection = pointAt(snapshot, "upper-arm", [-41.80412, 0.123456, 0.000001], [-0.99999, 0.00001, 0]);
     expect(selection.surface).toEqual({ partId: "upper-arm", featureId: "hole-0", point: [-41.8, 0.12, 0], normal: [-1, 0, 0] });
     const wire = JSON.parse(JSON.stringify(selection));
-    expect(resolved(snapshot, wire)).toMatchObject({ partName: "Upper arm link", label: "Upper arm link · Ø6.4 mm hole 1" });
+    expect(resolved(snapshot, wire)).toMatchObject({ partName: "Upper arm link", label: "Upper arm link, Ø6.4 mm hole 1" });
   });
   it("rejects a forged feature, another part, an out-of-part point and non-finite values", () => {
     const snapshot = arm(), good = pointAt(snapshot, "upper-arm", [55, 0, 0], [1, 0, 0]);
@@ -100,7 +100,7 @@ describe("deictic binding", () => {
     expect(surfaceConflict("make the second hole 8 mm", hole)).toContain("names hole 2");
     expect(surfaceConflict("move that end 10 mm", hole)).toContain("“that end”");
     expect(surfaceConflict("make this hole bigger", top)).toContain("“this hole”");
-    expect(surfaceConflict("make this top 6 mm", end)).toContain("Upper arm link · +X end face");
+    expect(surfaceConflict("make this top 6 mm", end)).toContain("Upper arm link, +X end face");
   });
   it("binds fully specified measurements deterministically and leaves the rest to the assistant", () => {
     expect(localSurfaceEdit("make this hole 8 mm", hole, upper)).toEqual({ type: "hole", holeIndex: 0, diameter: 8 });
@@ -135,7 +135,7 @@ describe("proposal requests bound to a pointed feature", () => {
     const fetch = vi.fn(); vi.stubGlobal("fetch", fetch);
     const result = await propose(store, snapshot, { prompt: "make this hole 8 mm", actor: "Owner", selection: holeSelection(snapshot) }, "test-credential");
     expect(fetch).not.toHaveBeenCalled();
-    expect(result.target).toEqual({ partIds: ["upper-arm"], featureId: "hole-0", label: "Upper arm link · Ø6.4 mm hole 1" });
+    expect(result.target).toEqual({ partIds: ["upper-arm"], featureId: "hole-0", label: "Upper arm link, Ø6.4 mm hole 1" });
     const before = snapshot.design.customParts!, after = result.command.customParts!;
     expect(after.find(p => p.id === "upper-arm")!.holes).toEqual([{ x: -45, z: 0, diameter: 8 }, { x: 45, z: 0, diameter: 6.4 }]);
     expect({ ...after.find(p => p.id === "upper-arm")!, holes: undefined }).toEqual({ ...before.find(p => p.id === "upper-arm")!, holes: undefined });
@@ -183,7 +183,7 @@ describe("proposal requests bound to a pointed feature", () => {
   it("keeps a typed request without a key honest, and rejects a stale pointed feature", async () => withStore(async store => {
     const { snapshot } = store.create("custom", "Camera arm", deskArmParts());
     const result = await propose(store, snapshot, { prompt: "make this a bit sturdier", actor: "Owner", selection: holeSelection(snapshot) }, "");
-    expect(result.explanation).toContain("needs the design assistant"); expect(result.target?.label).toBe("Upper arm link · Ø6.4 mm hole 1");
+    expect(result.explanation).toContain("needs the design assistant"); expect(result.target?.label).toBe("Upper arm link, Ø6.4 mm hole 1");
     const forged = { ...holeSelection(snapshot), surface: { ...holeSelection(snapshot).surface!, featureId: "face+x" } };
     await expect(propose(store, snapshot, { prompt: "make this 8 mm", actor: "Owner", selection: forged }, "")).rejects.toThrow("Point at it again");
   }));
@@ -197,7 +197,7 @@ describe("client pointing state", () => {
     hovered.surface!.featureId = "face+y"; hovered.surface!.point[0] = 0;
     hovered = pointAt(snapshot, "lower-arm", [0, 2, 5], [0, 1, 0], "hover");
     expect(frozen.surface).toEqual({ partId: "upper-arm", featureId: "hole-0", point: [-41.8, 0, 0], normal: [-1, 0, 0] });
-    expect(targetLabel(snapshot, frozen)).toBe("Upper arm link · Ø6.4 mm hole 1");
+    expect(targetLabel(snapshot, frozen)).toBe("Upper arm link, Ø6.4 mm hole 1");
     expect(freezeTarget(null)).toBeNull();
   });
   it("clearing the chip removes only the surface and keeps the part target", () => {

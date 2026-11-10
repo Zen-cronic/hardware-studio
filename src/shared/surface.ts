@@ -231,7 +231,7 @@ export function displayTarget(part: Part, target: SurfaceTarget): { target: Surf
 }
 
 export function surfaceLabel(partName: string, feature: SurfaceFeature) {
-  return `${partName} · ${feature.label}`;
+  return `${partName}, ${feature.label}`;
 }
 
 export class SurfaceTargetError extends Error {

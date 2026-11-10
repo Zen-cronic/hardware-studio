@@ -90,17 +90,17 @@ test.describe("desktop", () => {
     await openArm(page, request);
     const label = page.locator('[data-surface-label="hover"]'), status = page.getByTestId("pointing-status");
     const hole = await pointAt(page, "upper-arm", "hole-0", HOLE_RIM);
-    await expect(label).toHaveText("Upper arm link · Ø6.4 mm hole 1");
+    await expect(label).toHaveText("Upper arm link, Ø6.4 mm hole 1");
     await expect(status).toHaveText("Pointer over Upper arm link, Ø6.4 mm hole 1");
     await expect(page.locator(".part-selection")).toHaveCount(0);
     await capture(page, "hover-hole", hole);
     const top = await pointAt(page, "upper-arm", "face+y", UPPER_TOP);
-    await expect(label).toHaveText("Upper arm link · top face");
+    await expect(label).toHaveText("Upper arm link, top face");
     await capture(page, "hover-top-face", top);
     // The see-through payload envelope does not hide the link below it.
     await page.getByRole("button", { name: "Toggle exploded assembly" }).click(); await settle(page); await page.waitForTimeout(900);
     const end = await pointAt(page, "upper-arm", "face+x", UPPER_END, true);
-    await expect(label).toHaveText("Upper arm link · +X end face");
+    await expect(label).toHaveText("Upper arm link, +X end face");
     await expect(status).toHaveText("Pointer over Upper arm link, +X end face");
     await capture(page, "hover-end-face", end);
     await page.mouse.move(5, 5);
@@ -119,10 +119,10 @@ test.describe("desktop", () => {
     await expect(page.getByTestId("pointing-status")).toHaveText("Pointing at Upper arm link, Ø6.4 mm hole 1");
     await writeRequest(page); await settle(page);
     const chip = page.getByTestId("request-target");
-    await expect(chip).toHaveText("Pointing at: Upper arm link · Ø6.4 mm hole 1");
+    await expect(chip).toHaveText("Pointing at: Upper arm link, Ø6.4 mm hole 1");
     // Moving across other parts on the way to the text box never retargets the pinned surface.
     await pointAt(page, "lower-arm", "hole-0", [[-50, 2, 4.4], [-50, 2, -4.4], [-50 + 4.2, 2, 0]]);
-    await expect(chip).toHaveText("Pointing at: Upper arm link · Ø6.4 mm hole 1");
+    await expect(chip).toHaveText("Pointing at: Upper arm link, Ø6.4 mm hole 1");
     await page.getByTestId("design-prompt").fill("make this hole 8 mm");
     await capture(page, "typed-chip", hole);
     await page.getByTestId("propose-change").click();
@@ -130,7 +130,7 @@ test.describe("desktop", () => {
     await expect(review).toBeVisible();
     expect(sent[0].selection).toMatchObject({ partIds: ["upper-arm"], source: "click", surface: { partId: "upper-arm", featureId: "hole-0" } });
     expect(sent[0].selection.surface.point).toHaveLength(3); expect(sent[0].selection.surface.normal).toHaveLength(3);
-    await expect(review.getByTestId("proposal-target")).toHaveText("Applied to: Upper arm link · Ø6.4 mm hole 1");
+    await expect(review.getByTestId("proposal-target")).toHaveText("Applied to: Upper arm link, Ø6.4 mm hole 1");
     await expect(review).toContainText("hole 1 diameter → 8 mm");
     await expect(page.locator(".model-canvas")).toHaveAttribute("data-pointed-surface", "upper-arm:hole-0");
     await capture(page, "proposal-applied-to", hole);
@@ -156,11 +156,11 @@ test.describe("desktop", () => {
     const hole = await pointAt(page, "upper-arm", "hole-0", HOLE_RIM);
     await page.mouse.click(hole.x, hole.y); await expect(page.getByTestId("pointed-feature")).toHaveText("Ø6.4 mm hole 1"); await writeRequest(page);
     await page.getByTestId("design-prompt").fill("widen this hole for an M8 bolt"); await page.getByTestId("propose-change").click();
-    await expect(page.getByTestId("proposal-target")).toHaveText("Applied to: Upper arm link · Ø6.4 mm hole 1");
+    await expect(page.getByTestId("proposal-target")).toHaveText("Applied to: Upper arm link, Ø6.4 mm hole 1");
     expect(sent.selection.surface).toMatchObject({ partId: "upper-arm", featureId: "hole-0" });
     // The preview highlights the same feature on the proposed geometry.
     await expect(page.locator(".model-canvas")).toHaveAttribute("data-pointed-surface", "upper-arm:hole-0");
-    await expect(page.locator('[data-surface-label="pinned"]')).toHaveText("Upper arm link · Ø8.4 mm hole 1");
+    await expect(page.locator('[data-surface-label="pinned"]')).toHaveText("Upper arm link, Ø8.4 mm hole 1");
   });
 
   test("clearing the chip keeps the part; a conflicting feature asks instead of guessing", async ({ page, request }) => {
@@ -193,7 +193,7 @@ test.describe("desktop", () => {
     await page.keyboard.press("Enter"); await expect(feature).toHaveText("+X end face");
     await page.getByRole("button", { name: "Previous feature", exact: true }).click(); await expect(feature).toHaveText("Ø6.4 mm hole 2");
     await expect(page.locator(".model-canvas")).toHaveAttribute("data-pointed-surface", "upper-arm:hole-1");
-    await writeRequest(page); await expect(page.getByTestId("request-target")).toHaveText("Pointing at: Upper arm link · Ø6.4 mm hole 2");
+    await writeRequest(page); await expect(page.getByTestId("request-target")).toHaveText("Pointing at: Upper arm link, Ø6.4 mm hole 2");
   });
 
   test("SYNTHETIC: voice freezes the full surface at speech onset and binds the spoken request", async ({ page, request }) => {
@@ -202,14 +202,14 @@ test.describe("desktop", () => {
     await page.getByRole("button", { name: "Speak an instruction", exact: true }).click();
     const hole = await pointAt(page, "upper-arm", "hole-0", HOLE_RIM);
     await emit(page, "speech");
-    await expect(page.getByTestId("voice-status")).toHaveText("Listening about Upper arm link · Ø6.4 mm hole 1.");
+    await expect(page.getByTestId("voice-status")).toHaveText("Listening about Upper arm link, Ø6.4 mm hole 1.");
     await pointAt(page, "upper-arm", "face+y", UPPER_TOP);
-    await expect(page.getByTestId("voice-status")).toHaveText("Listening about Upper arm link · Ø6.4 mm hole 1.");
-    await expect(page.locator('[data-surface-label="pinned"]')).toHaveText("Upper arm link · Ø6.4 mm hole 1");
+    await expect(page.getByTestId("voice-status")).toHaveText("Listening about Upper arm link, Ø6.4 mm hole 1.");
+    await expect(page.locator('[data-surface-label="pinned"]')).toHaveText("Upper arm link, Ø6.4 mm hole 1");
     await expect(page.locator('[data-surface-label="hover"]')).toHaveCount(0);
     await capture(page, "voice-frozen", hole);
     await emit(page, "final", "make this hole 8 mm");
-    await expect(page.getByTestId("proposal-target")).toHaveText("Applied to: Upper arm link · Ø6.4 mm hole 1");
+    await expect(page.getByTestId("proposal-target")).toHaveText("Applied to: Upper arm link, Ø6.4 mm hole 1");
     expect(sent[0].selection).toMatchObject({ source: "hover", partIds: ["upper-arm"], surface: { featureId: "hole-0" } });
     expect(errors).toEqual([]);
   });
@@ -231,12 +231,12 @@ test.describe("phone", () => {
     expect(pinned).toBe("lower-arm:face+y");
     await expect(page.locator('[data-surface-label="hover"]')).toHaveCount(0);
     await openPrompt(page);
-    await expect(page.getByTestId("request-target")).toHaveText("Pointing at: Lower arm link · top face");
+    await expect(page.getByTestId("request-target")).toHaveText("Pointing at: Lower arm link, top face");
     await page.getByTestId("design-prompt").fill("make this 6 mm thick");
     await capture(page, "mobile-tap-chip");
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.getByTestId("propose-change").click();
-    await expect(page.getByTestId("proposal-target")).toHaveText("Applied to: Lower arm link · top face");
+    await expect(page.getByTestId("proposal-target")).toHaveText("Applied to: Lower arm link, top face");
     await expect(page.getByRole("region", { name: "Proposed change" })).toContainText("local Y dimension → 6 mm");
     await capture(page, "mobile-proposal");
     expect(errors).toEqual([]);

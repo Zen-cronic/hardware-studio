@@ -31,6 +31,7 @@ import ClipRender from "./ClipRender";
 import { deskArmParts } from "./shared/desk-arm";
 import { droneParts } from "./shared/drone";
 import RequestBox from "./components/RequestBox";
+import ViewInRoom from "./ViewInRoom";
 import GuideExample from "./components/GuideExample";
 import Landing from "./components/Landing";
 import { create, pathFor, recent, type Recent } from "./lib/api";
@@ -77,6 +78,7 @@ export default function App() {
     return () => window.removeEventListener("popstate", pop);
   }, []);
   if (path === "/render-clip") return <ClipRender />;
+  if (path.startsWith("/view/")) return <ViewInRoom key={path} id={decodeURIComponent(path.split("/")[2])} />;
   if (path.startsWith("/develop/")) return <Development key={path + navTick} id={decodeURIComponent(path.split("/")[2])} navigate={navigate} />;
   if (path.startsWith("/studio/"))
     return (

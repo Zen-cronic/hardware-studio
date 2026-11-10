@@ -6,6 +6,7 @@ import { createApp } from "../../server/app";
 import { recordedPrompt, seedAgentOutcomes } from "../helpers/agent-outcome-fixture";
 test.use({ channel: "chrome" });
 for (const width of [1440,375]) test(`recorded role results and stale studies remain readable at ${width}px after acceptance`,async({browser},info)=>{
+ test.setTimeout(150000);
  const dataDir=mkdtempSync(join(tmpdir(),"outcomes-browser-"));
  const {app,store}=await createApp({dataDir,aiKey:""});
  const f=seedAgentOutcomes(store);await app.listen({host:"127.0.0.1",port:4206});
@@ -37,7 +38,15 @@ for (const width of [1440,375]) test(`recorded role results and stale studies re
   await page.screenshot({path:info.outputPath("recorded-outcomes.png"),fullPage:true});
   await outcomes.screenshot({path:info.outputPath("outcome-detail.png")});
   const old=f.versions.outcomes(f.view.version.id,f.owner.access.editorToken,()=>f.studies).contributions;
-  await page.getByRole("button",{name:"Accept into main design",exact:true}).click();
+  // Checks recorded on r1 do not describe r2: Accept waits until they are re-run on this version.
+  const accept=page.getByRole("button",{name:"Accept into main design",exact:true});
+  await expect(accept).toBeDisabled();
+  await expect(page.getByTestId("accept-blocked")).toContainText("8 checks shown are from r1; this version is r2. Re-run them on this version before accepting.");
+  await page.getByRole("button",{name:"Re-run checks on this version",exact:true}).click();
+  await expect(page.getByTestId("accept-blocked")).toContainText("8 checks started on r2.");
+  await expect(accept).toBeEnabled({timeout:120000});
+  await expect(outcomes).toContainText("16 manufacturing studies, r1, r2");
+  await accept.click();
   await expect(page.getByRole("button",{name:"Accept into main design",exact:true})).toHaveCount(0);
   await expect(designer).toContainText("110 × 4 × 24 → 110 × 6 × 24 mm");await expect(engineer).toContainText("No additional geometry change.");
   expect(f.versions.outcomes(f.view.version.id,f.owner.access.editorToken,()=>f.studies).contributions).toEqual(old);

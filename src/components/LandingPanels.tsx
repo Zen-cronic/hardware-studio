@@ -37,18 +37,18 @@ export default function LandingPanels({ navigate, still = false }: { navigate: N
         <p>Every change to a part that carries weight gets the same strength test before and after, under the load you set. You get one plain number, not a wall of charts.</p>
         <details className="lp-how">
           <summary>How we checked</summary>
-          <p>Tested on the desk arm: a strength simulation of its upper link in 6061 aluminium, held at the column end with 0.5 kg hanging at the camera end. The calculation was refined twice until the result stopped changing. The joint is treated as fully fixed, which is a simplification.</p>
-          <p>Bend at the tip: 0.25 mm before, 0.08 mm after. Stress in the part: 5.4 MPa before, 2.6 MPa after.</p>
+          <p>Under the same 1 kgf (9.8 N) peak motor thrust, upward at the motor end, Arm, front right bends 70% less (1.19 mm to 0.36 mm) and its typical stress drops 52%.</p>
+          <p>It is a strength simulation of the one arm, held where it meets the frame, refined until the result stopped changing. Holding the arm fully fixed at the frame is a simplification.</p>
         </details>
       </div>
       <div className="lp-panel-backdrop" aria-hidden="true">
         <div className="lp-card lp-proof">
-          <p className="lp-proof-label">Desk arm, upper link, 4 mm to 6 mm</p>
+          <p className="lp-proof-label">Arm, front right, 4 mm to 6 mm</p>
           <p className="lp-proof-big"><strong>70%</strong> less bending</p>
-          <p className="lp-proof-load"><Ruler size={15}/>Same test both times: 0.5 kg at the tip</p>
+          <p className="lp-proof-load"><Ruler size={15}/>Same test both times: 1 kgf of motor thrust at the tip</p>
           <div className="lp-bars">
-            <div><span>Before</span><i style={{width: "100%"}}/><b>0.25 mm</b></div>
-            <div><span>After</span><i style={{width: "30%"}} className="is-after"/><b>0.08 mm</b></div>
+            <div><span>Before</span><i style={{width: "100%"}}/><b>1.19 mm</b></div>
+            <div><span>After</span><i style={{width: "30%"}} className="is-after"/><b>0.36 mm</b></div>
           </div>
         </div>
       </div>

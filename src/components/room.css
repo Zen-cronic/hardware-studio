@@ -1,0 +1,25 @@
+/* In-room viewer page and the desktop sheet. */
+.room-page { min-height: 100dvh; display: flex; flex-direction: column; background: var(--bg); color: var(--text); }
+.room-header { display: flex; align-items: center; gap: 16px; padding: 12px 16px; flex-wrap: wrap; }
+.room-header h1 { margin: 0; font-size: var(--s-xl); }
+.room-page .room-model { flex: 1; min-height: 60dvh; }
+.room-model { display: block; width: 100%; height: 100%; min-height: 320px; background: var(--surface); border-radius: 10px; --poster-color: transparent; }
+.room-model.is-loading, .room-model.is-empty { display: grid; place-content: center; gap: 10px; text-align: center; padding: 20px; color: var(--muted); }
+.room-ar-button { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); min-height: 48px; }
+.room-hint, .room-status { margin: 12px 16px 20px; font-size: var(--s-sm); }
+.room-status { display: flex; align-items: center; gap: 10px; }
+:root .modal.room-sheet { width: min(860px, calc(100vw - 32px)); max-width: none; }
+.room-sheet-body { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 20px; align-items: start; }
+.room-sheet-preview { height: 380px; }
+.room-sheet-phone { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.room-sheet-phone p { margin: 0; font-size: var(--s-sm); }
+.room-qr { width: 240px; height: 240px; border-radius: 8px; border: 1px solid var(--line); background: var(--white); }
+.room-sheet-preview .room-model { min-height: 0; }
+.room-open-link { display: none; }
+@media (max-width: 720px) {
+  .room-sheet-body { grid-template-columns: 1fr; }
+  .room-sheet-preview { height: 280px; }
+  .room-sheet .room-qr, .room-sheet .room-scan { display: none; }
+  .room-open-link { display: inline-flex; min-height: 44px; }
+  .room-qr { width: 200px; height: 200px; }
+}

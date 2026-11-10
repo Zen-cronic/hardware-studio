@@ -35,6 +35,8 @@ import { EngineeringJobs, registerEngineeringRoutes } from "./engineering-jobs";
 import { registerVersionRoutes } from "./versions";
 import { registerClipRoutes } from "./clips";
 import { ImportJobs, registerImportRoutes } from "./imports";
+import { registerModelRoutes } from "./model-view";
+import { registerExampleRoutes } from "./examples";
 const tokenOf = (r: FastifyRequest) => {
   const header = r.headers.authorization;
   return header?.startsWith("Bearer ")
@@ -326,6 +328,8 @@ export async function createApp(options: Options = {}) {
     store.authorize(id, tokenOf(r));
     return store.latestBuild(id);
   });
+  registerModelRoutes(app, store);
+  registerExampleRoutes(app);
   app.get("/api/builds/:jobId", async (r) => {
     const { job } = store.getBuild((r.params as any).jobId);
     store.authorize(job.designId, tokenOf(r));
