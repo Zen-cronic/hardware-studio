@@ -3,7 +3,9 @@
 .proposal-check .subtle { margin: 0; }
 .check-result { border: 1px solid var(--line); border-left: 4px solid var(--success); border-radius: 8px; padding: 10px 12px; background: var(--panel); }
 .check-result[data-verdict="worse"] { border-left-color: var(--danger); }
-.check-result[data-verdict="unknown"], .check-result[data-verdict="inconclusive"] { border-left-color: var(--warning); }
+.check-result[data-verdict="worse"] .check-verdict { color: var(--danger); }
+.check-result:is([data-verdict="unknown"], [data-verdict="preliminary"], [data-verdict="mixed"], [data-verdict="unchanged"], [data-verdict="not_comparable"], [data-verdict="incomplete"]) { border-left-color: var(--warning); }
+.check-result:is([data-verdict="unknown"], [data-verdict="preliminary"], [data-verdict="mixed"], [data-verdict="unchanged"], [data-verdict="not_comparable"], [data-verdict="incomplete"]) .check-verdict { color: var(--warning); }
 .check-sentence { margin: 0 0 6px; font-size: var(--s-base); line-height: 1.4; font-weight: 600; }
 .check-verdict { margin: 0 0 6px; color: var(--success); font-size: var(--s-sm); }
 .check-result details p { font-size: var(--s-sm); margin: 6px 0; }

@@ -205,7 +205,7 @@ export function AgentDock({ voice, reply, disabled = false, disabledReason, clas
         <Mic size={20} aria-hidden="true" />
         {listening && <span className="agent-mic-ring" aria-hidden="true" />}
       </button>
-      <p className="agent-dock-status" role="status" aria-live="polite" data-testid="agent-reply">{status}</p>
+      <p className="agent-dock-status" aria-live="polite" aria-atomic="true" data-testid="agent-reply">{status}</p>
       <button type="button" className="agent-mute" onClick={voice.toggleMute} aria-pressed={voice.muted}
         aria-label={voice.muted ? "Turn spoken replies on" : "Mute spoken replies"} title={voice.muted ? "Spoken replies off" : "Spoken replies on"}>
         {voice.muted ? <VolumeX size={18} aria-hidden="true" /> : <Volume2 size={18} aria-hidden="true" />}
