@@ -76,7 +76,8 @@ export function partCandidates(snapshot: Snapshot, prompt: string): { noun: stri
     if (raw.length < 3 || STOP.has(raw)) continue;
     // A plural ("arms") is a request for several parts, not a choice.
     if (raw !== singular(raw)) continue;
-    const matches = parts.filter(p => { const h = head(p.name).split(/\s+/); return h[0] === raw || h.at(-1) === raw; });
+    // The noun of a part's name is its last word before the comma: "Camera mount" is a mount, not a camera.
+    const matches = parts.filter(p => head(p.name).split(/\s+/).at(-1) === raw);
     if (matches.length < 2) continue;
     const pick = facePick(prompt);
     return { noun: raw, candidates: matches.map(part => {

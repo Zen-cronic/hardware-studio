@@ -31,6 +31,9 @@ describe("asking which part, without the assistant", () => {
     expect(askWhichPart(snapshot, "make the battery smaller", "Maker", "q4")).toBeNull();
     // A free-form wish names no measurement: it goes to the assistant instead of a local question.
     expect(askWhichPart(snapshot, "Make room for a bigger camera", "Maker", "q5")).toBeNull();
+    // "Camera mount" cheeks are mounts: a sized camera wish is not a choice between them.
+    expect(askWhichPart(snapshot, "Make room for a 22 mm camera", "Maker", "q7")).toBeNull();
+    expect(askWhichPart(snapshot, "make the leg 40 mm long", "Maker", "q8")?.target?.label).toBe("4 legs");
     // Spoken number words are read as a measurement once normalised.
     expect(askWhichPart(snapshot, normalizeSpokenNumbers("make the arm six millimetres thick"), "Maker", "q6")?.questions?.[0]).toMatch(/^Which arm:/);
   });
