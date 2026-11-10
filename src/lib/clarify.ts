@@ -35,13 +35,17 @@ const FEATURE_NOUNS: Record<string, (feature: SurfaceFeature) => boolean> = {
 };
 const ORDINAL: Record<string, number> = { first: 1, second: 2, third: 3, fourth: 4, fifth: 5, one: 1, two: 2, three: 3, four: 4, five: 5, "1st": 1, "2nd": 2, "3rd": 3, "4th": 4, "5th": 5 };
 
-/** The feature kind a request names ("this hole", "hole 3"), if any. */
+/**
+ * The feature kind a request names ("this hole", "hole 3"), if any. Hole numbers follow the
+ * server's rule (askWhichHole): "hole 4.5 mm" and "hole 8 mm" are sizes, not hole numbers,
+ * and a singular "hole" with or without an article names a hole.
+ */
 export function namedFeature(prompt: string): { noun: string; holeNumbers: number[] } | null {
   const text = prompt.toLowerCase();
-  const holeNumbers = [...text.matchAll(/\bhole\s*(?:#|no\.?\s*|number\s*)?(\d+)\b(?!\s*(?:mm|millimet|cm|in\b|inch))/g)].map(m => Number(m[1]));
+  const holeNumbers = [...text.matchAll(/\bhole\s*(?:#|no\.?\s*|number\s*)?(\d+)\b(?!\s*(?:mm|millimet|cm|in\b|inch|\.\d))/g)].map(m => Number(m[1]));
   for (const m of text.matchAll(/\b(first|second|third|fourth|fifth|1st|2nd|3rd|4th|5th)\s+hole\b/g)) holeNumbers.push(ORDINAL[m[1]]);
   if (holeNumbers.length) return { noun: "hole", holeNumbers };
-  const noun = text.match(/\b(?:this|that|the|a)\s+(hole|bore|channel|slot|end|side)\b/)?.[1];
+  const noun = text.match(/\b(?:this|that|the|a)\s+(hole|bore|channel|slot|end|side)\b/)?.[1] ?? (/\bhole\b/.test(text) ? "hole" : undefined);
   return noun ? { noun, holeNumbers: [] } : null;
 }
 

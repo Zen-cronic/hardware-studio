@@ -12,7 +12,6 @@ describe("spoken measurements", () => {
     expect(n("twenty-four millimeters long")).toBe("24 mm long");
     expect(n("two hundred and forty millimetres wide")).toBe("240 mm wide");
     expect(n("make the base three centimetres taller")).toBe("make the base 3 cm taller");
-    expect(n("set it to twenty")).toBe("set it to 20");
     expect(n("make hole three bigger")).toBe("make hole 3 bigger");
   });
 
@@ -31,5 +30,24 @@ describe("spoken measurements", () => {
     expect(n("make the two front arms stiffer")).toBe("make the two front arms stiffer");
     expect(n("Make room for a bigger camera")).toBe("Make room for a bigger camera");
     expect(n("make the mil spec part")).toBe("make the mil spec part");
+  });
+
+  it("keeps a typed sign, leading point and diameter mark", () => {
+    expect(n("set the work angle to -20")).toBe("set the work angle to -20");
+    expect(n("make this .8 mm thick")).toBe("make this .8 mm thick");
+    expect(n("make this 0.8 mm thick")).toBe("make this 0.8 mm thick");
+    expect(n("make this hole Ø8")).toBe("make this hole Ø8");
+    expect(n("make this hole Ø8 millimetres")).toBe("make this hole Ø8 mm");
+  });
+
+  it("turns number words into digits only before a length unit or as a hole number", () => {
+    expect(n("make the hole at one end bigger")).toBe("make the hole at one end bigger");
+    expect(n("make this thicker so it can carry two kilos")).toBe("make this thicker so it can carry two kilos");
+    expect(n("make this hole eight")).toBe("make this hole eight");
+    expect(n("make the hole eight")).toBe("make the hole eight");
+    expect(n("set it to twenty")).toBe("set it to twenty");
+    expect(n("turn it twenty degrees")).toBe("turn it twenty degrees");
+    expect(n("make hole number three bigger")).toBe("make hole number 3 bigger");
+    expect(n("forty by twenty by thirty millimetres")).toBe("40 by 20 by 30 mm");
   });
 });

@@ -13,10 +13,13 @@ const UNIT: Record<string, string> = {
   mm: "mm", millimetre: "mm", millimetres: "mm", millimeter: "mm", millimeters: "mm", mil: "mm", mils: "mm", mill: "mm", mills: "mm",
   cm: "cm", centimetre: "cm", centimetres: "cm", centimeter: "cm", centimeters: "cm",
 };
-// Words after a number that make it a measurement (or a feature number), not a count.
-const MEASURE = new Set([...Object.keys(UNIT), "in", "inch", "inches", "kg", "kilogram", "kilograms", "kilo", "kilos", "g", "gram", "grams",
-  "n", "newton", "newtons", "degree", "degrees", "percent", "%", "rpm", "x", "by"]);
-const BEFORE = new Set(["hole", "number", "to", "of", "at", "by"]);
+// Length units after a number word make it a measurement. Kilos, newtons, degrees and plain
+// counts ("at one end", "two kilos") stay as words, so the local rules never read them as millimetres.
+const LENGTH = new Set([...Object.keys(UNIT), "inch", "inches"]);
+// Between the sides of a size: "forty by twenty by thirty millimetres".
+const BY = new Set(["by", "x"]);
+// "this hole eight" means a size for the pointed hole, not hole number eight.
+const DEICTIC = new Set(["this", "that", "the"]);
 
 const bare = (token: string) => token.toLowerCase().replace(/^[^\w%]+|[^\w%]+$/g, "");
 
@@ -44,24 +47,43 @@ function readNumber(tokens: string[], i: number): { value: string; end: number; 
   return { value: decimals ? `${whole}.${decimals}` : whole, end: j, words };
 }
 
-/** Digits for spoken measurements, and "mm"/"cm" for spoken millimetre and centimetre units. */
+/** Whether the number ending at tokens[end] is a length: a length unit follows, directly or after "by"/"x" and more sides. */
+function measured(tokens: string[], end: number): boolean {
+  const after = bare(tokens[end] || "");
+  if (LENGTH.has(after)) return true;
+  if (!BY.has(after)) return false;
+  const next = readNumber(tokens, end + 1);
+  return !!next && measured(tokens, next.end);
+}
+
+/** "hole three" with no unit after it names a hole; "this hole eight" does not. */
+function holeNumber(tokens: string[], i: number): boolean {
+  const before = bare(tokens[i - 1] || ""), hole = before === "number" ? i - 2 : i - 1;
+  return bare(tokens[hole] || "") === "hole" && !DEICTIC.has(bare(tokens[hole - 1] || ""));
+}
+
+/**
+ * Digits for spoken measurements, and "mm"/"cm" for spoken millimetre and centimetre units.
+ * Number words become digits only before a length unit ("six millimetres") or as a hole number
+ * ("hole three"). Typed digits are kept exactly as written, with any sign, leading point or Ø.
+ */
 export function normalizeSpokenNumbers(text: string): string {
   // "twenty-five" reads as two words; a hyphen elsewhere is kept.
   const tokens = text.replace(/\b(twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)-(one|two|three|four|five|six|seven|eight|nine)\b/gi, "$1 $2").split(/\s+/).filter(Boolean);
   const out: string[] = [];
   for (let i = 0; i < tokens.length;) {
     const number = readNumber(tokens, i);
-    if (number) {
-      const after = bare(tokens[number.end] || ""), before = bare(tokens[i - 1] || "");
+    if (number && (!number.words || measured(tokens, number.end) || holeNumber(tokens, i))) {
+      const after = bare(tokens[number.end] || "");
       const trailing = (tokens[number.end - 1] || "").match(/[^\w%]+$/)?.[0] || "";
-      if (!number.words || MEASURE.has(after) || BEFORE.has(before) || (number.value.includes(".") && number.words)) {
-        out.push(number.value + trailing);
-        i = number.end;
-        // The unit right after a number becomes its short form, keeping its punctuation.
-        const unit = UNIT[after];
-        if (unit && !trailing) { out.push(unit + ((tokens[i] || "").match(/[^\w%]+$/)?.[0] || "")); i++; }
-        continue;
-      }
+      // A typed number is kept as written: "-20", ".8", "Ø8" and "0.8" keep their sign, point and mark.
+      if (!number.words && number.end === i + 1) out.push(tokens[i]);
+      else out.push((tokens[i].match(/^[^\w%]+/)?.[0] || "") + number.value + trailing);
+      i = number.end;
+      // The unit right after a number becomes its short form, keeping its punctuation.
+      const unit = UNIT[after];
+      if (unit && !trailing) { out.push(unit + ((tokens[i] || "").match(/[^\w%]+$/)?.[0] || "")); i++; }
+      continue;
     }
     out.push(tokens[i]);
     i++;
