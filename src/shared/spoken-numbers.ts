@@ -21,27 +21,32 @@ const BY = new Set(["by", "x"]);
 // "this hole eight" means a size for the pointed hole, not hole number eight.
 const DEICTIC = new Set(["this", "that", "the"]);
 
+// Own entries only: "constructor" or "toString" in a request are words, not table entries.
+const lookup = <T>(table: Record<string, T>, key: string): T | undefined => Object.hasOwn(table, key) ? table[key] : undefined;
 const bare = (token: string) => token.toLowerCase().replace(/^[^\w%]+|[^\w%]+$/g, "");
 
 /** Reads a number starting at tokens[i]; returns its digits and the index after it. */
 function readNumber(tokens: string[], i: number): { value: string; end: number; words: boolean } | null {
   let j = i, n: number | null = null, digits: string | null = null, words = false;
   const t = (k: number) => bare(tokens[k] || "");
+  const small = (k: number) => lookup(SMALL, t(k)), tens = (k: number) => lookup(TENS, t(k)), digit = (k: number) => lookup(DIGIT, t(k));
+  const unitDigit = (k: number) => { const v = small(k); return v !== undefined && v > 0 && v < 10 ? v : undefined; };
   if (/^\d+(\.\d+)?$/.test(t(j))) { digits = t(j); j++; }
-  else if (SMALL[t(j)] !== undefined) { n = SMALL[t(j)]; j++; words = true; }
-  else if (TENS[t(j)] !== undefined) { n = TENS[t(j)]; j++; words = true; if (SMALL[t(j)] !== undefined && SMALL[t(j)] > 0 && SMALL[t(j)] < 10) { n += SMALL[t(j)]; j++; } }
-  else if (t(j) === "point" && (DIGIT[t(j + 1)] !== undefined || /^\d+$/.test(t(j + 1)))) { n = 0; words = true; }
+  else if (small(j) !== undefined) { n = small(j)!; j++; words = true; }
+  else if (tens(j) !== undefined) { n = tens(j)!; j++; words = true; const u = unitDigit(j); if (u !== undefined) { n += u; j++; } }
+  else if (t(j) === "point" && (digit(j + 1) !== undefined || /^\d+$/.test(t(j + 1)))) { n = 0; words = true; }
   else return null;
   if (n !== null && n > 0 && n < 10 && t(j) === "hundred") {
     n *= 100; j++;
-    if (t(j) === "and" && (SMALL[t(j + 1)] !== undefined || TENS[t(j + 1)] !== undefined)) j++;
-    if (TENS[t(j)] !== undefined) { n += TENS[t(j)]; j++; if (SMALL[t(j)] !== undefined && SMALL[t(j)] > 0 && SMALL[t(j)] < 10) { n += SMALL[t(j)]; j++; } }
-    else if (SMALL[t(j)] !== undefined) { n += SMALL[t(j)]; j++; }
+    if (t(j) === "and" && (small(j + 1) !== undefined || tens(j + 1) !== undefined)) j++;
+    const ten = tens(j);
+    if (ten !== undefined) { n += ten; j++; const u = unitDigit(j); if (u !== undefined) { n += u; j++; } }
+    else if (small(j) !== undefined) { n += small(j)!; j++; }
   }
   let whole = digits ?? String(n), decimals = "";
-  if (t(j) === "point" && (DIGIT[t(j + 1)] !== undefined || /^\d+$/.test(t(j + 1)))) {
+  if (t(j) === "point" && (digit(j + 1) !== undefined || /^\d+$/.test(t(j + 1)))) {
     j++; words = true;
-    while (DIGIT[t(j)] !== undefined || /^\d+$/.test(t(j))) { decimals += DIGIT[t(j)] ?? t(j); j++; }
+    while (digit(j) !== undefined || /^\d+$/.test(t(j))) { decimals += digit(j) ?? t(j); j++; }
   } else if (t(j) === "and" && t(j + 1) === "a" && t(j + 2) === "half") { decimals = "5"; j += 3; words = true; }
   if (whole.includes(".") && decimals) return null;
   return { value: decimals ? `${whole}.${decimals}` : whole, end: j, words };
@@ -81,7 +86,7 @@ export function normalizeSpokenNumbers(text: string): string {
       else out.push((tokens[i].match(/^[^\w%]+/)?.[0] || "") + number.value + trailing);
       i = number.end;
       // The unit right after a number becomes its short form, keeping its punctuation.
-      const unit = UNIT[after];
+      const unit = lookup(UNIT, after);
       if (unit && !trailing) { out.push(unit + ((tokens[i] || "").match(/[^\w%]+$/)?.[0] || "")); i++; }
       continue;
     }

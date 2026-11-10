@@ -30,6 +30,8 @@ describe("spoken measurements", () => {
     expect(n("make the two front arms stiffer")).toBe("make the two front arms stiffer");
     expect(n("Make room for a bigger camera")).toBe("Make room for a bigger camera");
     expect(n("make the mil spec part")).toBe("make the mil spec part");
+    expect(n("add 2 constructor")).toBe("add 2 constructor");
+    expect(n("the toString in the corner")).toBe("the toString in the corner");
   });
 
   it("keeps a typed sign, leading point and diameter mark", () => {
