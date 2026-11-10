@@ -158,8 +158,17 @@ try {
     await expect(page.getByText('Main r0 → proposed r2', { exact: true })).toBeVisible();
     await expect(page.locator('.version-changes').getByText('Upper arm link', { exact: true })).toBeVisible();
     await screenshot('review-before-acceptance.png');
+    // Checks recorded on an earlier revision hold Accept until they are repeated on this one.
+    const acceptButton = page.getByRole('button', { name: 'Accept into main design', exact: true });
+    const blocked = page.getByTestId('accept-blocked');
+    if (await blocked.isVisible()) {
+      await blocked.getByRole('button', { name: 'Re-run checks on this version', exact: true }).click();
+      await expect(blocked).toContainText(/started on r\d+/, { timeout: 30000 });
+      console.log(JSON.stringify({ phase: 're-ran stale checks', message: await blocked.textContent() }));
+    }
+    await expect(acceptButton).toBeEnabled({ timeout: 600000 });
     const acceptedResponse = page.waitForResponse(r => r.request().method() === 'POST' && r.url().endsWith(`/proposed-versions/${version.id}/accept`));
-    await page.getByRole('button', { name: 'Accept into main design', exact: true }).click();
+    await acceptButton.click();
     const response = await acceptedResponse; assert.equal(response.status(), 200);
     state.accepted = await response.json(); checkpoint();
   }
@@ -174,7 +183,10 @@ try {
   write('acceptance.json', { version: acceptedVersion.version, proposedSnapshotHash: acceptedVersion.proposedSnapshotHash, acceptedPartsMatchProposed: true, acceptedDerivedMatchProposed: true, uiAction: 'Actual Accept into main design button after review; automated browser, not a human usability session.' });
   console.log(JSON.stringify({ phase: 'proposal accepted through UI', acceptedRevision: 1 }));
   await page.goto(`${base}/studio/${version.parentDesignId}#token=${parentAccess.editor_token}`);
-  await page.getByRole('tab', { name: 'Build', exact: true }).click();
+  // The Build view sits in the studio's More panel.
+  const buildTab = page.getByRole('tab', { name: 'Build', exact: true });
+  if (!(await buildTab.isVisible())) await page.getByRole('button', { name: 'More', exact: true }).click();
+  await buildTab.click();
   if (!state.buildId) {
     const response = page.waitForResponse(r => r.request().method() === 'POST' && r.url().endsWith('/build'));
     await page.getByTestId('generate-build').click(); const started = await response; assert.equal(started.status(), 200);
