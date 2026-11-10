@@ -122,6 +122,24 @@ def drawing_svg(part: dict, revision: int) -> str:
             inner = part["holeDiameter"] * scale / 2
             front += f'<path stroke-dasharray="6 4" d="M {cx-inner} {front_y} v {front_height} M {cx+inner} {front_y} v {front_height}"/>'
     details = []
+    if part["shape"] == "ellipsoid":
+        front = f'<ellipse cx="210" cy="240" rx="{front_width/2}" ry="{front_height/2}"/>'
+        side = f'<ellipse cx="580" cy="240" rx="{side_width/2}" ry="{side_height/2}"/>'
+        details.append(f"Ellipsoid of revolution about Y: Ø {x:g} × {y:g} high")
+    if part.get("edgeRadius"):
+        r = part["edgeRadius"] * scale
+        front = f'<rect x="{front_x}" y="{front_y}" width="{front_width}" height="{front_height}" rx="{r}"/>'
+        side = f'<rect x="{side_x}" y="{side_y}" width="{side_width}" height="{side_height}" rx="{r}"/>'
+        top = f'<rect x="{210-x*scale/2}" y="{580-z*scale/2}" width="{x*scale}" height="{z*scale}" rx="{r}"/>'
+        details.append(f"All edges rounded R {part['edgeRadius']:g}")
+        if part.get("wall"):
+            t = part["wall"] * scale
+            for cx, cy, w, h in ((210, 240, front_width, front_height), (580, 240, side_width, side_height), (210, 580, x*scale, z*scale)):
+                inner = f'<rect stroke-dasharray="6 4" x="{cx-w/2+t}" y="{cy-h/2+t}" width="{w-2*t}" height="{h-2*t}" rx="{max(0, r-t)}"/>'
+                if cx == 580: side += inner
+                elif cy == 240: front += inner
+                else: top += inner
+            details.append(f"Closed hollow shell, {part['wall']:g} wall throughout")
     if "loopSpan" in part:
         span=part["loopSpan"]*scale
         def capsule(diameter):

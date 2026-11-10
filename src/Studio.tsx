@@ -1904,7 +1904,7 @@ function NewPartModal({
 }) {
   useDialog(true, onClose);
   const [name, setName] = useState("New component"),
-    [shape, setShape] = useState<"box" | "cylinder" | "tube">("box"),
+    [shape, setShape] = useState<"box" | "rounded" | "cylinder" | "tube" | "ellipsoid">("box"),
     [width, setWidth] = useState(40),
     [height, setHeight] = useState(20),
     [depth, setDepth] = useState(40),
@@ -1926,9 +1926,10 @@ function NewPartModal({
           await onAdd({
             id: uid(),
             name,
-            shape,
-            size: [width, height, shape === "box" ? depth : width],
+            shape: shape === "rounded" ? "box" : shape,
+            size: [width, height, shape === "box" || shape === "rounded" ? depth : width],
             holeDiameter: shape === "tube" ? width * 0.7 : undefined,
+            edgeRadius: shape === "rounded" ? Math.round(Math.min(width, height, depth) * 2.5) / 10 : undefined,
             position: [x, y, z],
             color: colors.border,
             material: "PLA",
@@ -1963,8 +1964,10 @@ function NewPartModal({
             onChange={(e) => setShape(e.target.value as typeof shape)}
           >
             <option value="box">Box</option>
+              <option value="rounded">Rounded box</option>
             <option value="cylinder">Cylinder</option>
             <option value="tube">Tube</option>
+              <option value="ellipsoid">Ellipsoid (ball or egg shape)</option>
           </select>
         </label>
         <div className="three-inputs">

@@ -1,11 +1,36 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
+import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import type { Part } from "../shared/types";
+
+/** True when a part needs more than three's plain box or cylinder to draw it exactly. */
+export function needsFeaturedGeometry(part: Part) {
+  return !!(part.channel || part.sections || part.holes?.length || part.shape === "tube" || part.shape === "ellipsoid" || part.edgeRadius);
+}
+
+/** Smooth shapes have no creases, so there are no edge lines to draw on them. */
+export function hasCreases(part: Part) {
+  return part.shape !== "ellipsoid" && !part.edgeRadius;
+}
+
+/** A rounded box (every edge filleted, corners as sphere octants) or an ellipsoid of revolution. */
+function roundGeometry(part: Part, compact: boolean): THREE.BufferGeometry | null {
+  if (part.shape === "ellipsoid") {
+    const g = new THREE.SphereGeometry(0.5, compact ? 32 : 64, compact ? 20 : 40);
+    g.scale(part.size[0], part.size[1], part.size[2]);
+    return g;
+  }
+  if (part.shape === "box" && part.edgeRadius)
+    return new RoundedBoxGeometry(part.size[0], part.size[1], part.size[2], compact ? 3 : 6, part.edgeRadius);
+  return null;
+}
 
 export function featuredGeometry(
   part: Part,
   compact = false,
 ): THREE.BufferGeometry {
+  const round = roundGeometry(part, compact);
+  if (round) return round;
   if (part.loopSpan !== undefined) {
     const span = part.loopSpan;
     const outline = (radius: number, clockwise: boolean) => {

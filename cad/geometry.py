@@ -38,7 +38,7 @@ def validate_part(part: Any) -> dict:
     for key in ("id", "name", "material"):
         if not isinstance(part.get(key), str) or not part[key].strip() or len(part[key]) > 240:
             raise DesignError(f"Part {key} must be a nonempty string under 241 characters")
-    if part.get("shape") not in {"box", "cylinder", "tube"}:
+    if part.get("shape") not in {"box", "cylinder", "tube", "ellipsoid"}:
         raise DesignError(f"Unsupported shape for {part['id']}")
     vector(part.get("size"), f"{part['id']} size", 0.01, MAX_SIZE_MM)
     vector(part.get("position"), f"{part['id']} position")
@@ -58,9 +58,19 @@ def validate_part(part: Any) -> dict:
             bore = finite(part.get("holeDiameter"), f"{part['id']} bore", 0.001, MAX_SIZE_MM)
             if bore >= part["size"][2] - (0.5 if "loopSpan" in part else 0.002):
                 raise DesignError(f"{part['id']} bore must leave positive wall thickness")
+    if part["shape"] == "ellipsoid" and any(k in part for k in ("holeDiameter","sections","holes","loopSpan","channel")):
+        raise DesignError(f"{part['id']} ellipsoid takes no bore, sections, holes or channel")
+    if "edgeRadius" in part:
+        radius = finite(part["edgeRadius"], "Edge radius", .2, min(part["size"])/2-.05)
+        if part["shape"] != "box" or any(k in part for k in ("holes","channel")):
+            raise DesignError(f"{part['id']} rounded edges need a box with no holes or channel")
+        if "wall" in part:
+            finite(part["wall"], "Shell wall", .5, min(radius-1e-6, min(part["size"])/2-.5))
+    elif "wall" in part:
+        raise DesignError(f"{part['id']} a hollow shell needs rounded edges")
     sections = part.get("sections")
     if sections is not None:
-        if part["shape"] == "box" or not isinstance(sections,list) or not 1 <= len(sections) <= 16:
+        if part["shape"] in ("box","ellipsoid") or not isinstance(sections,list) or not 1 <= len(sections) <= 16:
             raise DesignError("Invalid axial sections")
         for i, section in enumerate(sections):
             if not isinstance(section,dict): raise DesignError("Invalid axial section")
@@ -159,8 +169,15 @@ def local_shape(part: dict) -> cq.Shape:
                 solid=solid.fuse(cq.Solid.makeCylinder(diameter/2,height,cq.Vector(end,-height/2,0),cq.Vector(0,1,0)))
             return solid.clean()
         shape=capsule(z,y).cut(capsule(part["holeDiameter"],y+2)).clean()
+    elif part["shape"] == "box" and part.get("edgeRadius"):
+        shape = rounded_box(x, y, z, part["edgeRadius"])
+        if part.get("wall"):
+            t = part["wall"]
+            shape = shape.cut(rounded_box(x-2*t, y-2*t, z-2*t, part["edgeRadius"]-t))
     elif part["shape"] == "box":
         shape = cq.Workplane("XY").box(x, y, z, centered=(True, True, True)).val()
+    elif part["shape"] == "ellipsoid":
+        shape = ellipsoid(x, y)
     else:
         sections = part.get("sections") or [{"height": y, "diameter": x, "bore": part.get("holeDiameter",0) if part["shape"] == "tube" else 0}]
         offset=-y/2
@@ -190,8 +207,34 @@ def local_shape(part: dict) -> cq.Shape:
     return shape
 
 
+def rounded_box(x: float, y: float, z: float, radius: float) -> cq.Shape:
+    """A box with every edge filleted at one radius: exactly the inner box swept by a sphere."""
+    return cq.Workplane("XY").box(x, y, z, centered=(True, True, True)).edges().fillet(radius).val()
+
+
+def rounded_box_volume(x: float, y: float, z: float, r: float) -> float:
+    a, b, c = x-2*r, y-2*r, z-2*r
+    return a*b*c + 2*r*(a*b+b*c+c*a) + math.pi*r*r*(a+b+c) + 4/3*math.pi*r**3
+
+
+def ellipsoid(diameter: float, height: float) -> cq.Shape:
+    """Half an ellipse in the XY plane revolved about local Y: an exact surface of revolution."""
+    a, b = diameter/2, height/2
+    if math.isclose(a, b, rel_tol=1e-9):
+        # A circle passed as an ellipse revolves into a solid that does not survive STEP; use the sphere primitive.
+        return cq.Solid.makeSphere(a, angleDegrees1=-90, angleDegrees2=90)
+    # Two half turns fused: a single full-turn face of an oblate ellipse does not survive STEP.
+    halves = [cq.Workplane("XY").moveTo(0, -b).ellipseArc(a, b, -90, 90, makeWire=False).close().revolve(180, (0, 0, 0), (0, 1, 0)).val() for _ in range(2)]
+    return halves[0].fuse(halves[1].rotate((0, 0, 0), (0, 1, 0), 180))
+
+
 def analytic_volume(part: dict) -> float:
     x,y,z=part["size"]
+    if part["shape"] == "ellipsoid":
+        return math.pi*x*x*y/6
+    if part["shape"] == "box" and part.get("edgeRadius"):
+        r=part["edgeRadius"]; t=part.get("wall",0)
+        return rounded_box_volume(x,y,z,r)-(rounded_box_volume(x-2*t,y-2*t,z-2*t,r-t) if t else 0)
     if "loopSpan" in part:
         inner=part["holeDiameter"]
         return (part["loopSpan"]*(z-inner)+math.pi*(z*z-inner*inner)/4)*y
@@ -229,3 +272,20 @@ def safe_stem(identity: str) -> str:
     import hashlib
     plain = re.sub(r"[^A-Za-z0-9_-]", "-", identity).strip("-")[:60] or "part"
     return plain + "-" + hashlib.sha256(identity.encode()).hexdigest()[:8]
+
+
+def find_interferences(parts: list[dict], min_volume_mm3: float = 0.5) -> list[dict]:
+    """Pairs of parts whose solids overlap by more than `min_volume_mm3`; faces that only touch do not count."""
+    placed = []
+    for part in parts:
+        shape = world_shape(part)
+        placed.append((part["id"], shape, bounds(shape)))
+    found = []
+    for i, (a, shape_a, box_a) in enumerate(placed):
+        for b, shape_b, box_b in placed[i + 1:]:
+            if any(box_a["max"][k] <= box_b["min"][k] + 1e-6 or box_b["max"][k] <= box_a["min"][k] + 1e-6 for k in range(3)):
+                continue
+            volume = shape_a.intersect(shape_b).Volume()
+            if volume > min_volume_mm3:
+                found.append({"a": a, "b": b, "volumeMm3": round(volume, 3)})
+    return found

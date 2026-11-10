@@ -7,6 +7,7 @@ import type { Part } from "../shared/types";
 import { featuredGeometry } from "../lib/partGeometry";
 import { motionPose } from "../lib/motion";
 import { colors } from "../lib/tokens";
+import { finishFor } from "../lib/droneLook";
 import LandingPayload from "./LandingPayload";
 
 type Props = {parts: Part[]; playing:boolean; separated:boolean; manual:boolean; reduced:boolean; progress:number; diameter:number; onReady?:()=>void; onAssembly?:(value:number)=>void};
@@ -168,8 +169,9 @@ function Scene({parts,playing,separated,manual,reduced,progress,diameter,onReady
     <directionalLight position={[500,250,-300]} intensity={.65}/>
     <Workbench/>
     <group ref={model} position={[mobile?0:165,0,0]}>
-      {parts.map((p,i)=>{const metal=/steel|alumin|metal/i.test(p.material),reference=p.role==="reference",coated=["base-floor","motor-plate"].includes(p.id),cover=p.id==="platter-cover";if(reference)return <group key={p.id} ref={m=>{meshes.current[i]=m;}} position={p.position} rotation={p.rotation}><LandingPayload size={p.size}/></group>;return <mesh castShadow receiveShadow key={p.id} ref={m=>{meshes.current[i]=m;}} position={p.position} rotation={p.rotation} geometry={geometries[i]}>
-        <meshPhysicalMaterial color={reference?colors.action:coated?colors.action:cover?colors.primary:new THREE.Color(p.color).multiplyScalar(metal?.95:1)} metalness={coated?.65:metal?.88:0} roughness={coated?.32:metal?.25:.52} anisotropy={metal&&!coated?.65:0} roughnessMap={metal&&!coated?brushed:null} clearcoat={reference||coated||cover?.35:.05}/>
+      {parts.map((p,i)=>{const metal=/steel|alumin|metal/i.test(p.material),reference=p.role==="reference",finish=finishFor(p);if(reference)return <group key={p.id} ref={m=>{meshes.current[i]=m;}} position={p.position} rotation={p.rotation}><LandingPayload size={p.size}/></group>;return <mesh castShadow receiveShadow key={p.id} ref={m=>{meshes.current[i]=m;}} position={p.position} rotation={p.rotation} geometry={geometries[i]}>
+        {/* The same finishes as the studio and the home page stage, brushed where the part is machined metal */}
+        <meshPhysicalMaterial color={finish.color} metalness={finish.metalness} roughness={finish.roughness} anisotropy={metal?.65:0} roughnessMap={metal?brushed:null} clearcoat={finish.clearcoat??0} clearcoatRoughness={finish.clearcoatRoughness??.3}/>
         <Edges threshold={30} color={reference?colors.primary:colors.text} transparent opacity={reference?.6:.12}/>
       </mesh>;})}
     </group>

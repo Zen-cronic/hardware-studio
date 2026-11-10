@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import * as THREE from "three";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
-import { featuredGeometry } from "./lib/partGeometry";
+import { featuredGeometry, needsFeaturedGeometry } from "./lib/partGeometry";
 import { motionPose } from "./lib/motion";
 import { explodedParts } from "./lib/explosion";
 import { evaluateClipFrame, type ClipProject } from "./lib/clip-timeline";
@@ -42,7 +42,7 @@ class ProductScene {
     const key = new THREE.DirectionalLight(colors.white, 2); key.position.set(2, 3, 2); this.scene.add(key);
     const fill = new THREE.DirectionalLight(colors.white, .8); fill.position.set(-2, 2, -1); this.scene.add(fill);
     for (const part of project.snapshot.derived.parts) {
-      const geometry = part.shape === "box" && !part.holes?.length && !part.channel
+      const geometry = part.shape === "box" && !needsFeaturedGeometry(part)
         ? new THREE.BoxGeometry(...part.size)
         : part.shape === "cylinder" && !part.sections && !part.holes?.length
           ? new THREE.CylinderGeometry(part.size[0] / 2, part.size[0] / 2, part.size[1], 64)
