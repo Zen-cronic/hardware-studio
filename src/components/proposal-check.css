@@ -1,0 +1,12 @@
+/* Check before applying: a plain sentence first, the inputs behind a disclosure. */
+.proposal-check { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
+.proposal-check .subtle { margin: 0; }
+.check-result { border: 1px solid var(--line); border-left: 4px solid var(--success); border-radius: 8px; padding: 10px 12px; background: var(--panel); }
+.check-result[data-verdict="worse"] { border-left-color: var(--danger); }
+.check-result[data-verdict="unknown"], .check-result[data-verdict="inconclusive"] { border-left-color: var(--warning); }
+.check-sentence { margin: 0 0 6px; font-size: var(--s-base); line-height: 1.4; font-weight: 600; }
+.check-verdict { margin: 0 0 6px; color: var(--success); font-size: var(--s-sm); }
+.check-result details p { font-size: var(--s-sm); margin: 6px 0; }
+.check-numbers { display: grid; gap: 4px; margin: 6px 0; font-size: var(--s-sm); }
+.check-numbers div { display: flex; justify-content: space-between; gap: 10px; }
+.check-numbers dd { margin: 0; font-family: var(--font-mono); }

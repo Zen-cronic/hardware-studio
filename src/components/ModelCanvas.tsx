@@ -19,7 +19,8 @@ import { explodedParts, explosionProgress, EXPLOSION_DURATION } from "../lib/exp
 import { visiblePartsInPolygon, type ScreenPoint } from "../lib/selection";
 import type { SelectionRef, SelectionSource } from "../shared/selection";
 import { CircleSelectionOverlay, SpatialSelectionTools } from "./SpatialSelection";
-import { displayTarget, resolveSurfaceFeature, surfaceTargetFromHit, type SurfaceFeature, type SurfaceTarget } from "../shared/surface";
+import { displayTarget, partFeatures, resolveSurfaceFeature, surfaceTargetFromHit, type SurfaceFeature, type SurfaceTarget } from "../shared/surface";
+import { projectParts, type PartTargetRequest, type ScreenTarget } from "../lib/projection";
 type Props = {
   parts: Part[];
   activePartIds?: string[];
@@ -44,6 +45,12 @@ type Props = {
   camera?: { position: Vec3; target: Vec3 };
   onCamera?: (camera: { position: Vec3; target: Vec3 }) => void;
   ariaLabel?: string;
+  /** Filled with a projector from part ids (and an optional feature) to viewport pixels. */
+  projector?: React.MutableRefObject<((target: PartTargetRequest) => ScreenTarget | null) | null>;
+  /** Reports the hovered part and its readable feature label, or null. */
+  onHoverChange?: (hover: { partId: string; label: string } | null) => void;
+  /** Parts the assistant is pointing at; drawn with the hover outline. */
+  highlightPartIds?: string[];
 };
 class CanvasBoundary extends Component<
   { children: ReactNode; onFailure: () => void },
@@ -606,6 +613,23 @@ function HoverBridge({ enabled, parts, onHover, picker }: { enabled: boolean; pa
   }, [enabled, gl, scene, camera, picker]);
   return null;
 }
+// Viewport coordinates of a part or one of its features, for overlays outside the canvas.
+function ProjectionBridge({ parts, projector }: { parts: Part[]; projector: NonNullable<Props["projector"]> }) {
+  const { gl, scene, camera, size } = useThree();
+  const byId = useRef(new Map<string, Part>()); byId.current = new Map(parts.map(part => [part.id, part]));
+  useEffect(() => {
+    projector.current = ({ partIds, featureId }) => {
+      const part = byId.current.get(partIds[0]);
+      const anchor = part && featureId ? partFeatures(part).find(entry => entry.feature.id === featureId)?.target.point : undefined;
+      const hit = projectParts(scene, camera, size.width, size.height, partIds, anchor ? new THREE.Vector3(...anchor) : undefined);
+      if (!hit) return null;
+      const { left, top } = gl.domElement.getBoundingClientRect();
+      return { ...hit, x: hit.x + left, y: hit.y + top, rect: { left: hit.rect.left + left, right: hit.rect.right + left, top: hit.rect.top + top, bottom: hit.rect.bottom + top } };
+    };
+    return () => { projector.current = null; };
+  }, [gl, scene, camera, size.width, size.height, projector]);
+  return null;
+}
 type PolygonPicker = ((points: ScreenPoint[]) => string[]) | null;
 function SelectionBridge({ picker }: { picker: React.MutableRefObject<PolygonPicker> }) {
   const { gl, scene, camera, size, invalidate } = useThree();
@@ -675,16 +699,18 @@ export default function ModelCanvas(props: Props) {
   const pinned = useMemo(() => {
     const surface = props.pointedTarget?.surface, part = surface && partById.get(surface.partId);
     const shown = part && surface ? displayTarget(part, surface) : null;
-    return part && shown ? { partId: part.id, ...shown, label: `${part.name} · ${shown.feature.label}`, spoken: `${part.name}, ${shown.feature.label}` } : null;
+    return part && shown ? { partId: part.id, ...shown, label: `${part.name}, ${shown.feature.label}`, spoken: `${part.name}, ${shown.feature.label}` } : null;
   }, [props.pointedTarget, partById]);
   const hoverInfo = useMemo(() => {
     const part = hover && partById.get(hover.partId);
     if (!hover || !part) return null;
     const feature = resolveSurfaceFeature(part, hover.target.point, hover.target.normal);
-    return { ...hover, feature, label: `${part.name} · ${feature.label}`, spoken: `${part.name}, ${feature.label}` };
+    return { ...hover, feature, label: `${part.name}, ${feature.label}`, spoken: `${part.name}, ${feature.label}` };
   }, [hover, partById]);
   // A frozen utterance target is the only target drawn while it lasts.
   const showHover = !!hoverInfo && !props.voiceTarget && !(pinned && pinned.partId === hoverInfo.partId && pinned.feature.id === hoverInfo.feature.id);
+  const onHoverChange = useRef(props.onHoverChange); onHoverChange.current = props.onHoverChange;
+  useEffect(() => { onHoverChange.current?.(hoverInfo && showHover ? { partId: hoverInfo.partId, label: hoverInfo.label } : null); }, [hoverInfo?.partId, hoverInfo?.label, showHover]);
   const [spokenHover, setSpokenHover] = useState("");
   useEffect(() => {
     const timer = setTimeout(() => setSpokenHover(hoverInfo?.spoken || ""), 450);
@@ -753,6 +779,7 @@ export default function ModelCanvas(props: Props) {
           <AssemblyAnimation parts={props.parts} exploded={!!props.exploded} playing={playing && !circleMode}
             speed={props.speed ?? 1} reduced={reduced} frozen={circleMode} frame={animation} />
           <SelectionBridge picker={picker} />
+          {props.projector && <ProjectionBridge parts={props.parts} projector={props.projector} />}
           <HoverBridge enabled={!!props.hoverEnabled && !circleMode && !candidates.length} parts={props.parts} onHover={setHover} picker={hoverHit} />
           <FrameSignal parts={parts} onReady={() => setReady(true)} />
           <color attach="background" args={[colors.surface]} />
@@ -787,7 +814,7 @@ export default function ModelCanvas(props: Props) {
                 selected={undefined}
                 selectedPartIds={displayIds}
                 focused={focusedCandidate === part.id || (!props.voiceTarget?.surface && (props.voiceTarget?.partIds[0] || (showHover ? null : hovered)) === part.id)}
-                outlined={(props.voiceTarget?.partIds[0] || hovered) === part.id}
+                outlined={(props.voiceTarget?.partIds[0] || hovered) === part.id || !!props.highlightPartIds?.includes(part.id)}
                 marker={candidates.includes(part.id) ? candidates.indexOf(part.id) + 1 : undefined}
                 onPick={canSelect && !circleMode && props.onSelection && props.selectionContext ? target => choose([target.partId], "click", target) : undefined}
                 surface={[

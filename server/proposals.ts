@@ -5,6 +5,7 @@ import type { Snapshot, Proposal, Part, ProposalTarget } from "../src/shared/typ
 import { Store, HttpError } from "./store";
 import { applySemanticEdit, assertCurrentSelection, getSelectionControls, resolveSelectionSurface, type SelectionRef, type SemanticEdit } from "../src/shared/selection";
 import { localSurfaceEdit, surfaceConflict, targetContext, type ResolvedSurfaceTarget } from "../src/shared/surface";
+import { askWhichHole, localGroupEdit } from "../src/shared/group-edit";
 import { DesignError } from "../src/shared/engine";
 import { selectedAiKey, selectedAiModel, providerRequest, providerHeaders, providerJson, validateInputCount, providerUsage, providerText, FRONTIER_PRICING } from "./ai-provider";
 function localProposal(
@@ -162,6 +163,16 @@ export async function propose(
     const conflict = surfaceConflict(body.prompt, pointed);
     if (conflict) return clarification(snapshot, body, conflict, "Which feature should this change?", "local", target);
     const part = snapshot.derived.parts.find(p => p.id === pointed.partId)!;
+    // "These arms 6 mm thick", "make these arms stiffer": the pointed part and its matching siblings, decided locally.
+    const group = !images.length ? localGroupEdit(snapshot, body.prompt, pointed) : null;
+    if (group) {
+      validateDesign({ ...snapshot.design, customParts: group.customParts });
+      return { source: "local", questions: [], explanation: group.explanation, target: { partIds: group.partIds, label: group.label },
+        command: { ...emptyCommand(snapshot, body.actor, body.prompt), customParts: group.customParts } };
+    }
+    // "The hole" on a part with several holes, while pointing elsewhere on it: ask which, before any assistant call.
+    const which = !images.length ? askWhichHole(part, body.prompt, pointed) : null;
+    if (which) return clarification(snapshot, body, which.explanation, which.question, "local", target);
     const local = !images.length && snapshot.design.kind === "custom" ? localSurfaceEdit(body.prompt, pointed, part) : null;
     if (local) return boundProposal(snapshot, body.selection!, local, body, "local", target!);
   }

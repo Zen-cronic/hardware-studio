@@ -146,7 +146,7 @@ export interface ProposalTarget {
   partIds: string[];
   /** Pointed feature id when the request was bound to one surface feature. */
   featureId?: string;
-  /** Human-readable binding, e.g. "Upper arm link · Ø6.4 mm hole 1". */
+  /** Human-readable binding, e.g. "Upper arm link, Ø6.4 mm hole 1". */
   label: string;
 }
 export interface Proposal {

@@ -27,6 +27,7 @@ import {
   Send,
   Settings2,
   Share2,
+  Smartphone,
   Undo2,
   Users,
   X,
@@ -67,6 +68,12 @@ import { assertCurrentSelection, createSelection, resolveSelectionSurface, type 
 import { cycleSurface, freezeTarget, targetLabel, withoutSurface } from "./lib/pointing";
 import SharedNotes from "./components/SharedNotes";
 import ReferenceInput, { VoiceButton } from "./components/ReferenceInput";
+import CompanionCursor, { AgentDock, type AgentPointer } from "./components/CompanionCursor";
+import RoomSheet from "./components/RoomSheet";
+import ProposalCheck, { type ProposalCheckHandle } from "./components/ProposalCheck";
+import { replyLines, useVoiceAgent } from "./lib/voiceAgent";
+import { askWhichPart, clarifyCandidates, isClarification, resolveAnswer } from "./lib/clarify";
+import type { PartTargetRequest, ScreenTarget } from "./lib/projection";
 import { Brand, type Navigate } from "./App";
 import { colors } from "./lib/tokens";
 import { useDialog } from "./lib/useDialog";
@@ -369,6 +376,8 @@ export default function Studio({
     setPrompt(text); setRequestSelection(target); setUnboundVoice(!target);
     setEditorMode("prompt"); setLeftPanelOpen(true); setRightPanelOpen(false); setMobileEditor("prompt");
     if (!target || !snapshot) {
+      const ask = snapshot && !proposal && !readOnly && tab === "design" ? askWhichPart(snapshot, text, actor, uid()) : null;
+      if (ask) { setProposalBinding(null); setProposal(ask); return; }
       setVoiceMessage("No part was targeted. Hover over a part and try again, or edit the typed request."); return;
     }
     try { assertCurrentSelection(snapshot, target); }
@@ -384,6 +393,62 @@ export default function Studio({
     setSelection(current => current?.surface && current.revision !== snapshot?.design.revision ? withoutSurface(current) : current);
     setRequestSelection(current => current?.surface && current.revision !== snapshot?.design.revision ? withoutSurface(current) : current);
   }, [snapshot?.design.id, snapshot?.design.revision]);
+  // Voice companion: hold-to-talk, spoken replies and the assistant circle.
+  const projector = useRef<((target: PartTargetRequest) => ScreenTarget | null) | null>(null);
+  const [hoverLabel, setHoverLabel] = useState<string | null>(null);
+  const [room, setRoom] = useState(false);
+  const checkRef = useRef<ProposalCheckHandle>(null);
+  function voiceListening(active: boolean) {
+    setVoiceOn(active);
+    if (!active) { utteranceRef.current = null; setVoiceTarget(null); setVoiceMessage(message => /^(Listening about|Hover over a part, then|No part under the pointer)/.test(message) ? "" : message); }
+    else { setVoiceMessage("Hover over a part, then speak your request."); setPlaying(false); }
+  }
+  function companionSpeechStarted() {
+    speechStarted();
+    // Holding the mic leaves the model, so a pinned or selected part is the target.
+    const pinned = requestSelection === undefined ? selection : requestSelection;
+    if (utteranceRef.current || !pinned || !snapshot) return;
+    const target = freezeTarget(pinned);
+    utteranceRef.current = target; setVoiceTarget(target);
+    setVoiceMessage(`Listening about ${targetLabel(snapshot, target)}.`);
+  }
+  // A question asked before any assistant call stays open for a spoken answer.
+  const clarifying = isClarification(proposal);
+  const candidates = useMemo(() => clarifying && snapshot ? clarifyCandidates(snapshot, proposal!, prompt) : [], [clarifying, proposal, snapshot, prompt]);
+  function answerClarification(text: string) {
+    const pointed = utteranceRef.current;
+    utteranceRef.current = null;
+    if (!snapshot || !proposal) return;
+    if (!candidates.length) {
+      // An open question without listed choices: the answer joins the request and is proposed again.
+      if (/\b(never ?mind|cancel|forget it)\b/i.test(text)) { setProposal(null); return; }
+      const combined = `${prompt.trim()}. ${text}`.slice(0, 2000), target = pointed ?? proposalBinding;
+      setProposal(null); setPrompt(combined); setRequestSelection(target ?? undefined);
+      void propose(combined, target);
+      return;
+    }
+    const answer = resolveAnswer(snapshot, text, candidates, pointed, c => projector.current?.({ partIds: [c.partId], featureId: c.featureId }) ?? null);
+    if (answer.kind === "cancel") { setProposal(null); return; }
+    if (answer.kind === "unclear") { setProposal({ ...proposal, command: { ...proposal.command, id: uid() }, explanation: `I could not tell which one from “${text}”.`, questions: [answer.message] }); return; }
+    setProposal(null); setRequestSelection(answer.candidate.target); setUnboundVoice(false); setVoiceMessage("");
+    void propose(prompt, answer.candidate.target);
+  }
+  const voice = useVoiceAgent({
+    disabled: !snapshot || readOnly || busy || promptBusy || (!!proposal && !clarifying) || pendingCircleSelection || tab !== "design",
+    spaceToTalk: !!snapshot && !readOnly && tab === "design",
+    onSpeechStart: companionSpeechStarted, onText: text => clarifying ? answerClarification(text) : spokenRequest(text), onError: setError, onListeningChange: voiceListening,
+    reply: proposal ? { key: proposal.command.id, lines: [...replyLines(proposal),
+      ...(candidates.length && !proposal.questions?.some(q => /say this one/i.test(q)) ? ["Point at one and say this one, or say the left one or the right one."] : [])].slice(0, 4) } : null,
+  });
+  const agentPointer = useMemo<AgentPointer | null>(() => {
+    const target = proposal?.target;
+    if (!proposal || !target?.partIds.length) return null;
+    const targets = candidates.length
+      ? candidates.map(c => ({ key: c.key, label: c.label, partIds: [c.partId], featureId: c.featureId, labelled: candidates.length <= 4 }))
+      : target.partIds.length > 1 ? target.partIds.map(id => ({ key: id, label: id, partIds: [id], labelled: false }))
+      : [{ key: "target", label: target.label, partIds: target.partIds, featureId: target.featureId, labelled: !target.featureId }];
+    return { key: proposal.command.id, targets, locate: t => projector.current?.({ partIds: t.partIds, featureId: t.featureId }) ?? null };
+  }, [proposal, candidates]);
   async function undo() {
     if (!snapshot) return;
     const item = [...snapshot.history].reverse().find((h) => h.actor === actor);
@@ -554,6 +619,9 @@ export default function Studio({
             onClick={() => setNotes(!notes)}
           >
             <MessageSquare size={18} />
+          </button>
+          <button className="button small action-room" data-testid="see-in-room" onClick={() => setRoom(true)}>
+            <Smartphone size={16} /><span>See it in your room</span>
           </button>
           <button className="button small action-share" onClick={() => setShare(true)}>
             <Share2 size={16} />
@@ -813,10 +881,18 @@ export default function Studio({
                         proposed design.
                       </p>
                     )}
+                    {!clarifying && !readOnly && <ProposalCheck ref={checkRef} snapshot={snapshot} proposal={proposal} token={token} actor={actor}
+                      partId={proposalBinding?.partIds.find(id => proposal.target?.partIds.includes(id))} disabled={busy} onSay={voice.say} onError={setError} />}
                     <button
                       data-testid="apply-proposal"
                       className="button primary wide"
-                      onClick={() => void run(proposal.command)}
+                      onClick={() => {
+                        // A checked proposal is accepted as its version, so the before/after evidence stays with the design.
+                        const accepted = checkRef.current?.accept();
+                        if (!accepted) { void run(proposal.command); return; }
+                        setBusy(true);
+                        void accepted.then(ok => { if (ok) { setProposal(null); setNotice("Design updated. Parts and assembly now match."); void reload(); } }).finally(() => setBusy(false));
+                      }}
                       disabled={
                         busy ||
                         readOnly ||
@@ -1001,13 +1077,9 @@ export default function Studio({
             <div className="scene-heading-actions">
               {tab === "design" && <div className="voice-control">
                 <VoiceButton disabled={readOnly || busy || promptBusy || !!proposal || pendingCircleSelection}
-                  onText={spokenRequest} onError={setError} onSpeechStart={speechStarted}
-                  onListeningChange={active => {
-                    setVoiceOn(active);
-                    if (!active) { utteranceRef.current = null; setVoiceTarget(null); setVoiceMessage(message => /^(Listening about|Hover over a part, then|No part under the pointer)/.test(message) ? "" : message); }
-                    else { setVoiceMessage("Hover over a part, then speak your request."); setPlaying(false); }
-                  }} />
-                {(voiceOn || voiceMessage || proposal) && <p className="voice-status" role="status" data-testid="voice-status">{proposal ? "Review or dismiss this proposal before using voice." : voiceMessage}</p>}
+                  onText={text => { voice.expectReply(); spokenRequest(text); }} onError={setError} onSpeechStart={speechStarted}
+                  onListeningChange={voiceListening} />
+                {(voiceOn || voiceMessage || proposal) && <p className="voice-status" role="status" data-testid="voice-status">{proposal && !clarifying ? "Review or dismiss this proposal before using voice." : clarifying && !voiceMessage ? "Hold Space or the mic and answer the question aloud." : voiceMessage}</p>}
               </div>}
 
               {others.length > 0 && (
@@ -1041,11 +1113,11 @@ export default function Studio({
             exploded={exploded}
             dimensions={dimensions}
             selected={proposal ? undefined : selected}
-            hoverEnabled={tab === "design" && !proposal && !readOnly}
+            hoverEnabled={tab === "design" && (!proposal || clarifying) && !readOnly}
             hoverPicker={hoverPicker}
             onPendingSelectionChange={setPendingCircleSelection}
             voiceTarget={voiceTarget}
-            pointedTarget={proposal ? (proposalBinding?.surface ? proposalBinding : null) : voiceTarget?.surface ? voiceTarget : requestTarget?.surface ? requestTarget : null}
+            pointedTarget={proposal && !(clarifying && voiceTarget?.surface) ? (proposalBinding?.surface ? proposalBinding : null) : voiceTarget?.surface ? voiceTarget : requestTarget?.surface ? requestTarget : null}
             onSelect={proposal ? undefined : partId => selectParts(partId ? createSelection(snapshot, [partId], "click") : null)}
             selectionContext={{designId:design.id,revision:design.revision}}
             selectedPartIds={proposal ? undefined : selection?.partIds}
@@ -1053,7 +1125,15 @@ export default function Studio({
             reset={reset}
             camera={following?.camera}
             onCamera={cameraChanged}
+            projector={projector}
+            onHoverChange={hover => setHoverLabel(hover?.label ?? null)}
+            highlightPartIds={proposal?.target?.partIds}
           />
+          {tab === "design" && <CompanionCursor hoverLabel={hoverLabel} phase={voice.phase} transcript={voice.transcript}
+            agent={agentPointer} speaking={voice.speaking} />}
+          {tab === "design" && !readOnly && <AgentDock voice={voice} reply={proposal ? replyLines(proposal).join(" ") : undefined}
+            disabled={busy || promptBusy || !!proposal || pendingCircleSelection}
+            disabledReason={promptBusy ? "Working through the design…" : "Review or dismiss this proposal, then hold to talk again."} />}
           {chosen && !pendingCircleSelection && !proposal && (
             <div className="part-selection">
               <span
@@ -1462,6 +1542,7 @@ export default function Studio({
           />
         </div>
       )}
+      {room && <RoomSheet designId={id} token={token} readOnly={!!readOnly} onClose={() => setRoom(false)} />}
       {share && (
         <ShareModal
           id={id}
