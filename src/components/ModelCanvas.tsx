@@ -665,6 +665,8 @@ function HoverBridge({ enabled, parts, onHover, picker }: { enabled: boolean; pa
 function ProjectionBridge({ parts, projector }: { parts: Part[]; projector: NonNullable<Props["projector"]> }) {
   const { gl, scene, camera, size } = useThree();
   const byId = useRef(new Map<string, Part>()); byId.current = new Map(parts.map(part => [part.id, part]));
+  const occlusion = useRef(new Map<string, { at: number; hidden: boolean }>());
+  const ray = useMemo(() => new THREE.Raycaster(), []);
   useEffect(() => {
     projector.current = ({ partIds, featureId }) => {
       const part = byId.current.get(partIds[0]);
@@ -672,17 +674,24 @@ function ProjectionBridge({ parts, projector }: { parts: Part[]; projector: NonN
       const hit = projectParts(scene, camera, size.width, size.height, partIds, anchor ? new THREE.Vector3(...anchor) : undefined);
       if (!hit) return null;
       // A marker whose part is hidden behind another solid part is not shown.
+      // The ray test is cheap (part meshes only) and reused for a few frames.
       let occluded = false;
       if (hit.visible) {
-        const ray = new THREE.Raycaster();
-        ray.setFromCamera(new THREE.Vector2((hit.x / size.width) * 2 - 1, -(hit.y / size.height) * 2 + 1), camera);
-        const first = ray.intersectObjects(scene.children, true).find(entry => {
-          const id = entry.object.userData?.partId;
-          if (typeof id !== "string") return false;
-          const material = (entry.object as THREE.Mesh).material as THREE.Material | undefined;
-          return !(material && material.transparent && material.opacity < 0.5);
-        });
-        occluded = !!first && !partIds.includes(first.object.userData.partId);
+        const key = partIds.join(",") + "|" + (featureId || "") + "|" + Math.round(hit.x) + "," + Math.round(hit.y);
+        const now = performance.now(), cached = occlusion.current.get(key);
+        if (cached && now - cached.at < 250) occluded = cached.hidden;
+        else {
+          const meshes: THREE.Object3D[] = [];
+          scene.traverseVisible(object => { if ((object as THREE.Mesh).isMesh && typeof object.userData?.partId === "string") meshes.push(object); });
+          ray.setFromCamera(new THREE.Vector2((hit.x / size.width) * 2 - 1, -(hit.y / size.height) * 2 + 1), camera);
+          const first = ray.intersectObjects(meshes, false).find(entry => {
+            const material = (entry.object as THREE.Mesh).material as THREE.Material | undefined;
+            return !(material && material.transparent && material.opacity < 0.5);
+          });
+          occluded = !!first && !partIds.includes(first.object.userData.partId);
+          if (occlusion.current.size > 64) occlusion.current.clear();
+          occlusion.current.set(key, { at: now, hidden: occluded });
+        }
       }
       const { left, top } = gl.domElement.getBoundingClientRect();
       return { ...hit, visible: hit.visible && !occluded, x: hit.x + left, y: hit.y + top, rect: { left: hit.rect.left + left, right: hit.rect.right + left, top: hit.rect.top + top, bottom: hit.rect.bottom + top } };

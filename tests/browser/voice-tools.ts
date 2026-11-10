@@ -44,6 +44,8 @@ export async function open(page: Page, request: APIRequestContext, still = false
 }
 export async function settle(page: Page) {
   const canvas = page.locator(".model-canvas canvas");
+  // A side panel that opens shrinks the canvas a moment later; wait until it fills its container.
+  await expect.poll(() => canvas.evaluate(c => Math.abs(c.getBoundingClientRect().width - c.parentElement!.getBoundingClientRect().width) < 2), { timeout: 5000 }).toBe(true);
   let last = "";
   for (let i = 0; i < 20; i++) {
     const view = `${await canvas.getAttribute("data-view")}|${JSON.stringify(await canvas.boundingBox())}`;
