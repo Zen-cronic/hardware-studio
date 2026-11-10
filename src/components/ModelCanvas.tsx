@@ -141,6 +141,25 @@ function AssemblyAnimation({ parts, exploded, playing, speed, reduced, frozen, f
   }, -1);
   return null;
 }
+// Studio finishes by part role: brushed aluminium for machined parts, steel for fasteners,
+// satin black for bought motors and electronics, graphite for neutral printed frame parts.
+// Coloured parts keep their hue so they stay readable on hover and selection.
+function surfaceFinish(part: Part): { color: THREE.Color; metalness: number; roughness: number } {
+  const c = new THREE.Color(part.color);
+  // Judge lightness and colourfulness on the sRGB hex, not the linear working colour.
+  const hex = /^#[0-9a-f]{6}$/i.test(part.color) ? [1, 3, 5].map(i => parseInt(part.color.slice(i, i + 2), 16) / 255) : [c.r, c.g, c.b];
+  const chroma = Math.max(...hex) - Math.min(...hex), light = (Math.max(...hex) + Math.min(...hex)) / 2;
+  const material = part.material || "";
+  const dims = [...part.size].sort((a, b) => a - b), plate = dims[2] > 40 && dims[0] / dims[2] < 0.12;
+  if (plate && part.process !== "buy") return { color: new THREE.Color("#353C46"), metalness: 0.35, roughness: 0.42 };
+  if (/alumin/i.test(material)) return { color: new THREE.Color("#8C98A6"), metalness: 0.82, roughness: 0.36 };
+  if (/steel|metal|brass/i.test(material)) return { color: new THREE.Color("#7E8893"), metalness: 0.9, roughness: 0.28 };
+  if (/propeller/i.test(material)) return { color: c, metalness: 0.05, roughness: 0.22 };
+  if (/carbon fib/i.test(material)) return { color: new THREE.Color("#2A3038"), metalness: 0.3, roughness: 0.38 };
+  if (part.process === "buy" && part.role !== "reference") return { color: c.lerp(new THREE.Color("#1E232A"), 0.75), metalness: 0.35, roughness: 0.42 };
+  if (chroma < 0.12 && light > 0.55) return { color: new THREE.Color("#4F5864"), metalness: 0.06, roughness: 0.46 };
+  return { color: c, metalness: 0.04, roughness: 0.55 };
+}
 function PartMesh({
   part,
   parts,
@@ -173,11 +192,12 @@ function PartMesh({
       !isSelected,
     // The studio canvas keeps reference envelopes see-through, including during proposal review.
     referencePreview = reference && (!!onSelect || !!selectionContext);
+  const finish = useMemo(() => surfaceFinish(part), [part.color, part.material, part.process]);
   const materialColor = useMemo(() => {
-    const c = new THREE.Color(part.color);
-    if (isSelected) c.lerp(new THREE.Color(colors.focus), 0.3);
-    return metal ? c.multiplyScalar(0.82) : c;
-  }, [part.color, metal, isSelected]);
+    const c = finish.color.clone();
+    if (isSelected) c.lerp(new THREE.Color(colors.primary), 0.45);
+    return c;
+  }, [finish, isSelected]);
   useFrame(() => {
     const m = ref.current;
     if (!m) return;
@@ -233,11 +253,11 @@ function PartMesh({
       )}
       <meshStandardMaterial
         color={materialColor}
-        metalness={metal ? 0.82 : 0.02}
-        roughness={metal ? 0.38 : 0.78}
+        metalness={finish.metalness}
+        roughness={finish.roughness}
         emissive={
           isSelected
-            ? colors.focus
+            ? colors.primary
             : part.id === "led"
               ? part.color
               : colors.text
@@ -265,9 +285,9 @@ function PartMesh({
           lineWidth={focused || outlined ? 3 : isSelected ? 2 : 1}
           color={
             isSelected
-              ? colors.focus
+              ? colors.primary
               : focused || outlined
-                ? colors.action
+                ? colors.primary
               : referencePreview
                 ? part.color
                 : colors.text
@@ -327,7 +347,7 @@ function StudioLight() {
     const room = new RoomEnvironment();
     const map = pmrem.fromScene(room, 0.04);
     scene.environment = map.texture;
-    scene.environmentIntensity = 0.7;
+    scene.environmentIntensity = 0.5;
     room.dispose();
     pmrem.dispose();
     invalidate();
@@ -757,11 +777,11 @@ export default function ModelCanvas(props: Props) {
           <FrameSignal parts={parts} onReady={() => setReady(true)} />
           <color attach="background" args={[colors.surface]} />
           <StudioLight />
-          <ambientLight intensity={0.38} />
-          <hemisphereLight args={[colors.white, colors.border, 0.65]} />
+          <ambientLight intensity={0.12} />
+          <hemisphereLight args={[colors.white, colors.background, 0.35]} />
           <directionalLight
             position={[extent, extent * 2, extent]}
-            intensity={1.7}
+            intensity={1.25}
             castShadow
             shadow-mapSize={[1024, 1024]}
             shadow-camera-left={-extent}
@@ -774,6 +794,8 @@ export default function ModelCanvas(props: Props) {
             position={[-extent, extent, -extent]}
             intensity={0.7}
           />
+          {/* Cool rim light separates edges from the dark stage */}
+          <directionalLight position={[-extent * 0.6, extent * 0.5, -extent * 1.6]} intensity={1.15} color={colors.primary} />
           <Suspense fallback={null}>
             {props.parts.map((part) => (
               <PartMesh
@@ -797,7 +819,7 @@ export default function ModelCanvas(props: Props) {
                 part={part}
               />
             ))}
-            {!compact && (
+            {(
               <ContactShadows
                 position={[center[0], box.min.y - 1, center[2]]}
                 scale={extent * 4}

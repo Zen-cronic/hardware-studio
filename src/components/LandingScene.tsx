@@ -37,12 +37,12 @@ function Workbench(){
   },[]);
   useEffect(()=>()=>grid.dispose(),[grid]);
   return <group>
-    <mesh position={[0,-18,0]}><boxGeometry args={[2000,16,2000]}/><meshBasicMaterial color={colors.surface} toneMapped={false}/></mesh>
-    <mesh position={[0,-9.9,0]} rotation={[-Math.PI/2,0,0]} receiveShadow><planeGeometry args={[2000,2000]}/><shadowMaterial color={colors.text} transparent opacity={.16}/></mesh>
+    <mesh position={[0,-18,0]}><boxGeometry args={[2000,16,2000]}/><meshBasicMaterial color={colors.background} toneMapped={false}/></mesh>
+    <mesh position={[0,-9.9,0]} rotation={[-Math.PI/2,0,0]} receiveShadow><planeGeometry args={[2000,2000]}/><shadowMaterial color={colors.background} transparent opacity={.5}/></mesh>
     <group position={[165,-9,-5]} rotation={[0,-.1,0]}>
-      <mesh receiveShadow><boxGeometry args={[570,2,420]}/><meshStandardMaterial color={colors.primary} roughness={.8}/></mesh>
-      <lineSegments geometry={grid} position={[0,1.1,0]}><lineBasicMaterial color={colors.action} transparent opacity={.2}/></lineSegments>
-      {Array.from({length:23},(_,i)=><mesh key={i} position={[-275+i*25,1.3,200]}><boxGeometry args={[.8,.2,i%2?6:11]}/><meshBasicMaterial color={colors.action}/></mesh>)}
+      <mesh receiveShadow><boxGeometry args={[570,2,420]}/><meshStandardMaterial color={colors.panel} roughness={.85}/></mesh>
+      <lineSegments geometry={grid} position={[0,1.1,0]}><lineBasicMaterial color={colors.primary} transparent opacity={.14}/></lineSegments>
+      {Array.from({length:23},(_,i)=><mesh key={i} position={[-275+i*25,1.3,200]}><boxGeometry args={[.8,.2,i%2?6:11]}/><meshBasicMaterial color={colors.primary}/></mesh>)}
     </group>
     <group position={[320,-3,-140]} rotation={[0,-.32,0]}>
       <mesh castShadow><boxGeometry args={[185,5,13]}/><meshStandardMaterial color={colors.border} metalness={.92} roughness={.25}/></mesh>
@@ -163,7 +163,7 @@ function Scene({parts,playing,separated,manual,reduced,progress,diameter,onReady
     if(tick.current===2)onReady?.();if(tick.current<2)invalidate();
   });
   return <>
-    <color attach="background" args={[colors.surface]}/><ambientLight intensity={.18}/><hemisphereLight args={[colors.white,colors.action,.4]}/>
+    <color attach="background" args={[colors.background]}/><ambientLight intensity={.3}/><hemisphereLight args={[colors.white,colors.action,.4]}/>
     <directionalLight position={[-200,650,300]} intensity={2.5} castShadow shadow-radius={6} shadow-mapSize={[2048,2048]} shadow-camera-left={-650} shadow-camera-right={650} shadow-camera-top={650} shadow-camera-bottom={-650} shadow-camera-far={1800} shadow-bias={-.0002}/>
     <directionalLight position={[500,250,-300]} intensity={.65}/>
     <Workbench/>

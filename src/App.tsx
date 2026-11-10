@@ -256,7 +256,7 @@ function ProductCard({
       >
         <ModelCanvas
           compact
-          parts={snapshot.derived.parts}
+          parts={snapshot.derived.parts.filter((part) => part.role !== "reference")}
           ariaLabel={product.name + " 3D preview"}
         />
         <span className="preview-action">

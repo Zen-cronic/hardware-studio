@@ -1,19 +1,27 @@
 import { test, expect, type Page } from '@playwright/test';
 
+// The turntable section is one screen tall below the prompt hero; its chapter buttons choose the view.
 async function advance(page: Page, progress: number) {
-  await page.locator('.landing-story').evaluate((story, fraction) => {
-    const rect = story.getBoundingClientRect();
-    window.scrollTo({ top: window.scrollY + rect.top + (rect.height - innerHeight) * fraction, behavior: 'instant' });
-  }, progress);
+  await page.locator('.landing-story').evaluate(story => {
+    window.scrollTo({ top: window.scrollY + story.getBoundingClientRect().top, behavior: 'instant' });
+  });
+  if (progress <= 0.05) {
+    const first = page.getByRole('button', { name: 'See it work', exact: true });
+    if (await first.isVisible()) await first.click();
+    return;
+  }
+  await page.getByRole('button', { name: progress > 0.6 ? 'Change the size' : 'Look inside', exact: true }).click();
 }
 
 async function ready(page: Page) {
   await page.goto('/');
+  // The turntable section sits below the prompt hero and the walkthrough; bring it into view first.
+  await page.locator('.landing-story').scrollIntoViewIfNeeded();
   await expect(page.getByTestId('landing-scene')).toHaveAttribute('data-ready', 'true');
   await page.evaluate(() => document.fonts.ready);
 }
 
-test('scroll keeps the same scene while parts and real dimensions change, then reverses', async ({ page }) => {
+test('chapter controls keep the same scene while parts and real dimensions change, then reverse', async ({ page }) => {
   const errors: string[] = [], writes: string[] = [];
   page.on('pageerror', e => errors.push(e.message));
   page.on('request', r => { if (!['GET', 'HEAD'].includes(r.method())) writes.push(r.method() + ' ' + new URL(r.url()).pathname); });
@@ -67,7 +75,7 @@ test('movement continues after the entrance and stops offscreen and on pause', a
   const count = await canvas.getAttribute('data-render-count');
   await page.waitForTimeout(900);
   expect(await canvas.getAttribute('data-render-count')).toBe(count);
-  await page.evaluate(() => scrollTo(0, 0));
+  await advance(page, 0);
   await expect(scene).toHaveAttribute('data-motion', 'playing');
 });
 

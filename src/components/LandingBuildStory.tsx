@@ -45,11 +45,22 @@ export default function LandingBuildStory({parts,navigate,onSize}:{parts:Part[];
       </div>
     </section>
     <section className="landing-examples" aria-labelledby="landing-examples-title">
-      <header><div><h2 id="landing-examples-title">Find your next build.</h2></div><button className="button primary" onClick={()=>navigate('/browse')}>Browse all designs <ChevronRight size={18}/></button></header>
-      <div className="landing-example-list">{products.map(product=><button className="landing-example" key={product.kind} onClick={()=>navigate('/designs/'+product.kind)} aria-label={`Explore ${product.name}`}>
+      <header><div><h2 id="landing-examples-title">What it can build today</h2><p>Each one is a working design you can open, change and download.</p></div><button className="button primary" onClick={()=>navigate('/browse')}>Browse all designs <ChevronRight size={18}/></button></header>
+      <div className="landing-example-list">
+        <button className="lp-example-extra" onClick={()=>navigate('/new')} aria-label="Start with the camera drone">
+          <img className="lp-example-render" src="/previews/drone.png" alt="" loading="lazy" width="650" height="450"/>
+          <span className="lp-example-name">Camera drone</span><span className="lp-example-status is-ready">Ready to try</span>
+        </button>
+        <button className="lp-example-extra" onClick={()=>navigate('/new')} aria-label="Start with the articulated camera arm">
+          <img className="lp-example-render" src="/previews/arm.png" alt="" loading="lazy" width="1100" height="806"/>
+          <span className="lp-example-name">Articulated camera arm</span><span className="lp-example-status is-ready">Ready to try</span>
+        </button>
+        {products.map(product=><button className="landing-example" key={product.kind} onClick={()=>navigate('/designs/'+product.kind)} aria-label={`Explore ${product.name}`}>
         <img src={`/previews/${product.kind}.png`} alt="" loading="lazy" width="1100" height={product.kind==='turntable'?1150:760}/>
-        <span>{product.name}</span>
-      </button>)}</div>
+        <span>{product.name}</span><span className="lp-example-status is-ready">Ready to try</span>
+      </button>)}
+
+      </div>
       <p className="landing-start-shape">Have something else in mind? <button className="button" onClick={()=>navigate('/new')}>Start from a shape</button></p>
     </section>
   </>;
