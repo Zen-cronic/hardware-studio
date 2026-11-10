@@ -29,6 +29,8 @@ import Studio from "./Studio";
 import Development from "./Development";
 import ClipRender from "./ClipRender";
 import { deskArmParts } from "./shared/desk-arm";
+import { droneParts } from "./shared/drone";
+import RequestBox from "./components/RequestBox";
 import GuideExample from "./components/GuideExample";
 import Landing from "./components/Landing";
 import { create, pathFor, recent, type Recent } from "./lib/api";
@@ -523,16 +525,50 @@ function NewDesign({ navigate }: { navigate: Navigate }) {
       setBusy(false);
     }
   }
+  async function starter(name: string, parts: Part[]) {
+    setBusy(true);
+    setError("");
+    try {
+      const r = await create("custom", name, parts);
+      navigate(pathFor(r.snapshot.design.id, r.access.editorToken));
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  const starters = [
+    { name: "Camera drone", line: "A 250 mm quadcopter frame with motors, battery and a camera mount.", image: "/previews/drone.png", start: () => void starter("Camera drone", droneParts()) },
+    { name: "Articulated camera arm", line: "A desk-clamped arm that holds a phone or a small camera.", image: "/previews/arm.png", start: () => void starter("Articulated camera arm", deskArmParts()) },
+    ...CATALOG.filter((p) => p.kind !== "custom").map((p) => ({ name: p.name, line: p.description, image: `/previews/${p.kind}.png`, start: () => navigate("/designs/" + p.kind) })),
+  ];
   return (
     <main className="new-page">
-      <div className="new-heading">
-        <button className="button quiet" onClick={() => navigate("/browse")}>
-          <ArrowLeft size={16} /> Browse designs
-        </button>
-        <h1>Make room for your idea.</h1>
-        <p>Start with a shape. Add parts and refine it in your workspace.</p>
-        <button className="button" disabled={busy} onClick={async()=>{setBusy(true);setError("");try{const r=await create("custom","Articulated camera arm",deskArmParts());navigate(pathFor(r.snapshot.design.id,r.access.editorToken));}catch(e){setError((e as Error).message);}finally{setBusy(false);}}}>Start with an articulated camera arm</button>
-      </div>
+      <section className="new-ask" aria-labelledby="new-title">
+        <h1 id="new-title">What do you want to build?</h1>
+        <p>Describe it or pick a starting point. Then point at any part and say what to change.</p>
+        <RequestBox navigate={navigate} still={false} />
+      </section>
+      <section className="new-starters" aria-labelledby="new-starters-title">
+        <h2 id="new-starters-title">Start from a working design</h2>
+        <div className="starter-grid">
+          {starters.map((s) => (
+            <button key={s.name} className="starter-card" disabled={busy} onClick={s.start} aria-label={"Start with the " + s.name.toLowerCase()}>
+              <img src={s.image} alt="" loading="lazy" width="550" height="403" />
+              <strong>{s.name}</strong>
+              <span>{s.line}</span>
+            </button>
+          ))}
+        </div>
+        {error && (
+          <p role="alert" className="error">
+            {error}
+          </p>
+        )}
+      </section>
+      <section className="new-shape-section" aria-labelledby="new-shape-title">
+        <h2 id="new-shape-title">Or start from a simple shape</h2>
+        <p>Pick a box, cylinder or tube and set its size. You can add parts in the studio.</p>
       <div className="new-layout">
         <div className="new-stage">
           <ModelCanvas parts={[part]} dimensions />
@@ -590,40 +626,71 @@ function NewDesign({ navigate }: { navigate: Navigate }) {
             {busy ? <Loader2 size={17} className="spin" /> : <Plus size={17} />}{" "}
             Create design
           </button>
-          {error && (
-            <p role="alert" className="error">
-              {error}
-            </p>
-          )}
         </form>
       </div>
+      </section>
     </main>
   );
 }
+// Returns { path } for a design whose before-and-after card is ready, or { path: null }.
+const PROOF_EXAMPLE_ENDPOINT = "/api/examples/proof";
 function Judge({ navigate }: { navigate: Navigate }) {
+  const [busy, setBusy] = useState(false),
+    [error, setError] = useState("");
+  // The server names a ready example with a before-and-after card; the button stays hidden without one.
+  const [proofExample, setProofExample] = useState("");
+  useEffect(() => {
+    let stop = false;
+    fetch(PROOF_EXAMPLE_ENDPOINT).then((r) => (r.ok ? r.json() : null)).then((body) => {
+      if (!stop && body && typeof body.path === "string" && body.path.startsWith("/")) setProofExample(body.path);
+    }).catch(() => {});
+    return () => { stop = true; };
+  }, []);
+  async function startDrone() {
+    setBusy(true);
+    setError("");
+    try {
+      const r = await create("custom", "Camera drone", droneParts());
+      navigate(pathFor(r.snapshot.design.id, r.access.editorToken));
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
   return (
     <main className="work-page judge-page">
-      <h1>Take a design from idea to build files.</h1>
+      <h1>See what Hardware Studio does, in five steps.</h1>
       <p className="lead">
-        Start with a working example, make a meaningful change, and inspect the
-        result.
+        For makers, students and small hardware teams who want a part designed and checked without learning CAD. Today it starts from a camera drone, a desk arm and six other working designs. It designs and checks the parts; you print, cut or order them yourself.
       </p>
+      <div className="judge-actions">
+        <button className="button primary" disabled={busy} onClick={() => void startDrone()}>
+          {busy ? <Loader2 size={17} className="spin" /> : null}Start with the camera drone <ChevronRight size={18} />
+        </button>
+        {proofExample && (
+          <button className="button" onClick={() => navigate(proofExample)}>
+            Open a before-and-after card <ChevronRight size={18} />
+          </button>
+        )}
+      </div>
+      {error && <p role="alert" className="error">{error}</p>}
       <div className="guide-layout">
-        <GuideExample />
         <div className="judge-steps">
           {[
-            "Try the mechanism and rotate the model.",
-            "Make your own copy and change a dimension.",
-            "Invite someone to edit the same design.",
-            "Review the parts and work through the assembly.",
-            "Export a package tied to your accepted design.",
-          ].map((s, i) => (
-            <div key={s}>
+            ["Open the camera drone", "Drag to turn it around. Every part is real and editable."],
+            ["Describe a change", "Point at a hole in an arm and type or say “make this hole 8 mm”, then press Apply change. This works without any AI."],
+            ["Check that it still holds", "In Engineering & versions, the same strength test runs before and after a change, under the load you set."],
+            ["See it in your room", "Press See it in your room and open the design on your phone at real size."],
+            ["Get build files", "Download the CAD files, parts list and assembly steps for the accepted design."],
+          ].map(([title, body], i) => (
+            <div key={title}>
               <span className="step-number">{i + 1}</span>
-              <p>{s}</p>
+              <p><strong>{title}</strong> {body}</p>
             </div>
           ))}
         </div>
+        <GuideExample />
       </div>
       <button
         className="button primary"

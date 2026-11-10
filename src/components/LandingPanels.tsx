@@ -37,7 +37,7 @@ export default function LandingPanels({ navigate, still = false }: { navigate: N
         <p>Every change to a part that carries weight gets the same strength test before and after, under the load you set. You get one plain number, not a wall of charts.</p>
         <details className="lp-how">
           <summary>How we checked</summary>
-          <p>Tested on the desk arm: a strength simulation of its upper link in 6061 aluminium, held at the column end with 0.5 kg hanging at the camera end. The mesh was refined twice until the result stopped changing. The joint is treated as fully fixed, which is a simplification.</p>
+          <p>Tested on the desk arm: a strength simulation of its upper link in 6061 aluminium, held at the column end with 0.5 kg hanging at the camera end. The calculation was refined twice until the result stopped changing. The joint is treated as fully fixed, which is a simplification.</p>
           <p>Bend at the tip: 0.25 mm before, 0.08 mm after. Stress in the part: 5.4 MPa before, 2.6 MPa after.</p>
         </details>
       </div>

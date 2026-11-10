@@ -10,6 +10,7 @@ import "./workbench.css";
 import "./interface.css";
 import "./theme.css";
 import "./studio-shell.css";
+import "./pages.css";
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <App />
