@@ -1,7 +1,7 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { FlaskConical, Loader2 } from "lucide-react";
 import { api } from "../lib/api";
-import { acceptCheckedVersion, discardCheckedVersion, prepareCheckedVersion } from "../lib/check-version";
+import { acceptCheckedVersion, CHANGED_WHILE_CHECKING, discardCheckedVersion, prepareCheckedVersion } from "../lib/check-version";
 import { checkPreset, checkSentence, type CheckPreset } from "../shared/check-presets";
 import type { Proposal, Snapshot } from "../shared/types";
 import "./proposal-check.css";
@@ -79,8 +79,8 @@ const ProposalCheck = forwardRef<ProposalCheckHandle, {
           unapplied.current.delete(checked.versionId);
           return true;
         } catch (e) {
-          // A refused check stays visible as an error; the button offers a fresh check.
-          if (mounted.current) setResult(null);
+          // A design that moved during the check needs a fresh check: the card offers one again.
+          if (mounted.current && (e as Error).message === CHANGED_WHILE_CHECKING) setResult(null);
           onError((e as Error).message); return false;
         }
       })();
