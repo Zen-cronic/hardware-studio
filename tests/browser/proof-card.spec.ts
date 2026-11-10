@@ -59,6 +59,8 @@ for (const [width, scheme] of [[1440, "light"], [375, "light"], [1440, "dark"], 
       await expect(card.locator(".proof-checks")).toContainText("Same conditions");
       await expect(card.locator(".proof-checks")).toContainText("Not accepted yet");
       await expect(card.locator(".proof-checks")).toContainText("The current package is for main r0.");
+      // Conditions, the package check and the measured table sit under one disclosure.
+      await card.locator(".proof-how > summary").click();
       const table = card.getByRole("table", { name: "Measured results for Upper arm link" });
       await expect(table.getByRole("row", { name: /Mesh check/ })).toContainText("ConvergedConverged");
       const displacement = table.getByRole("row", { name: /Max displacement/ });
@@ -199,6 +201,7 @@ for (const width of [1440, 375])
       await expect(card.locator(".proof-verdict")).toContainText("Improved under the same conditions");
       await expect(card.locator(".proof-verdict")).toContainText("maximum displacement −70.14% and 95th-percentile stress −50.85%");
       await expect(card.locator(".proof-checks")).toContainText("Same conditions");
+      await card.locator(".proof-how > summary").click();
       await expect(card.getByRole("table", { name: "Measured results for Upper arm link" }).getByRole("row", { name: /Mesh check/ })).toContainText("ConvergedConverged");
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       await card.scrollIntoViewIfNeeded();

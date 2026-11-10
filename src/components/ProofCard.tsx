@@ -65,12 +65,17 @@ export default function ProofCard({ versionId, token, refreshKey, onTestProposed
   const download = card.export.state === "matches" && build?.downloadUrl;
   const needsProposed = !["converged"].includes(sides.proposed.state) || !!sides.proposed.stale || conditions.state === "different";
   const needsOriginal = sides.original.state === "missing";
+  // One plain number first: how much less (or more) the part bends.
+  const bend = metrics.find((m) => m.key === "maxDisplacementMm");
+  const lead = verdict.state === "improved" && comparability !== "not_comparable" && bend?.percent !== undefined
+    ? { value: `${Math.round(Math.abs(bend.percent))}%`, words: bend.percent < 0 ? "less bending" : "more bending" } : null;
   return <section className="proof-card" aria-label="Before and after proof" data-verdict={verdict.state}>
     <div className="proof-heading">
       <h3>Before and after</h3>
       <span className="outcome-revision">r{card.original.revision} → r{card.proposed.revision}</span>
     </div>
-    <p className="outcome-secondary">Did this edit improve the design under the same conditions, and does the download match the accepted version?</p>
+    {lead && <p className="proof-lead"><strong>{lead.value}</strong><span>{lead.words}</span></p>}
+    <p className="outcome-secondary">The same strength test, before and after this change, under the same load.</p>
     {card.components.length > 1 && <label className="study-field">Component compared
       <select value={card.partId || ""} onChange={(e) => setPart(e.target.value)}>
         {card.components.map((c) => <option key={c.partId} value={c.partId}>{c.name}</option>)}
@@ -79,6 +84,12 @@ export default function ProofCard({ versionId, token, refreshKey, onTestProposed
       <ToneIcon state={verdict.state} />
       <div><strong>{verdict.title}</strong><p>{verdict.detail}</p></div>
     </div>
+    {(needsOriginal && onTestOriginal) || (needsProposed && onTestProposed) ? <div className="study-actions">
+      {needsOriginal && onTestOriginal && <button className="button small" onClick={() => onTestOriginal(card.partId)}>Test the original</button>}
+      {needsProposed && onTestProposed && <button className="button small" onClick={() => onTestProposed(card.partId)}>Test the proposed design</button>}
+    </div> : null}
+    <details className="proof-how" open={conditions.state === "different" || undefined}>
+    <summary>How we checked</summary>
     <ul className="proof-checks">
       <li data-tone={tone(conditions.state)}>
         <ToneIcon state={conditions.state} />
@@ -112,10 +123,6 @@ export default function ProofCard({ versionId, token, refreshKey, onTestProposed
       </table>
     </div>
     {metrics.some((m) => !m.inVerdict) && <p className="outcome-secondary">Peak element stress can spike at sharp corners and fixed edges, so the verdict uses displacement and 95th-percentile stress.</p>}
-    {(needsOriginal && onTestOriginal) || (needsProposed && onTestProposed) ? <div className="study-actions">
-      {needsOriginal && onTestOriginal && <button className="button small" onClick={() => onTestOriginal(card.partId)}>Test the original</button>}
-      {needsProposed && onTestProposed && <button className="button small" onClick={() => onTestProposed(card.partId)}>Test the proposed design</button>}
-    </div> : null}
     <details open={conditions.state === "different"}>
       <summary>Test conditions</summary>
       {conditions.items.length ? <dl className="proof-conditions">{conditions.items.map((item) => <div key={item.key} data-same={item.same ? "yes" : "no"}>
@@ -141,5 +148,6 @@ export default function ProofCard({ versionId, token, refreshKey, onTestProposed
       {(card.otherStudies.original > 0 || card.otherStudies.proposed > 0) && <p className="outcome-secondary">Other studies on this component: {card.otherStudies.original} original, {card.otherStudies.proposed} proposed. Each is listed in its design's study history.</p>}
     </details>
     <p className="proof-scope">{card.scope}</p>
+    </details>
   </section>;
 }
