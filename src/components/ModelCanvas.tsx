@@ -11,6 +11,7 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { ContactShadows, OrbitControls, Html, Edges, Line } from "@react-three/drei";
 import * as THREE from "three";
 import { featuredGeometry } from "../lib/partGeometry";
+import { bladeGeometry, twillTexture } from "../lib/droneLook";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import type { Part, Vec3 } from "../shared/types";
 import { colors } from "../lib/tokens";
@@ -150,11 +151,13 @@ function surfaceFinish(part: Part): { color: THREE.Color; metalness: number; rou
   const hex = /^#[0-9a-f]{6}$/i.test(part.color) ? [1, 3, 5].map(i => parseInt(part.color.slice(i, i + 2), 16) / 255) : [c.r, c.g, c.b];
   const chroma = Math.max(...hex) - Math.min(...hex), light = (Math.max(...hex) + Math.min(...hex)) / 2;
   const material = part.material || "";
+  if (/propeller/i.test(material)) return { color: new THREE.Color("#2B3542"), metalness: 0.05, roughness: 0.5 };
+  if (/\btpu\b/i.test(material)) return { color: new THREE.Color("#1A1D22"), metalness: 0.05, roughness: 0.6 };
+  if (/lipo|battery/i.test(material)) return { color: new THREE.Color("#24282E"), metalness: 0.1, roughness: 0.58 };
   const dims = [...part.size].sort((a, b) => a - b), plate = dims[2] > 40 && dims[0] / dims[2] < 0.12;
   if (plate && part.process !== "buy") return { color: new THREE.Color("#353C46"), metalness: 0.35, roughness: 0.42 };
   if (/alumin/i.test(material)) return { color: new THREE.Color("#8C98A6"), metalness: 0.82, roughness: 0.36 };
   if (/steel|metal|brass/i.test(material)) return { color: new THREE.Color("#7E8893"), metalness: 0.9, roughness: 0.28 };
-  if (/propeller/i.test(material)) return { color: c, metalness: 0.05, roughness: 0.22 };
   if (/carbon fib/i.test(material)) return { color: new THREE.Color("#2A3038"), metalness: 0.3, roughness: 0.38 };
   if (part.process === "buy" && part.role !== "reference") return { color: c.lerp(new THREE.Color("#1E232A"), 0.75), metalness: 0.35, roughness: 0.42 };
   if (chroma < 0.12 && light > 0.55) return { color: new THREE.Color("#4F5864"), metalness: 0.06, roughness: 0.46 };
@@ -193,11 +196,20 @@ function PartMesh({
     // The studio canvas keeps reference envelopes see-through, including during proposal review.
     referencePreview = reference && (!!onSelect || !!selectionContext);
   const finish = useMemo(() => surfaceFinish(part), [part.color, part.material, part.process]);
+  const carbon = /carbon fib/i.test(part.material || ""), propeller = /propeller/i.test(part.material || "");
+  const twill = useMemo(() => {
+    if (!carbon) return null;
+    const t = twillTexture(); t.repeat.set(Math.max(1, part.size[0] / 14), Math.max(1, part.size[2] / 14));
+    return t;
+  }, [carbon, part.size[0], part.size[2]]);
+  useEffect(() => () => twill?.dispose(), [twill]);
+  const blade = useMemo(() => propeller ? bladeGeometry(part.size[0], part.size[2]) : null, [propeller, part.size[0], part.size[2]]);
+  useEffect(() => () => blade?.dispose(), [blade]);
   const materialColor = useMemo(() => {
-    const c = finish.color.clone();
+    const c = carbon ? new THREE.Color("#ffffff") : finish.color.clone();
     if (isSelected) c.lerp(new THREE.Color(colors.primary), 0.45);
     return c;
-  }, [finish, isSelected]);
+  }, [finish, isSelected, carbon]);
   useFrame(() => {
     const m = ref.current;
     if (!m) return;
@@ -234,7 +246,9 @@ function PartMesh({
         document.body.style.cursor = "auto";
       }}
     >
-      {part.channel ||
+      {blade ? (
+        <primitive object={blade} attach="geometry" />
+      ) : part.channel ||
       part.sections ||
       part.holes?.length ||
       part.shape === "tube" ? (
@@ -251,10 +265,14 @@ function PartMesh({
           ]}
         />
       )}
-      <meshStandardMaterial
+      <meshPhysicalMaterial
         color={materialColor}
+        map={twill}
+        roughnessMap={twill}
+        clearcoat={carbon ? 0.45 : 0}
+        clearcoatRoughness={0.2}
         metalness={finish.metalness}
-        roughness={finish.roughness}
+        roughness={carbon ? 0.5 : finish.roughness}
         emissive={
           isSelected
             ? colors.primary
@@ -347,7 +365,7 @@ function StudioLight() {
     const room = new RoomEnvironment();
     const map = pmrem.fromScene(room, 0.04);
     scene.environment = map.texture;
-    scene.environmentIntensity = 0.5;
+    scene.environmentIntensity = 0.58;
     room.dispose();
     pmrem.dispose();
     invalidate();
@@ -781,7 +799,7 @@ export default function ModelCanvas(props: Props) {
           <hemisphereLight args={[colors.white, colors.background, 0.35]} />
           <directionalLight
             position={[extent, extent * 2, extent]}
-            intensity={1.25}
+            intensity={1.5}
             castShadow
             shadow-mapSize={[1024, 1024]}
             shadow-camera-left={-extent}
