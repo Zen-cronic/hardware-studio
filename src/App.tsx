@@ -166,15 +166,10 @@ function Catalog({ navigate }: { navigate: Navigate }) {
   return (
     <main className="catalog-page">
       <header className="browse-heading">
-        <h1>Find your starting point.</h1>
+        <h1 id="collection-heading">Find your starting point.</h1>
         <p>Try a mechanism, make a copy, and change it together.</p>
       </header>
       <section className="collection" aria-labelledby="collection-heading">
-        <div className="section-heading">
-          <div>
-            <h2 id="collection-heading">Browse designs</h2>
-          </div>
-        </div>
         <div className="collection-toolbar">
           <div
             className="filter-tabs"

@@ -22,7 +22,7 @@ test('maker previews a selected arm edit, compares a proposed version and accept
  await page.getByRole('button',{name:/Design exploration \/ open/}).click();
  await expect(page.getByText('Main r0 → proposed r1')).toBeVisible();
  await page.getByRole('button',{name:'Accept into main design'}).click();
- await expect(page.getByText(/Revision 1 \/ Every result/)).toBeVisible();
+ await expect(page.locator('.development-header p')).toHaveText('Revision 1');
  await page.screenshot({path:testInfo.outputPath('accepted-version.png'),fullPage:true});
 });
 test('real manufacturing study displays findings and small-screen controls stay within viewport',async({page},testInfo)=>{
