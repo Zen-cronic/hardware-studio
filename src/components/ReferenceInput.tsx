@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { X, ImagePlus, Mic, Pencil, Check, Trash2 } from "lucide-react";
-import { colors } from "../lib/tokens";
+import { SKETCH_INK, SKETCH_PAPER } from "../lib/sketch-ink";
 import { useDialog } from "../lib/useDialog";
 type Recognition = any;
 export function VoiceButton({
@@ -160,9 +160,9 @@ export default function ReferenceInput({
   useEffect(() => {
     if (sketch && canvas.current) {
       const c = canvas.current.getContext("2d")!;
-      c.fillStyle = colors.white;
+      c.fillStyle = SKETCH_PAPER;
       c.fillRect(0, 0, 640, 420);
-      c.strokeStyle = colors.text;
+      c.strokeStyle = SKETCH_INK;
       c.lineWidth = 3;
       c.lineCap = "round";
     }
@@ -372,7 +372,7 @@ export default function ReferenceInput({
                 className="button"
                 onClick={() => {
                   const c = canvas.current!.getContext("2d")!;
-                  c.fillStyle = colors.white;
+                  c.fillStyle = SKETCH_PAPER;
                   c.fillRect(0, 0, 640, 420);
                 }}
               >

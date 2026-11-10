@@ -3,7 +3,7 @@ import { HocuspocusProvider } from "@hocuspocus/provider";
 import * as Y from "yjs";
 import { MessageSquare, Send, Pencil, Undo2, ImagePlus } from "lucide-react";
 import { uid } from "../lib/api";
-import { colors } from "../lib/tokens";
+import { inkFor, readableInk, SKETCH_PAPER } from "../lib/sketch-ink";
 import { collaborationUrl } from "../lib/collaboration-url";
 type Note = { id: string; author: string; body: string; at: string };
 type Stroke = {
@@ -35,9 +35,7 @@ export default function SharedNotes({
   const canvas = useRef<HTMLCanvasElement>(null),
     current = useRef<[number, number][]>([]),
     strokeRef = useRef<Stroke[]>([]);
-  const color = [colors.action, colors.focus, colors.success][
-    Array.from(actor).reduce((sum, c) => sum + c.charCodeAt(0), 0) % 3
-  ];
+  const color = inkFor(actor);
   useEffect(() => {
     const doc = new Y.Doc(),
       a = doc.getArray<Note>("notes"),
@@ -72,7 +70,7 @@ export default function SharedNotes({
   function draw() {
     const c = canvas.current?.getContext("2d");
     if (!c) return;
-    c.fillStyle = colors.white;
+    c.fillStyle = SKETCH_PAPER;
     c.fillRect(0, 0, 640, 420);
     const all = [
       ...strokeRef.current,
@@ -82,7 +80,7 @@ export default function SharedNotes({
     ];
     for (const stroke of all) {
       if (!stroke.points.length) continue;
-      c.strokeStyle = stroke.color;
+      c.strokeStyle = readableInk(stroke.color);
       c.lineWidth = 3;
       c.lineCap = "round";
       c.lineJoin = "round";
