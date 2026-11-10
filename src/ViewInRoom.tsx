@@ -46,7 +46,9 @@ export function RoomModel({ src, ar = true, label, onLoad }: { src: string; ar?:
   useEffect(() => {
     const el = element.current;
     if (!el) return;
-    const attributes: Record<string, string> = { src, alt: label, "camera-controls": "", "touch-action": "pan-y", "shadow-intensity": "0.8", exposure: "1.35", "environment-image": "neutral",
+    const attributes: Record<string, string> = { src, alt: label, "camera-controls": "", "touch-action": "pan-y", "shadow-intensity": "1", "shadow-softness": "0.7", exposure: "1.15", "environment-image": "neutral",
+      // A lit three-quarter view from the front, so the model reads as an object rather than a silhouette.
+      "camera-orbit": "55deg 64deg 105%",
       ...(ar ? { ar: "", "ar-modes": "webxr scene-viewer quick-look", "ar-scale": "fixed", "ar-placement": "floor" } : {}) };
     for (const [name, value] of Object.entries(attributes)) el.setAttribute(name, value);
     if (!ar) for (const name of ["ar", "ar-modes", "ar-scale", "ar-placement"]) el.removeAttribute(name);

@@ -116,8 +116,8 @@ export function validateParts(
       part.name.length > 120
     )
       throw new DesignError("Each part needs a short name.");
-    if (!["box", "cylinder", "tube"].includes(part.shape))
-      throw new DesignError("Use box, cylinder or tube geometry.");
+    if (!["box", "cylinder", "tube", "ellipsoid"].includes(part.shape))
+      throw new DesignError("Use box, cylinder, tube or ellipsoid geometry.");
     if (
       !Array.isArray(part.size) ||
       part.size.length !== 3 ||
@@ -166,6 +166,41 @@ export function validateParts(
     )
       throw new DesignError(
         "Cylinder and tube diameters must match on X and Z.",
+      );
+    if (
+      part.shape === "ellipsoid" &&
+      (part.holeDiameter !== undefined ||
+        part.sections !== undefined ||
+        part.holes !== undefined ||
+        part.loopSpan !== undefined)
+    )
+      throw new DesignError(
+        "An ellipsoid is a plain rounded solid: no bore, sections or holes.",
+      );
+    if (part.edgeRadius !== undefined) {
+      const smallest = Math.min(...part.size);
+      if (
+        part.shape !== "box" ||
+        !Number.isFinite(part.edgeRadius) ||
+        part.edgeRadius < 0.2 ||
+        part.edgeRadius > smallest / 2 - 0.05 ||
+        part.holes !== undefined ||
+        part.channel !== undefined
+      )
+        throw new DesignError(
+          "Rounded edges need a box, a radius under half its smallest side, and no holes or channel.",
+        );
+    }
+    if (
+      part.wall !== undefined &&
+      (part.edgeRadius === undefined ||
+        !Number.isFinite(part.wall) ||
+        part.wall < 0.5 ||
+        part.wall >= part.edgeRadius ||
+        part.wall > Math.min(...part.size) / 2 - 0.5)
+    )
+      throw new DesignError(
+        "A hollow shell needs rounded edges and a wall thinner than the edge radius.",
       );
     if (
       part.role !== undefined &&
@@ -460,6 +495,9 @@ export function validateDesign(d: Design): void {
           : part.motion,
         loopSpan:
           part.loopSpan === undefined ? undefined : part.loopSpan * p.scale,
+        edgeRadius:
+          part.edgeRadius === undefined ? undefined : part.edgeRadius * p.scale,
+        wall: part.wall === undefined ? undefined : part.wall * p.scale,
         holeDiameter:
           part.holeDiameter === undefined
             ? undefined
@@ -576,7 +614,16 @@ function bom(parts: Part[]): BomItem[] {
         (p.loopSpan !== undefined
           ? `${round(p.size[0])} × ${round(p.size[1])} × ${round(p.size[2])} mm / loop centres ${round(p.loopSpan)} mm / bend OD ${round(p.size[2])} / ID ${round(p.holeDiameter!)} mm / smooth clearance envelope, teeth omitted`
           : p.shape === "box"
-            ? p.size.map(round).join(" × ") + " mm"
+            ? p.size.map(round).join(" × ") +
+              " mm" +
+              (p.edgeRadius
+                ? ` / edges rounded R${round(p.edgeRadius)} mm`
+                : "") +
+              (p.wall ? ` / hollow shell, ${round(p.wall)} mm wall` : "")
+            : p.shape === "ellipsoid"
+              ? p.size[0] === p.size[1]
+                ? `${round(p.size[0])} mm ball`
+                : `${round(p.size[0])} mm diameter × ${round(p.size[1])} mm rounded solid`
             : round(p.size[0]) +
               " mm diameter × " +
               round(p.size[1]) +
@@ -1682,6 +1729,9 @@ export function deriveDesign(d: Design): DerivedDesign {
           : part.motion,
         loopSpan:
           part.loopSpan === undefined ? undefined : part.loopSpan * p.scale,
+        edgeRadius:
+          part.edgeRadius === undefined ? undefined : part.edgeRadius * p.scale,
+        wall: part.wall === undefined ? undefined : part.wall * p.scale,
         holeDiameter:
           part.holeDiameter === undefined
             ? undefined

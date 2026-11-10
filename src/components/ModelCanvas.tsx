@@ -8,11 +8,11 @@ import {
 } from "react";
 import type { ReactNode } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { ContactShadows, OrbitControls, Html, Edges, Line } from "@react-three/drei";
+import { OrbitControls, Html, Edges, Line } from "@react-three/drei";
 import * as THREE from "three";
-import { featuredGeometry } from "../lib/partGeometry";
-import { bladeGeometry, twillTexture } from "../lib/droneLook";
-import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { featuredGeometry, needsFeaturedGeometry } from "../lib/partGeometry";
+import { bladeGeometry, boxProjectUv, finishFor, isCarbonFibre, twillTexture } from "../lib/droneLook";
+import { StageEnvironment, StageGround, StageLights } from "./StudioStage";
 import type { Part, Vec3 } from "../shared/types";
 import { colors } from "../lib/tokens";
 import { motionPose } from "../lib/motion";
@@ -111,6 +111,7 @@ function FeaturedGeometry({
       part.sections,
       part.channel,
       part.loopSpan,
+      part.edgeRadius,
     ]),
     compact,
   ]);
@@ -149,27 +150,11 @@ function AssemblyAnimation({ parts, exploded, playing, speed, reduced, frozen, f
   }, -1);
   return null;
 }
-// Studio finishes by part role: brushed aluminium for machined parts, steel for fasteners,
-// satin black for bought motors and electronics, graphite for neutral printed frame parts.
-// Coloured parts keep their hue so they stay readable on hover and selection.
-function surfaceFinish(part: Part): { color: THREE.Color; metalness: number; roughness: number } {
-  const c = new THREE.Color(part.color);
-  // Judge lightness and colourfulness on the sRGB hex, not the linear working colour.
-  const hex = /^#[0-9a-f]{6}$/i.test(part.color) ? [1, 3, 5].map(i => parseInt(part.color.slice(i, i + 2), 16) / 255) : [c.r, c.g, c.b];
-  const chroma = Math.max(...hex) - Math.min(...hex), light = (Math.max(...hex) + Math.min(...hex)) / 2;
-  const material = part.material || "";
-  if (/propeller/i.test(material)) return { color: new THREE.Color("#2B3542"), metalness: 0.05, roughness: 0.5 };
-  if (/\btpu\b/i.test(material)) return { color: new THREE.Color("#1A1D22"), metalness: 0.05, roughness: 0.6 };
-  if (/lipo|battery/i.test(material)) return { color: new THREE.Color("#24282E"), metalness: 0.1, roughness: 0.58 };
-  const dims = [...part.size].sort((a, b) => a - b), plate = dims[2] > 40 && dims[0] / dims[2] < 0.12;
-  if (plate && part.process !== "buy") return { color: new THREE.Color("#353C46"), metalness: 0.35, roughness: 0.42 };
-  if (/alumin/i.test(material) && part.process === "buy") return { color: new THREE.Color("#3E5878"), metalness: 0.75, roughness: 0.35 };
-  if (/alumin/i.test(material)) return { color: new THREE.Color("#8C98A6"), metalness: 0.82, roughness: 0.36 };
-  if (/steel|metal|brass/i.test(material)) return { color: new THREE.Color("#7E8893"), metalness: 0.9, roughness: 0.28 };
-  if (/carbon fib/i.test(material)) return { color: new THREE.Color("#2A3038"), metalness: 0.3, roughness: 0.38 };
-  if (part.process === "buy" && part.role !== "reference") return { color: c.lerp(new THREE.Color("#1E232A"), 0.75), metalness: 0.35, roughness: 0.42 };
-  if (chroma < 0.12 && light > 0.55) return { color: new THREE.Color("#4F5864"), metalness: 0.06, roughness: 0.46 };
-  return { color: c, metalness: 0.04, roughness: 0.55 };
+// Studio finishes come from the shared render kit (droneLook.ts), so the home page stage,
+// the studio and the still renders give each declared material the same look.
+function surfaceFinish(part: Part) {
+  const finish = finishFor(part);
+  return { ...finish, color: new THREE.Color(finish.color) };
 }
 function PartMesh({
   part,
@@ -206,14 +191,18 @@ function PartMesh({
       !isSelected,
     // The studio canvas keeps reference envelopes see-through, including during proposal review.
     referencePreview = reference && (!!onSelect || !!selectionContext);
-  const finish = useMemo(() => surfaceFinish(part), [part.color, part.material, part.process]);
-  const carbon = /carbon fib/i.test(part.material || ""), propeller = /propeller/i.test(part.material || "");
-  const twill = useMemo(() => {
-    if (!carbon) return null;
-    const t = twillTexture(); t.repeat.set(Math.max(1, part.size[0] / 14), Math.max(1, part.size[2] / 14));
-    return t;
-  }, [carbon, part.size[0], part.size[2]]);
+  const finish = useMemo(() => surfaceFinish(part), [part.color, part.material, part.process, part.role, part.size.join()]);
+  const carbon = isCarbonFibre(part.material), propeller = /propeller/i.test(part.material || "");
+  const twill = useMemo(() => carbon ? twillTexture() : null, [carbon]);
   useEffect(() => () => twill?.dispose(), [twill]);
+  // Carbon parts get millimetre texture coordinates, so the weave reads at its real scale.
+  const carbonGeometry = useMemo(() => {
+    if (!carbon) return null;
+    const g = needsFeaturedGeometry(part) ? featuredGeometry(part, compact)
+      : part.shape === "box" ? new THREE.BoxGeometry(...part.size) : new THREE.CylinderGeometry(part.size[0] / 2, part.size[0] / 2, part.size[1], compact ? 32 : 64);
+    return boxProjectUv(g);
+  }, [carbon, compact, JSON.stringify([part.shape, part.size, part.holes, part.holeDiameter, part.sections, part.channel, part.edgeRadius, part.loopSpan])]);
+  useEffect(() => () => carbonGeometry?.dispose(), [carbonGeometry]);
   const blade = useMemo(() => propeller ? bladeGeometry(part.size[0], part.size[2]) : null, [propeller, part.size[0], part.size[2]]);
   useEffect(() => () => blade?.dispose(), [blade]);
   const materialColor = useMemo(() => {
@@ -259,10 +248,9 @@ function PartMesh({
     >
       {blade ? (
         <primitive object={blade} attach="geometry" />
-      ) : part.channel ||
-      part.sections ||
-      part.holes?.length ||
-      part.shape === "tube" ? (
+      ) : carbonGeometry ? (
+        <primitive object={carbonGeometry} attach="geometry" />
+      ) : needsFeaturedGeometry(part) ? (
         <FeaturedGeometry part={part} compact={compact} />
       ) : part.shape === "box" ? (
         <boxGeometry args={part.size} />
@@ -280,10 +268,10 @@ function PartMesh({
         color={materialColor}
         map={twill}
         roughnessMap={twill}
-        clearcoat={carbon ? 0.12 : 0}
-        clearcoatRoughness={0.55}
-        metalness={carbon ? 0.05 : finish.metalness}
-        roughness={carbon ? 0.68 : finish.roughness}
+        clearcoat={finish.clearcoat ?? 0}
+        clearcoatRoughness={finish.clearcoatRoughness ?? 0.55}
+        metalness={finish.metalness}
+        roughness={finish.roughness}
         envMapIntensity={carbon ? 0.3 : 1}
         emissive={
           tinted
@@ -335,7 +323,7 @@ function PartMesh({
         />
       )}
       {/brushless motor/i.test(part.material || "") && part.shape === "cylinder" && !ghost && <mesh position={[0, -part.size[1] / 2 + 3, 0]}><cylinderGeometry args={[part.size[0] / 2 + 0.2, part.size[0] / 2 + 0.2, 4, 48]} /><meshStandardMaterial color="#b8733f" metalness={0.95} roughness={0.3} /></mesh>}
-      {/lipo|battery/i.test(part.material || "") && part.shape === "box" && !ghost && <>
+      {/lipo|battery/i.test(part.material || "") && part.shape === "box" && !part.edgeRadius && !ghost && <>
         <mesh position={[part.size[0] * 0.28, 0, 0]}><boxGeometry args={[4, part.size[1] + 0.4, part.size[2] + 0.4]} /><meshStandardMaterial color={colors.primary} roughness={0.4} /></mesh>
         <mesh><boxGeometry args={[14, part.size[1] + 1.6, part.size[2] + 1.6]} /><meshStandardMaterial color="#0c0e11" roughness={0.8} /></mesh>
       </>}
@@ -373,24 +361,6 @@ function FrameSignal({
       onReady();
     } else invalidate();
   });
-  return null;
-}
-function StudioLight() {
-  const { gl, scene, invalidate } = useThree();
-  useEffect(() => {
-    const pmrem = new THREE.PMREMGenerator(gl);
-    const room = new RoomEnvironment();
-    const map = pmrem.fromScene(room, 0.04);
-    scene.environment = map.texture;
-    scene.environmentIntensity = 0.5;
-    room.dispose();
-    pmrem.dispose();
-    invalidate();
-    return () => {
-      scene.environment = null;
-      map.dispose();
-    };
-  }, [gl, scene, invalidate]);
   return null;
 }
 function Camera({
@@ -573,6 +543,11 @@ function SurfaceHighlight({ part, target, feature, mode }: { part: Part; target:
         out.push({ geometry: new THREE.RingGeometry(r, r + Math.max(1, r * 0.3), 48), position: [0, side * (half[1] + lift), 0], rotation: planeRotation("y", side) });
         lines.push(circle(0, side * (half[1] + lift), 0, r));
       }
+    } else if (feature.kind === "outer" && part.shape === "ellipsoid") {
+      const geometry = new THREE.SphereGeometry(0.5, 48, 24);
+      geometry.scale(part.size[0] + 2 * lift, part.size[1] + 2 * lift, part.size[2] + 2 * lift);
+      out.push({ geometry, position: [0, 0, 0] });
+      lines.push(circle(0, 0, 0, half[0] + lift));
     } else if (feature.kind === "outer" && part.loopSpan === undefined) {
       const r = feature.dimensions.diameter / 2 + lift;
       out.push({ geometry: new THREE.CylinderGeometry(r, r, part.size[1], 64, 1, true), position: [0, 0, 0] });
@@ -585,13 +560,15 @@ function SurfaceHighlight({ part, target, feature, mode }: { part: Part; target:
     } else if (feature.kind === "face" && feature.axis) {
       const a = feature.axis, side = feature.side!, i = "xyz".indexOf(a);
       const position = [0, 0, 0] as Vec3; position[i] = side * (half[i] + lift);
+      // A rounded box's flat face stops where its edge fillets begin.
+      const flat = part.size.map(v => Math.max(0.1, v - 2 * (part.edgeRadius || 0))) as Vec3, flatHalf = flat.map(v => v / 2) as Vec3;
       const geometry = round ? (part.shape === "tube" && part.holeDiameter && part.loopSpan === undefined && !part.sections
         ? new THREE.RingGeometry(part.holeDiameter / 2, half[0], 64) : new THREE.CircleGeometry(half[0], 64))
-        : a === "y" ? new THREE.PlaneGeometry(part.size[0], part.size[2]) : a === "x" ? new THREE.PlaneGeometry(part.size[2], part.size[1]) : new THREE.PlaneGeometry(part.size[0], part.size[1]);
+        : a === "y" ? new THREE.PlaneGeometry(flat[0], flat[2]) : a === "x" ? new THREE.PlaneGeometry(flat[2], flat[1]) : new THREE.PlaneGeometry(flat[0], flat[1]);
       out.push({ geometry, position, rotation: planeRotation(a, side) });
       if (round) lines.push(circle(0, position[1], 0, half[0]));
       else {
-        const [u, v] = [0, 1, 2].filter(k => k !== i), corner = (su: number, sv: number) => { const q = [...position] as Vec3; q[u] = su * half[u]; q[v] = sv * half[v]; return q; };
+        const [u, v] = [0, 1, 2].filter(k => k !== i), corner = (su: number, sv: number) => { const q = [...position] as Vec3; q[u] = su * flatHalf[u]; q[v] = sv * flatHalf[v]; return q; };
         lines.push([corner(-1, -1), corner(1, -1), corner(1, 1), corner(-1, 1), corner(-1, -1)]);
       }
     } else {
@@ -853,26 +830,9 @@ export default function ModelCanvas(props: Props) {
           <HoverBridge enabled={!!props.hoverEnabled && !circleMode && !candidates.length} parts={props.parts} onHover={setHover} picker={hoverHit} />
           <FrameSignal parts={parts} onReady={() => setReady(true)} />
           <color attach="background" args={[colors.surface]} />
-          <StudioLight />
-          <ambientLight intensity={0.12} />
-          <hemisphereLight args={[colors.white, colors.background, 0.35]} />
-          <directionalLight
-            position={[extent, extent * 2, extent]}
-            intensity={1.5}
-            castShadow
-            shadow-mapSize={[1024, 1024]}
-            shadow-camera-left={-extent}
-            shadow-camera-right={extent}
-            shadow-camera-top={extent}
-            shadow-camera-bottom={-extent}
-            shadow-bias={-0.0001}
-          />
-          <directionalLight
-            position={[-extent, extent, -extent]}
-            intensity={0.7}
-          />
-          {/* Cool rim light separates edges from the dark stage */}
-          <directionalLight position={[-extent * 0.6, extent * 0.5, -extent * 1.6]} intensity={1.15} color={colors.primary} />
+          {/* The shared stage: studio environment, key/fill/rim lights and a ground with a contact shadow */}
+          <StageEnvironment intensity={0.55} />
+          <StageLights extent={extent} shadows={!compact} />
           <Suspense fallback={null}>
             {props.parts.map((part) => (
               <PartMesh
@@ -896,17 +856,7 @@ export default function ModelCanvas(props: Props) {
                 part={part}
               />
             ))}
-            {(
-              <ContactShadows
-                position={[center[0], box.min.y - 1, center[2]]}
-                scale={extent * 4}
-                far={extent * 0.22}
-                opacity={0.45}
-                blur={1.6}
-                resolution={512}
-                frames={1}
-              />
-            )}
+            <StageGround y={box.min.y} radius={extent * 1.5} center={[center[0], center[2]]} opacity={0.6} />
             {dimensions && (
               <Html
                 portal={labelPortal}

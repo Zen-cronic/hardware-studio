@@ -124,7 +124,7 @@ export function getSelectionControls(snapshot: Snapshot, selection: SelectionRef
   const axes = part.shape === "box" ? ["x", "y", "z"] as const : ["x", "y"] as const;
   for (const axis of axes) {
     const index = axis === "x" ? 0 : axis === "y" ? 1 : 2;
-    controls.push({ id: `dimension-${axis}`, label: part.shape === "box" ? `Local ${axis.toUpperCase()} dimension` : axis === "x" ? (part.loopSpan !== undefined ? "Loop length" : "Outer diameter") : "Axial thickness",
+    controls.push({ id: `dimension-${axis}`, label: part.shape === "box" ? `Local ${axis.toUpperCase()} dimension` : part.shape === "ellipsoid" ? (axis === "x" ? "Diameter" : "Height") : axis === "x" ? (part.loopSpan !== undefined ? "Loop length" : "Outer diameter") : "Axial thickness",
       value: part.size[index], unit: "mm", step: 0.5, min: 0.5, max: 5000,
       description: "Changes the selected part in its own axes. Hole positions remain fixed; the complete assembly is regenerated and checked.",
       intent: { type: "dimension", axis, value: part.size[index] } });

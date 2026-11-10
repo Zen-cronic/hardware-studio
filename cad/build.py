@@ -9,6 +9,7 @@ import io
 import json
 import math
 import os
+import re
 import shutil
 import sys
 import struct
@@ -148,7 +149,19 @@ console.log('Recalculated geometry and build information from design parameters.
     )
 
 
-def glb_millimetres_to_metres(path: Path) -> None:
+def pbr_finish(material: str) -> tuple[float, float]:
+    """glTF metallic and roughness for a declared material; glTF's own default is bare rough metal."""
+    m = material.lower()
+    if re.search(r"\bcarbon fib(re|er)\b", m): return (0.1, 0.55)
+    if "brushless motor" in m: return (0.7, 0.35)
+    if re.search(r"alumin|steel|brass|metal", m): return (0.85, 0.3)
+    if re.search(r"optical glass|\blens\b", m): return (0.1, 0.08)
+    if "camera module" in m: return (0.3, 0.3)
+    if "propeller" in m: return (0.05, 0.35)
+    return (0.0, 0.55)
+
+
+def glb_millimetres_to_metres(path: Path, finishes: dict[str, tuple[float, float]] | None = None) -> None:
     # OCCT 7.8 writes model units unchanged. glTF defines metres; wrap scene roots.
     raw = path.read_bytes()
     magic, version, total = struct.unpack_from("<4sII", raw)
@@ -158,6 +171,17 @@ def glb_millimetres_to_metres(path: Path) -> None:
     if json_kind != 0x4E4F534A:
         raise DesignError("GLB JSON chunk missing")
     doc = json.loads(raw[20:20+json_length])
+    # Give every material a declared finish; a part's node name is its file stem.
+    finishes = finishes or {}
+    for node in doc.get("nodes", []):
+        if "mesh" not in node or node.get("name") not in finishes: continue
+        for primitive in doc["meshes"][node["mesh"]].get("primitives", []):
+            if "material" not in primitive: continue
+            pbr = doc["materials"][primitive["material"]].setdefault("pbrMetallicRoughness", {})
+            if "metallicFactor" not in pbr: pbr["metallicFactor"], pbr["roughnessFactor"] = finishes[node["name"]]
+    for material in doc.get("materials", []):
+        pbr = material.setdefault("pbrMetallicRoughness", {})
+        pbr.setdefault("metallicFactor", 0.0); pbr.setdefault("roughnessFactor", 0.55)
     for scene in doc.get("scenes", []):
         unit_node = {"name": "millimetres-to-metres", "children": scene.get("nodes", []), "scale": [0.001, 0.001, 0.001]}
         scene["nodes"] = [len(doc["nodes"])]
@@ -220,7 +244,7 @@ def build_package(snapshot: dict, output: Path | str) -> dict:
         # Our source is already Y-up; cancel CadQuery's assumed Z-up conversion.
         assembly.loc = cq.Location((0, 0, 0), (1, 0, 0), 90)
         assembly.save(str(stage / "assembly.glb"), exportType="GLTF", tolerance=0.05, angularTolerance=0.1)
-        glb_millimetres_to_metres(stage / "assembly.glb")
+        glb_millimetres_to_metres(stage / "assembly.glb", {file_map[p["id"]]: pbr_finish(p["material"]) for p in parts})
         doc_snapshot = {**saved, "derived": {**saved["derived"], "parts": parts}}
         write_documents(doc_snapshot, stage, file_map)
         write_source(stage)

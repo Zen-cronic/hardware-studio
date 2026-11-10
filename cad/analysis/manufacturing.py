@@ -50,6 +50,8 @@ def manufacturing(request,directory):
         walls=[]
         if part["shape"]=="box":
             walls.append(("body",min(x,y,z)))
+            if part.get("wall"):
+                walls.append(("shell-wall",part["wall"]))
             if part.get("channel"):
                 c=part["channel"]
                 walls.extend([("channel-roof",y-c["depth"]),("channel-sidewall",(z-c["width"])/2)])
