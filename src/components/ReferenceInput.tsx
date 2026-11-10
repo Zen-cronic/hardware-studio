@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { X, ImagePlus, Mic, Pencil, Check, Trash2 } from "lucide-react";
 import { SKETCH_INK, SKETCH_PAPER } from "../lib/sketch-ink";
+import { decodeImage, referenceJpeg } from "../lib/reference-image";
 import { useDialog } from "../lib/useDialog";
 type Recognition = any;
 export function VoiceButton({
@@ -239,17 +240,7 @@ export default function ReferenceInput({
           "One frame from your video is attached. Describe the motion you want in your instruction.",
         );
       } else {
-        const i = new Image();
-        i.src = url;
-        await Promise.race([
-          i.decode(),
-          new Promise((_, reject) =>
-            setTimeout(
-              () => reject(new Error("The image took too long to open.")),
-              10000,
-            ),
-          ),
-        ]);
+        const i = await decodeImage(url);
         source = i;
         w = i.width;
         h = i.height;
@@ -257,13 +248,7 @@ export default function ReferenceInput({
           "Reference attached. Include a known measurement for accurate sizing.",
         );
       }
-      if (!w || !h) throw new Error("This reference has no readable image.");
-      const c = document.createElement("canvas"),
-        scale = Math.min(1, 1000 / Math.max(w, h));
-      c.width = w * scale;
-      c.height = h * scale;
-      c.getContext("2d")!.drawImage(source, 0, 0, c.width, c.height);
-      onImage(c.toDataURL("image/jpeg", 0.8));
+      onImage(referenceJpeg(source, w, h));
     } catch (e) {
       onError(
         (e as Error).message ||

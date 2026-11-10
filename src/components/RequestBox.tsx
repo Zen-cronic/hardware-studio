@@ -3,6 +3,7 @@ import { ImagePlus, Loader2, Mic } from "lucide-react";
 import type { Navigate } from "../App";
 import { create, pathFor } from "../lib/api";
 import { FIRST_REQUEST_KEY, starterFor } from "../lib/heroProduct";
+import { photoReference } from "../lib/reference-image";
 
 const EXAMPLES = ["A camera drone for my backpack", "A desk arm for my phone"];
 
@@ -43,6 +44,11 @@ export default function RequestBox({ navigate, still }: { navigate: Navigate; st
     try { r.start(); } catch { recognition.current = null; setListening(false); }
   }
   function stopListening() { try { recognition.current?.stop(); } catch { /* already stopped */ } }
+  // Leaving the page stops the recognizer, so the microphone is not left open.
+  useEffect(() => () => {
+    const r = recognition.current; recognition.current = null;
+    if (r) { r.onresult = null; r.onend = null; r.onerror = null; try { r.stop(); } catch { /* already stopped */ } }
+  }, []);
   async function build(request = text) {
     const ask = request.trim();
     if (!ask) { field.current?.focus(); setError("Describe what you want to make, or hold the mic and say it."); return; }
@@ -50,14 +56,21 @@ export default function RequestBox({ navigate, still }: { navigate: Navigate; st
     try {
       const starter = starterFor(ask);
       const r = await create("custom", starter.name, starter.parts());
-      try { sessionStorage.setItem(FIRST_REQUEST_KEY, JSON.stringify({ id: r.snapshot.design.id, text: ask, image })); } catch { /* storage unavailable */ }
-      navigate(pathFor(r.snapshot.design.id, r.access.editorToken));
+      // The request travels to the studio in session storage. A photo too large for it stays behind,
+      // and the studio says so; the typed request always arrives.
+      const id = r.snapshot.design.id, store = (value: object) => { try { sessionStorage.setItem(FIRST_REQUEST_KEY, JSON.stringify(value)); return true; } catch { return false; } };
+      if (!store({ id, text: ask, image }) && !(image && store({ id, text: ask, image: null, photoTooLarge: true }))) {
+        setError("Your request could not be carried to the studio in this browser. Copy it, open the studio, and paste it there.");
+        return;
+      }
+      navigate(pathFor(id, r.access.editorToken));
     } catch (e) { setError((e as Error).message); } finally { setBusy(false); }
   }
+  // The same re-encode as the studio's reference input: a JPEG of at most 1000 px, from PNG, JPEG or WebP.
   function attach(f?: File) {
     if (!f) return;
-    if (!f.type.startsWith("image/")) { setError("Add a photo (JPG or PNG)."); return; }
-    const reader = new FileReader(); reader.onload = () => setImage(String(reader.result)); reader.readAsDataURL(f);
+    setError("");
+    photoReference(f).then(setImage, (e: Error) => setError(e.message));
   }
   return <>
       <form className="lp-prompt" onSubmit={e => { e.preventDefault(); void build(); }}>
@@ -76,7 +89,7 @@ export default function RequestBox({ navigate, still }: { navigate: Navigate; st
             <span className="lp-orb" aria-hidden="true"><Mic size={18}/></span>{listening ? "Listening, let go to stop" : "Hold to talk"}
           </button>
           <button type="button" className="lp-photo" aria-label="Add a photo or video" onClick={() => file.current?.click()}><ImagePlus size={18}/><span>Add a photo</span></button>
-          <input ref={file} type="file" accept="image/*" hidden onChange={e => attach(e.target.files?.[0])}/>
+          <input ref={file} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={e => attach(e.target.files?.[0])}/>
           <span className="lp-spacer"/>
           <button className="button primary lp-build" disabled={busy}>{busy ? <Loader2 className="spin" size={18}/> : null}Build it</button>
         </div>

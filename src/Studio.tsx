@@ -147,11 +147,12 @@ export default function Studio({
     try {
       const raw = sessionStorage.getItem(FIRST_REQUEST_KEY);
       if (!raw) return;
-      const first = JSON.parse(raw) as { id: string; text: string; image?: string | null };
+      const first = JSON.parse(raw) as { id: string; text: string; image?: string | null; photoTooLarge?: boolean };
       if (first.id !== id) return;
       sessionStorage.removeItem(FIRST_REQUEST_KEY);
       setPrompt(first.text);
       if (first.image) setImage(first.image);
+      if (first.photoTooLarge) setNotice("The photo was too large; add it in the studio.");
       setLeftPanelOpen(true); setRightPanelOpen(false); setMobileEditor("prompt");
     } catch { /* Storage can be unavailable; the studio still opens normally. */ }
   }, [id]);
