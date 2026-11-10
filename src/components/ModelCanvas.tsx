@@ -10,7 +10,7 @@ import type { ReactNode } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, Html, Edges, Line } from "@react-three/drei";
 import * as THREE from "three";
-import { featuredGeometry, needsFeaturedGeometry } from "../lib/partGeometry";
+import { featuredGeometry, hasCreases, needsFeaturedGeometry } from "../lib/partGeometry";
 import { bladeGeometry, boxProjectUv, finishFor, isCarbonFibre, twillTexture } from "../lib/droneLook";
 import { StageEnvironment, StageGround, StageLights } from "./StudioStage";
 import type { Part, Vec3 } from "../shared/types";
@@ -297,7 +297,7 @@ function PartMesh({
                 : 1
         }
       />
-      {(
+      {hasCreases(part) && (
         <Edges
           threshold={24}
           lineWidth={focused || outlined ? 3 : isSelected ? 2 : 1}

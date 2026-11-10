@@ -2,7 +2,7 @@ import { Component, useEffect, useMemo, useRef, useState, type ReactNode } from 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Edges } from "@react-three/drei";
 import * as THREE from "three";
-import { featuredGeometry, needsFeaturedGeometry } from "../lib/partGeometry";
+import { featuredGeometry, hasCreases, needsFeaturedGeometry } from "../lib/partGeometry";
 import { bladeGeometry, boxProjectUv, discTexture, finishFor, finishMaterial, isCarbonFibre, twillTexture } from "../lib/droneLook";
 import { StageEnvironment, StageGround, StageLights } from "./StudioStage";
 import { colors } from "../lib/tokens";
@@ -84,7 +84,7 @@ function PartMesh({ part, twill, disc, still, highlighted, dimmed, offset, onHov
   }
   return <group ref={holder} position={home} rotation={[rot[0], rot[1], rot[2]]}>
     <mesh geometry={geometry} material={material} castShadow receiveShadow {...events}>
-      {highlighted && <Edges threshold={20} color={colors.primary} lineWidth={2}/>}
+      {highlighted && hasCreases(part) && <Edges threshold={20} color={colors.primary} lineWidth={2}/>}
     </mesh>
     {kindOf(part) === "motor" && !dimmed && <mesh position={[0, -part.size[1] / 2 + 3, 0]} material={copper}><cylinderGeometry args={[part.size[0] / 2 - 1.2, part.size[0] / 2 - 1.2, 4, 48]}/></mesh>}
     {kindOf(part) === "battery" && !part.edgeRadius && !dimmed && <>

@@ -8,6 +8,11 @@ export function needsFeaturedGeometry(part: Part) {
   return !!(part.channel || part.sections || part.holes?.length || part.shape === "tube" || part.shape === "ellipsoid" || part.edgeRadius);
 }
 
+/** Smooth shapes have no creases, so there are no edge lines to draw on them. */
+export function hasCreases(part: Part) {
+  return part.shape !== "ellipsoid" && !part.edgeRadius;
+}
+
 /** A rounded box (every edge filleted, corners as sphere octants) or an ellipsoid of revolution. */
 function roundGeometry(part: Part, compact: boolean): THREE.BufferGeometry | null {
   if (part.shape === "ellipsoid") {
