@@ -84,6 +84,7 @@ export class ApiError extends Error {
     message: string,
     public status: number,
     public conflicts: string[] = [],
+    public code?: string,
   ) {
     super(message);
   }
@@ -102,7 +103,7 @@ export async function api<T>(
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   });
   if (!res.ok) {
-    let value: { error?: string; conflicts?: string[] } = {};
+    let value: { error?: string; conflicts?: string[]; code?: string } = {};
     try {
       value = await res.json();
     } catch {}
@@ -110,6 +111,7 @@ export async function api<T>(
       value.error || "The request could not be completed. Please try again.",
       res.status,
       value.conflicts,
+      value.code,
     );
   }
   return res.json();

@@ -1,6 +1,7 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { FlaskConical, Loader2 } from "lucide-react";
-import { api, uid } from "../lib/api";
+import { api } from "../lib/api";
+import { acceptCheckedVersion, discardCheckedVersion, prepareCheckedVersion } from "../lib/check-version";
 import { checkPreset, checkSentence, type CheckPreset } from "../shared/check-presets";
 import type { Proposal, Snapshot } from "../shared/types";
 import "./proposal-check.css";
@@ -15,7 +16,11 @@ export interface ProposalCheckHandle {
 }
 type Study = { id: string; status: string; error?: string; result?: any; setup?: any; revision: number; partId?: string; stale?: boolean };
 export interface CheckResult {
+  /** The proposal this check ran for, and the revisions it saw; Apply sends exactly these. */
+  proposalId: string; expectedMainRevision: number; expectedProposedRevision: number; reviewedSnapshotHash: string;
   versionId: string; preset: CheckPreset; partName: string; sentence: string;
+  /** False when the finest mesh had not settled: the numbers are shown as preliminary. */
+  settled: boolean;
   verdict?: { state: string; title: string; detail?: string };
   before: Study; after: Study;
 }
@@ -39,21 +44,39 @@ const ProposalCheck = forwardRef<ProposalCheckHandle, {
   const target = partId || proposal.target?.partIds[0];
   const preset = target ? checkPreset(snapshot, target) : null;
   const [busy, setBusy] = useState(false), [step, setStep] = useState(""), [result, setResult] = useState<CheckResult | null>(null);
-  const alive = useRef(true);
-  useEffect(() => () => { alive.current = false; }, []);
-  useEffect(() => { setResult(null); setStep(""); }, [proposal.command.id]);
+  // Effect-scoped: StrictMode runs the effect twice, and the second run must leave the component live.
+  const mounted = useRef(false);
+  // Each check gets a run number; a newer run, a new proposal or unmounting makes older results void.
+  const run = useRef(0);
+  // Proposed versions this component created and did not apply; discarded when it goes away.
+  const unapplied = useRef(new Set<string>());
+  useEffect(() => {
+    mounted.current = true;
+    const versions = unapplied.current;
+    return () => {
+      mounted.current = false; run.current++;
+      for (const versionId of versions) void discardCheckedVersion(versionId, token);
+      versions.clear();
+    };
+  }, [token]);
+  useEffect(() => { run.current++; setResult(null); setStep(""); setBusy(false); }, [proposal.command.id]);
   const resultRef = useRef(result); resultRef.current = result;
+  const proposalRef = useRef(proposal); proposalRef.current = proposal;
   useImperativeHandle(ref, () => ({
     accept: () => {
       const checked = resultRef.current;
-      if (!checked) return null;
+      // Only the version checked for the proposal on screen can be accepted.
+      if (!checked || checked.proposalId !== proposalRef.current.command.id) return null;
       return (async () => {
         try {
-          const view = await api<any>("/proposed-versions/" + checked.versionId, token);
-          await api("/proposed-versions/" + checked.versionId + "/accept", token, { operationId: uid(), actor,
-            expectedMainRevision: view.main.design.revision, expectedProposedRevision: view.proposed.design.revision, reviewedSnapshotHash: view.proposedSnapshotHash });
+          await acceptCheckedVersion(checked, token, actor);
+          unapplied.current.delete(checked.versionId);
           return true;
-        } catch (e) { onError((e as Error).message); return false; }
+        } catch (e) {
+          // A refused check stays visible as an error; the button offers a fresh check.
+          if (mounted.current) setResult(null);
+          onError((e as Error).message); return false;
+        }
       })();
     },
   }), [token, actor, onError]);
@@ -61,37 +84,43 @@ const ProposalCheck = forwardRef<ProposalCheckHandle, {
   const partName = snapshot.derived.parts.find(p => p.id === target)?.name || "This part";
   async function check() {
     if (!preset) return;
+    const mine = ++run.current, live = () => mounted.current && run.current === mine;
     setBusy(true); setResult(null);
     try {
-      const design = snapshot.design, command = proposal.command;
+      const design = snapshot.design, proposalId = proposal.command.id;
       setStep("Preparing the proposed version…");
-      const version = await api<any>("/designs/" + design.id + "/proposed-versions", token,
-        { actor, expectedRevision: design.revision, name: ("Check: " + (command.summary || "proposed change")).slice(0, 100) });
-      const proposedId = version.version.proposedDesignId, proposedToken = version.access?.editorToken;
-      if (!proposedToken) throw new Error("Only the owner of this design can check a proposed change.");
-      const applied = await api<Snapshot>("/designs/" + proposedId + "/commands", proposedToken, { id: uid(), actor, baseRevision: 0,
-        changes: command.changes || {}, readSet: command.readSet || {}, ...(command.customParts ? { customParts: command.customParts } : {}), summary: command.summary });
+      const checkedVersion = await prepareCheckedVersion(snapshot, proposal, token, actor, versionId => {
+        unapplied.current.add(versionId);
+        // A check abandoned before its version existed discards it at once.
+        if (!mounted.current) { unapplied.current.delete(versionId); void discardCheckedVersion(versionId, token); }
+      });
+      if (!live()) return;
+      const { versionId, proposedDesignId: proposedId, proposedToken, applied } = checkedVersion;
       setStep(`Testing both versions under the same ${preset.load}…`);
       // Reuse a finished study of the current part with exactly these inputs; otherwise run one.
       const existing = (await api<Study[]>("/designs/" + design.id + "/studies", token)).find(job => !job.stale && job.revision === design.revision &&
         job.status === "ready" && job.result?.status === "solved" && JSON.stringify(job.setup?.loads) === JSON.stringify(preset.study.loads) &&
         JSON.stringify(job.setup?.material) === JSON.stringify(preset.study.material) && job.setup?.partId === preset.partId && JSON.stringify(job.setup?.mesh) === JSON.stringify(preset.study.mesh));
+      if (!live()) return;
       const beforeJob = existing || await api<Study>("/designs/" + design.id + "/studies", token, { ...preset.study, revision: design.revision });
       const afterJob = await api<Study>("/designs/" + proposedId + "/studies", proposedToken, { ...preset.study, revision: applied.design.revision });
-      const before = await waitFor(beforeJob.id, token, () => alive.current), after = await waitFor(afterJob.id, proposedToken, () => alive.current);
-      if (!alive.current) return;
-      const proof = await api<any>("/proposed-versions/" + version.version.id + "/proof?part=" + encodeURIComponent(preset.partId), token);
+      const before = await waitFor(beforeJob.id, token, live), after = await waitFor(afterJob.id, proposedToken, live);
+      if (!live()) return;
+      const proof = await api<any>("/proposed-versions/" + versionId + "/proof?part=" + encodeURIComponent(preset.partId), token);
+      if (!live()) return;
       const numbers = (job: Study) => typeof job.result?.maxDisplacementMm === "number" && typeof job.result?.p95VonMisesMPa === "number";
       const settled = before.result?.status === "solved" && after.result?.status === "solved";
       // Unsettled meshes still give comparable numbers; the sentence says they are preliminary.
       const sentence = numbers(before) && numbers(after)
         ? checkSentence(partName, preset.load, before.result, after.result) + (settled ? "" : " This is preliminary: the finest mesh had not fully settled.")
         : `The check could not finish for ${partName}: ${after.result?.message || after.error || before.result?.message || before.error || "no result"}.`;
-      const checked: CheckResult = { versionId: version.version.id, preset, partName, sentence, verdict: proof.verdict, before, after };
+      const checked: CheckResult = { proposalId, expectedMainRevision: checkedVersion.expectedMainRevision,
+        expectedProposedRevision: checkedVersion.expectedProposedRevision, reviewedSnapshotHash: checkedVersion.reviewedSnapshotHash,
+        versionId, preset, partName, sentence, settled, verdict: proof.verdict, before, after };
       setResult(checked); setStep("");
       onSay?.([sentence]);
-    } catch (e) { onError((e as Error).message); setStep(""); }
-    finally { if (alive.current) setBusy(false); }
+    } catch (e) { if (live()) { onError((e as Error).message); setStep(""); } }
+    finally { if (live()) setBusy(false); }
   }
   const m = (job: Study, key: string, unit: string) => typeof job.result?.[key] === "number" ? `${job.result[key].toPrecision(3)} ${unit}` : "—";
   return (
@@ -108,8 +137,11 @@ const ProposalCheck = forwardRef<ProposalCheckHandle, {
           const a = (result.after.result as { maxDisplacementMm?: number } | undefined)?.maxDisplacementMm;
           if (typeof b !== "number" || typeof a !== "number" || b <= 0) return null;
           const pct = Math.round((1 - a / b) * 100);
-          return <div className="check-lead">
-            <p className="check-big"><strong>{Math.abs(pct)}%</strong> {pct >= 0 ? "less bending" : "more bending"}</p>
+          // An unsettled mesh gives comparable numbers but not a headline: show them as preliminary.
+          return <div className="check-lead" data-preliminary={result.settled ? undefined : "true"}>
+            {result.settled
+              ? <p className="check-big"><strong>{Math.abs(pct)}%</strong> {pct >= 0 ? "less bending" : "more bending"}</p>
+              : <p className="check-big"><strong>Preliminary result</strong></p>}
             <div className="check-bars">
               <div><span>Before</span><i style={{ width: "100%" }} /><b>{b.toFixed(2)} mm</b></div>
               <div><span>After</span><i className="is-after" style={{ width: `${Math.max(4, Math.min(100, (a / b) * 100))}%` }} /><b>{a.toFixed(2)} mm</b></div>

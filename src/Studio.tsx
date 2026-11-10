@@ -935,7 +935,7 @@ export default function Studio({
                         proposed design.
                       </p>
                     )}
-                    {!clarifying && !readOnly && <ProposalCheck ref={checkRef} snapshot={snapshot} proposal={proposal} token={token} actor={actor}
+                    {!clarifying && !readOnly && <ProposalCheck key={proposal.command.id} ref={checkRef} snapshot={snapshot} proposal={proposal} token={token} actor={actor}
                       partId={proposalBinding?.partIds.find(id => proposal.target?.partIds.includes(id))} disabled={busy} onSay={voice.say} onError={setError} />}
                     <button
                       data-testid="apply-proposal"
