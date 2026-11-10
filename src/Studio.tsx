@@ -67,7 +67,7 @@ import {
 import ModelCanvas from "./components/ModelCanvas";
 import ContextualGuide from "./components/ContextualGuide";
 import { assertCurrentSelection, createSelection, resolveSelectionSurface, type SelectionRef } from "./shared/selection";
-import { cycleSurface, freezeTarget, targetLabel, withoutSurface } from "./lib/pointing";
+import { currentTarget, cycleSurface, freezeTarget, targetLabel, withoutSurface } from "./lib/pointing";
 import SharedNotes from "./components/SharedNotes";
 import ReferenceInput, { VoiceButton } from "./components/ReferenceInput";
 import CompanionCursor, { AgentDock, type AgentPointer } from "./components/CompanionCursor";
@@ -437,7 +437,8 @@ export default function Studio({
   function companionSpeechStarted() {
     speechStarted();
     // Holding the mic leaves the model, so a pinned or selected part is the target.
-    const pinned = requestSelection === undefined ? selection : requestSelection;
+    // A target from before an applied change is moved to the current revision, or dropped.
+    const pinned = snapshot ? currentTarget(snapshot, requestSelection === undefined ? selection : requestSelection) : null;
     if (utteranceRef.current || !pinned || !snapshot) return;
     const target = freezeTarget(pinned);
     utteranceRef.current = target; setVoiceTarget(target);
@@ -452,7 +453,7 @@ export default function Studio({
     if (!snapshot || !proposal) return;
     if (!candidates.length) {
       // An open question without listed choices: the answer joins the request and is proposed again.
-      if (/\b(never ?mind|cancel|forget it)\b/i.test(text)) { setProposal(null); return; }
+      if (/\b(never ?mind|cancel|forget it|stop)\b/i.test(text)) { setProposal(null); return; }
       const combined = `${prompt.trim()}. ${text}`.slice(0, 2000), target = pointed ?? proposalBinding;
       setProposal(null); setPrompt(combined); setRequestSelection(target ?? undefined);
       void propose(combined, target);
@@ -468,6 +469,7 @@ export default function Studio({
     disabled: !snapshot || readOnly || busy || promptBusy || (!!proposal && !clarifying) || pendingCircleSelection || tab !== "design",
     spaceToTalk: !!snapshot && !readOnly && tab === "design",
     onSpeechStart: companionSpeechStarted, onText: text => clarifying ? answerClarification(text) : spokenRequest(text, true), onError: setError, onListeningChange: voiceListening,
+    onStop: () => { utteranceRef.current = null; if (clarifying) setProposal(null); },
     reply: proposal ? { key: proposal.command.id, lines: [...replyLines(proposal),
       ...(candidates.length && !proposal.questions?.some(q => /say this one/i.test(q)) ? ["Point at one and say this one, or say the left one or the right one."] : [])].slice(0, 4) } : null,
   });

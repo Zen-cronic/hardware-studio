@@ -12,6 +12,18 @@ export function targetLabel(snapshot: Snapshot, target: SelectionRef | null | un
   return target.partIds.map(id => snapshot.derived.parts.find(part => part.id === id)?.name || "a part no longer available").join(", ");
 }
 
+/**
+ * A pinned target for a new utterance at the current revision. A target from an earlier revision
+ * keeps its parts (never its pointed surface, which belongs to the old geometry) when they all
+ * still exist; otherwise nothing is pinned. Never returns a stale target.
+ */
+export function currentTarget(snapshot: Snapshot, pinned: SelectionRef | null | undefined): SelectionRef | null {
+  if (!pinned || pinned.designId !== snapshot.design.id) return null;
+  if (pinned.revision === snapshot.design.revision) return pinned;
+  if (!pinned.partIds.length || !pinned.partIds.every(id => snapshot.derived.parts.some(part => part.id === id))) return null;
+  return { designId: snapshot.design.id, revision: snapshot.design.revision, partIds: [...pinned.partIds], source: pinned.source };
+}
+
 /** The utterance keeps an independent copy so later pointer movement cannot retarget it. */
 export function freezeTarget(picked: SelectionRef | null): SelectionRef | null {
   return picked ? structuredClone(picked) : null;

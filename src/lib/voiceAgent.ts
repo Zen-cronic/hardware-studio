@@ -175,6 +175,8 @@ export function speakLines(lines: string[], events: { onStart?: () => void; onEn
 }
 
 const MUTE_KEY = "hardware-voice-muted";
+/** Spoken while a reply is being read: stop reading it. */
+export const STOP_WORDS = /^(?:please\s+)?(?:stop|stop talking|stop it|be quiet|quiet|shush|that's enough)[.!]?$/i;
 function storedMute() { try { return localStorage.getItem(MUTE_KEY) === "1"; } catch { return false; } }
 
 /** True when Space should stay with the focused element instead of starting a hold. */
@@ -198,6 +200,8 @@ export interface VoiceAgentOptions {
   onText: (text: string) => void;
   onError: (message: string) => void;
   onListeningChange?: (active: boolean) => void;
+  /** Called when the words were only "stop" (after any reading is stopped). */
+  onStop?: () => void;
   /** A reply to speak once: a new key speaks its lines if the last request was spoken. */
   reply?: { key: string; lines: string[] } | null;
 }
@@ -254,7 +258,11 @@ export function useVoiceAgent(options: VoiceAgentOptions): VoiceAgent {
       onSpeechStart: () => latest.current.onSpeechStart(),
       onInterim: text => setTranscript(text),
       // "Six millimetres" reaches the request as "6 mm", which the local rules can read.
-      onText: text => { const words = normalizeSpokenNumbers(text); setTranscript(words); awaitingReply.current = true; latest.current.onText(words); },
+      onText: text => {
+        // "Stop" stops a reply being read and ends an open question; it is never a design request.
+        if (STOP_WORDS.test(text.trim())) { stopSpeaking.current?.(); setTranscript(""); latest.current.onStop?.(); return; }
+        const words = normalizeSpokenNumbers(text); setTranscript(words); awaitingReply.current = true; latest.current.onText(words);
+      },
       onError: message => latest.current.onError(message),
     });
     session.current = started;
@@ -276,7 +284,8 @@ export function useVoiceAgent(options: VoiceAgentOptions): VoiceAgent {
       if (event.ctrlKey || event.metaKey || event.altKey) return;
       if (holding) { event.preventDefault(); return; }
       if (event.repeat || keepsSpace(document.activeElement) || keepsSpace(event.target as Element)) return;
-      if (latest.current.disabled) return;
+      // Without speech recognition (Firefox) Space stays a normal key; the dock already says voice is unavailable.
+      if (latest.current.disabled || !recognitionConstructor()) return;
       event.preventDefault();
       holding = true;
       press();
@@ -294,6 +303,27 @@ export function useVoiceAgent(options: VoiceAgentOptions): VoiceAgent {
     return () => { window.removeEventListener("keydown", down, true); window.removeEventListener("keyup", up, true); window.removeEventListener("blur", blur); };
   }, [options.spaceToTalk, press, release]);
 
+  // Speaks lines and shows the speaking state until they end. speakLines may end at once
+  // (nothing to say, no synthesis), so the state is only set while this speech is current.
+  const speak = useCallback((lines: string[]) => {
+    stopSpeaking.current?.();
+    let ended = false;
+    const stop: () => void = speakLines(lines, {
+      onStart: () => { if (!ended) setSpeaking(true); },
+      onEnd: () => { ended = true; setSpeaking(false); if (stopSpeaking.current === stop) stopSpeaking.current = null; },
+    });
+    if (ended) return;
+    stopSpeaking.current = stop;
+    // Some engines never fire onstart without voices; show speaking while queued.
+    setSpeaking(true);
+  }, []);
+  // Typing a request means its reply is read, not spoken.
+  useEffect(() => {
+    const typed = (event: Event) => { if ((event.target as Element | null)?.closest?.("input, textarea, [contenteditable='true']")) awaitingReply.current = false; };
+    window.addEventListener("input", typed, true);
+    return () => window.removeEventListener("input", typed, true);
+  }, []);
+
   // Speak a new reply once, only when it answers something said aloud.
   const replyKey = options.reply?.key;
   useEffect(() => {
@@ -301,10 +331,7 @@ export function useVoiceAgent(options: VoiceAgentOptions): VoiceAgent {
     if (!reply || !awaitingReply.current) return;
     awaitingReply.current = false;
     if (muted) return;
-    stopSpeaking.current?.();
-    stopSpeaking.current = speakLines(reply.lines, { onStart: () => setSpeaking(true), onEnd: () => { setSpeaking(false); stopSpeaking.current = null; } });
-    // Some engines never fire onstart without voices; show speaking while queued.
-    setSpeaking(true);
+    speak(reply.lines);
   }, [replyKey]);
 
   const toggleMute = useCallback(() => {
@@ -319,10 +346,8 @@ export function useVoiceAgent(options: VoiceAgentOptions): VoiceAgent {
   const mutedRef = useRef(muted); mutedRef.current = muted;
   const say = useCallback((lines: string[]) => {
     if (mutedRef.current || !lines.length) return;
-    stopSpeaking.current?.();
-    stopSpeaking.current = speakLines(lines.flatMap(line => shortSentences(line, 3, 240)), { onStart: () => setSpeaking(true), onEnd: () => { setSpeaking(false); stopSpeaking.current = null; } });
-    setSpeaking(true);
-  }, []);
+    speak(lines.flatMap(line => shortSentences(line, 3, 240)));
+  }, [speak]);
 
   const holdProps: VoiceAgent["holdProps"] = {
     onPointerDown: event => {
