@@ -4,6 +4,7 @@ import {
   Check,
   CheckCircle2,
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
   Copy,
   Download,
@@ -62,7 +63,8 @@ import {
 } from "./lib/api";
 import ModelCanvas from "./components/ModelCanvas";
 import ContextualGuide from "./components/ContextualGuide";
-import { assertCurrentSelection, createSelection, type SelectionRef } from "./shared/selection";
+import { assertCurrentSelection, createSelection, resolveSelectionSurface, type SelectionRef } from "./shared/selection";
+import { cycleSurface, freezeTarget, targetLabel, withoutSurface } from "./lib/pointing";
 import SharedNotes from "./components/SharedNotes";
 import ReferenceInput, { VoiceButton } from "./components/ReferenceInput";
 import { Brand, type Navigate } from "./App";
@@ -92,6 +94,8 @@ export default function Studio({
   const hoverPicker = useRef<(() => SelectionRef | null) | null>(null);
   const utteranceRef = useRef<SelectionRef | null>(null);
   const [requestSelection, setRequestSelection] = useState<SelectionRef | null | undefined>(undefined);
+  // The target a pending proposal was requested for, shown as "Applied to" during review.
+  const [proposalBinding, setProposalBinding] = useState<SelectionRef | null>(null);
   const [unboundVoice, setUnboundVoice] = useState(false);
   const [voiceMessage, setVoiceMessage] = useState("");
   const [editorMode, setEditorMode] = useState<"prompt" | "selection">("prompt");
@@ -120,7 +124,16 @@ export default function Studio({
     );
   const [leftPanelOpen, setLeftPanelOpen] = useState(false),
     [rightPanelOpen, setRightPanelOpen] = useState(false);
-  useEffect(() => { if (tab === "design" && selection?.partIds.length) { setLeftPanelOpen(true); setRightPanelOpen(false); setMobileEditor("prompt"); setEditorMode("selection"); } }, [selection, tab]);
+  const previousSelection = useRef<SelectionRef | null>(null);
+  useEffect(() => {
+    const previous = previousSelection.current; previousSelection.current = selection;
+    if (tab === "design" && selection?.partIds.length) {
+      // Pointing at another surface of the same part keeps the current editor mode.
+      const sameParts = !!previous && previous !== selection && previous.designId === selection.designId && previous.partIds.join() === selection.partIds.join();
+      setLeftPanelOpen(true); setRightPanelOpen(false); setMobileEditor("prompt");
+      if (!sameParts) setEditorMode("selection");
+    }
+  }, [selection, tab]);
   const [step, setStep] = useState(0),
     [completed, setCompleted] = useState<string[]>([]),
     [check, setCheck] = useState<{ ok: boolean; text: string } | null>(null);
@@ -334,6 +347,7 @@ export default function Studio({
         ...(target ? { selection: target } : {}),
         ...(image ? { image } : {}),
       });
+      setProposalBinding(target ?? null);
       setProposal(p);
     } catch (e) {
       setError((e as Error).message);
@@ -342,10 +356,11 @@ export default function Studio({
     }
   }
   function speechStarted() {
-    const target = hoverPicker.current?.() || null;
-    utteranceRef.current = target ? structuredClone(target) : null;
-    setVoiceTarget(utteranceRef.current);
-    const name = target?.partIds.map(id => snapshot?.derived.parts.find(part => part.id === id)?.name).join(", ");
+    // Freeze the exact pointed surface at speech onset; later movement cannot retarget it.
+    const target = freezeTarget(hoverPicker.current?.() || null);
+    utteranceRef.current = target;
+    setVoiceTarget(target);
+    const name = target && snapshot ? targetLabel(snapshot, target) : "";
     setVoiceMessage(name ? `Listening about ${name}.` : "No part under the pointer. Your words will be kept as a draft.");
   }
   function spokenRequest(text: string) {
@@ -365,6 +380,9 @@ export default function Studio({
   useEffect(() => {
     // Do not rebind an utterance after a remote revision; server validation also rejects it.
     setVoiceTarget(null);
+    // A pinned surface belongs to the geometry it was pointed at; never carry it to a new revision.
+    setSelection(current => current?.surface && current.revision !== snapshot?.design.revision ? withoutSurface(current) : current);
+    setRequestSelection(current => current?.surface && current.revision !== snapshot?.design.revision ? withoutSurface(current) : current);
   }, [snapshot?.design.id, snapshot?.design.revision]);
   async function undo() {
     if (!snapshot) return;
@@ -424,6 +442,11 @@ export default function Studio({
     } finally {
       setBusy(false);
     }
+  }
+  function clearPointing() {
+    if (requestSelection) setRequestSelection(withoutSurface(requestSelection));
+    else if (selection?.surface) setSelection(withoutSurface(selection));
+    requestAnimationFrame(() => document.getElementById("design-prompt")?.focus());
   }
   function selectParts(next: SelectionRef | null) {
     setSelected(next?.partIds[0] || ""); setSelection(next);
@@ -485,6 +508,9 @@ export default function Studio({
       : previewParts;
   const currentStep = derived.steps[Math.min(step, derived.steps.length - 1)];
   const chosen = derived.parts.find((p) => p.id === selected);
+  const requestTarget = requestSelection === undefined ? selection : requestSelection;
+  let pointedFeature = "";
+  try { pointedFeature = selection ? resolveSelectionSurface(snapshot, selection)?.feature.label || "" : ""; } catch { pointedFeature = "Surface changed"; }
   const pending = Object.keys(draft).length > 0;
   const myHistory = [...history].reverse();
   return (
@@ -701,8 +727,12 @@ export default function Studio({
                     onChange={(e) => { setPrompt(e.target.value); setUnboundVoice(false); }}
                     disabled={readOnly}
                   />
-                  {prompt && <p className="subtle" data-testid="request-target">{(requestSelection === undefined ? selection : requestSelection)?.partIds.length
-                    ? "Request for " + (requestSelection === undefined ? selection : requestSelection)!.partIds.map(id => derived.parts.find(part => part.id === id)?.name || "a part no longer available").join(", ")
+                  {requestTarget?.surface ? <p className="pointing-chip" data-testid="request-target">
+                      <span>Pointing at: {targetLabel(snapshot, requestTarget)}</span>
+                      <button type="button" aria-label="Stop pointing at this surface" title="Stop pointing; keep the part" onClick={clearPointing} disabled={readOnly}><X size={14} /></button>
+                    </p>
+                    : prompt && <p className="subtle" data-testid="request-target">{requestTarget?.partIds.length
+                    ? "Request for " + requestTarget.partIds.map(id => derived.parts.find(part => part.id === id)?.name || "a part no longer available").join(", ")
                     : unboundVoice ? "No part targeted. Edit this request or speak again." : "Request for the whole design"}</p>}
                   <div className="prompt-actions">
                     <div className="reference-actions">
@@ -744,6 +774,9 @@ export default function Studio({
                         <X size={15} />
                       </button>
                     </div>
+                    {(proposal.target?.label || proposalBinding) && <p className="proposal-target" data-testid="proposal-target">
+                      {Object.keys(proposal.command.changes || {}).length || proposal.command.customParts ? "Applied to" : "Pointing at"}: <strong>{proposal.target?.label || targetLabel(snapshot, proposalBinding)}</strong>
+                    </p>}
                     <p>{proposal.explanation}</p>
                     {proposal.questions?.map((q) => (
                       <p className="measurement-question" key={q}>
@@ -873,7 +906,7 @@ export default function Studio({
                 )}
               </div>
               {pendingCircleSelection && <p className="subtle">Confirm the circled parts to open their controls.</p>}
-              {selection && !pendingCircleSelection && !proposal && editorMode === "selection" && <ContextualGuide snapshot={snapshot} selection={selection} onClearSelection={() => { selectParts(null); requestAnimationFrame(() => document.querySelector<HTMLElement>('.spatial-selection-list > summary')?.focus()); }} onPrompt={(value) => { setRequestSelection(undefined); setUnboundVoice(false); setPrompt(value); setEditorMode("prompt"); }} disabled={readOnly || busy} onPreview={(result) => { setProposal({ command:{...result.command,actor}, explanation:result.explanation, source:"local" }); setEditorMode("prompt"); }} />}
+              {selection && !pendingCircleSelection && !proposal && editorMode === "selection" && <ContextualGuide snapshot={snapshot} selection={selection} onClearSelection={() => { selectParts(null); requestAnimationFrame(() => document.querySelector<HTMLElement>('.spatial-selection-list > summary')?.focus()); }} onPrompt={(value) => { setRequestSelection(undefined); setUnboundVoice(false); setPrompt(value); setEditorMode("prompt"); }} disabled={readOnly || busy} onPreview={(result) => { setProposalBinding(selection); setProposal({ command:{...result.command,actor}, explanation:result.explanation, source:"local" }); setEditorMode("prompt"); }} />}
               <details className="history-panel">
                 <summary>
                   <RotateCcw size={15} /> Design history{" "}
@@ -1008,10 +1041,11 @@ export default function Studio({
             exploded={exploded}
             dimensions={dimensions}
             selected={proposal ? undefined : selected}
-            hoverEnabled={voiceOn && !proposal && !readOnly}
+            hoverEnabled={tab === "design" && !proposal && !readOnly}
             hoverPicker={hoverPicker}
             onPendingSelectionChange={setPendingCircleSelection}
             voiceTarget={voiceTarget}
+            pointedTarget={proposal ? (proposalBinding?.surface ? proposalBinding : null) : voiceTarget?.surface ? voiceTarget : requestTarget?.surface ? requestTarget : null}
             onSelect={proposal ? undefined : partId => selectParts(partId ? createSelection(snapshot, [partId], "click") : null)}
             selectionContext={{designId:design.id,revision:design.revision}}
             selectedPartIds={proposal ? undefined : selection?.partIds}
@@ -1032,6 +1066,11 @@ export default function Studio({
                   {chosen.material} /{" "}
                   {chosen.size.map((v) => Math.round(v)).join(" × ")} mm
                 </span>
+                {selection?.partIds.length === 1 && !readOnly && <div className="feature-cycler" role="group" aria-label="Point at a feature of this part">
+                  <button type="button" className="button icon-only" aria-label="Previous feature" onClick={() => setSelection(cycleSurface(snapshot, selection, -1))}><ChevronLeft size={14} /></button>
+                  <span data-testid="pointed-feature">{pointedFeature || "Whole part"}</span>
+                  <button type="button" className="button icon-only" aria-label="Next feature" onClick={() => setSelection(cycleSurface(snapshot, selection, 1))}><ChevronRight size={14} /></button>
+                </div>}
               </div>
               <button
                 className="button icon-only"

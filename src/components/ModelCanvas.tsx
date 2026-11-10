@@ -8,7 +8,7 @@ import {
 } from "react";
 import type { ReactNode } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { ContactShadows, OrbitControls, Html, Edges } from "@react-three/drei";
+import { ContactShadows, OrbitControls, Html, Edges, Line } from "@react-three/drei";
 import * as THREE from "three";
 import { featuredGeometry } from "../lib/partGeometry";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
@@ -19,6 +19,7 @@ import { explodedParts, explosionProgress, EXPLOSION_DURATION } from "../lib/exp
 import { visiblePartsInPolygon, type ScreenPoint } from "../lib/selection";
 import type { SelectionRef, SelectionSource } from "../shared/selection";
 import { CircleSelectionOverlay, SpatialSelectionTools } from "./SpatialSelection";
+import { displayTarget, resolveSurfaceFeature, surfaceTargetFromHit, type SurfaceFeature, type SurfaceTarget } from "../shared/surface";
 type Props = {
   parts: Part[];
   activePartIds?: string[];
@@ -32,6 +33,8 @@ type Props = {
   hoverEnabled?: boolean;
   hoverPicker?: React.MutableRefObject<(() => SelectionRef | null) | null>;
   voiceTarget?: SelectionRef | null;
+  /** A pinned, frozen or proposal-bound surface, drawn on the model until it changes. */
+  pointedTarget?: SelectionRef | null;
   onPendingSelectionChange?: (pending: boolean) => void;
   onSelect?: (id: string) => void;
   compact?: boolean;
@@ -141,6 +144,7 @@ function AssemblyAnimation({ parts, exploded, playing, speed, reduced, frozen, f
 function PartMesh({
   part,
   parts,
+  selectionContext,
   playing,
   speed = 1,
   selected,
@@ -152,7 +156,12 @@ function PartMesh({
   focused = false,
   marker,
   labelPortal,
-}: Props & { part: Part; animation: React.MutableRefObject<AssemblyFrame>; focused?: boolean; marker?: number; labelPortal: React.RefObject<HTMLElement> }) {
+  onPick,
+  surface,
+  outlined = false,
+}: Props & { outlined?: boolean; part: Part; animation: React.MutableRefObject<AssemblyFrame>; focused?: boolean; marker?: number; labelPortal: React.RefObject<HTMLElement>;
+  onPick?: (target: SurfaceTarget) => void;
+  surface?: { target: SurfaceTarget; feature: SurfaceFeature; mode: "hover" | "pinned"; label: string }[] }) {
   const ref = useRef<THREE.Mesh>(null);
   const rot = part.rotation || [0, 0, 0];
   const isSelected = selectedPartIds !== undefined ? selectedPartIds.includes(part.id) : selected === part.id;
@@ -162,7 +171,8 @@ function PartMesh({
       !!activePartIds &&
       !activePartIds.includes(part.id) &&
       !isSelected,
-    referencePreview = reference && !!onSelect;
+    // The studio canvas keeps reference envelopes see-through, including during proposal review.
+    referencePreview = reference && (!!onSelect || !!selectionContext);
   const materialColor = useMemo(() => {
     const c = new THREE.Color(part.color);
     if (isSelected) c.lerp(new THREE.Color(colors.focus), 0.3);
@@ -185,8 +195,13 @@ function PartMesh({
       receiveShadow
       onClick={(e) => {
         if (onSelect) {
+          // Let a click pass through a see-through reference envelope to the solid part behind it.
+          if (reference && onPick && e.intersections.some(hit => hit.object !== e.object && parts?.find(p => p.id === hit.object.userData.partId && p.role !== "reference"))) return;
           e.stopPropagation();
-          onSelect(part.id);
+          // A click or tap pins the exact surface; without a face it still selects the part.
+          const own = e.intersections.find(hit => hit.object === e.eventObject);
+          if (onPick && own?.face) onPick(surfaceTargetFromHit(part, e.eventObject.worldToLocal(own.point.clone()).toArray() as Vec3, own.face.normal.toArray() as Vec3));
+          else onSelect(part.id);
         }
       }}
       onPointerOver={(e) => {
@@ -247,11 +262,11 @@ function PartMesh({
       {(!reference || referencePreview || isSelected) && (
         <Edges
           threshold={24}
-          lineWidth={focused ? 3 : isSelected ? 2 : 1}
+          lineWidth={focused || outlined ? 3 : isSelected ? 2 : 1}
           color={
             isSelected
               ? colors.focus
-              : focused
+              : focused || outlined
                 ? colors.action
               : referencePreview
                 ? part.color
@@ -259,7 +274,7 @@ function PartMesh({
           }
           transparent
           opacity={
-            isSelected || focused
+            isSelected || focused || outlined
               ? 1
               : ghost
                 ? 0.07
@@ -269,11 +284,15 @@ function PartMesh({
           }
         />
       )}
-      {(marker || focused) && <Html portal={labelPortal} position={[0, 0, 0]} center zIndexRange={[2, 0]} style={{ pointerEvents: "none" }}>
+      {(marker || (focused && !surface?.some(s => s.mode === "pinned"))) && <Html portal={labelPortal} position={[0, 0, 0]} center zIndexRange={[2, 0]} style={{ pointerEvents: "none" }}>
         <span className={"part-marker" + (isSelected ? " is-checked" : "") + (focused ? " is-focused" : "")} data-part-marker={part.id} data-checked={isSelected}>
           {marker && <span>{marker}</span>}{marker && isSelected && <span aria-hidden="true">✓</span>}{focused && <span>{part.name}</span>}
         </span>
       </Html>}
+      {surface?.map(item => <SurfaceHighlight key={item.mode} part={part} target={item.target} feature={item.feature} mode={item.mode} />)}
+      {surface?.filter(item => item.mode === "pinned").map(item => <Html key="pinned-label" portal={labelPortal} position={item.target.point} zIndexRange={[3, 0]} style={{ pointerEvents: "none" }}>
+        <span className="surface-label is-pinned" data-surface-label="pinned">{item.label}</span>
+      </Html>)}
     </mesh>
   );
 }
@@ -424,6 +443,8 @@ function Camera({
       camera.position.copy(destination);
       camera.lookAt(center);
       if (ref.current) { ref.current.target.copy(center); ref.current.update(); }
+      // Passive inspection hook, matching the one OrbitControls writes after a drag.
+      gl.domElement.dataset.view = JSON.stringify({ position: camera.position.toArray(), target: center.toArray() });
     }
     invalidate();
   }, [
@@ -472,9 +493,72 @@ function Camera({
     />
   );
 }
-function HoverBridge({ enabled, onHover, picker }: { enabled: boolean; onHover: (id: string | null) => void; picker: React.MutableRefObject<(() => string | null) | null> }) {
+const NO_RAYCAST = () => null;
+// Draws only the pointed feature, in part-local axes, on top of the part.
+// It never takes part in hover/click raycasts or the circle ID pass.
+function SurfaceHighlight({ part, target, feature, mode }: { part: Part; target: SurfaceTarget; feature: SurfaceFeature; mode: "hover" | "pinned" }) {
+  const shapes = useMemo(() => {
+    const half = part.size.map(v => v / 2) as Vec3, lift = Math.max(0.06, Math.max(...part.size) * 0.0015);
+    const out: { geometry: THREE.BufferGeometry; position: Vec3; rotation?: Vec3; quaternion?: THREE.Quaternion }[] = [];
+    const lines: Vec3[][] = [];
+    const circle = (cx: number, y: number, cz: number, r: number) => Array.from({ length: 49 }, (_, i) => [cx + Math.cos(i / 48 * Math.PI * 2) * r, y, cz + Math.sin(i / 48 * Math.PI * 2) * r] as Vec3);
+    const planeRotation = (axis: "x" | "y" | "z", side: number): Vec3 => axis === "y" ? [-side * Math.PI / 2, 0, 0] : axis === "x" ? [0, side * Math.PI / 2, 0] : [0, side < 0 ? Math.PI : 0, 0];
+    const round = part.shape !== "box";
+    if (feature.kind === "hole") {
+      const hole = part.holes![feature.holeIndex!], r = hole.diameter / 2, outer = Math.max(hole.counterbore ? hole.counterbore.diameter / 2 : r, r) + Math.max(2, r * 0.6);
+      for (const side of [1, -1]) {
+        out.push({ geometry: new THREE.RingGeometry(r, outer, 48), position: [hole.x, side * (half[1] + lift), hole.z], rotation: planeRotation("y", side) });
+        lines.push(circle(hole.x, side * (half[1] + lift), hole.z, r), circle(hole.x, side * (half[1] + lift), hole.z, outer));
+      }
+      out.push({ geometry: new THREE.CylinderGeometry(r - lift, r - lift, part.size[1], 48, 1, true), position: [hole.x, 0, hole.z] });
+    } else if (feature.kind === "bore" && part.loopSpan === undefined) {
+      const r = feature.dimensions.diameter / 2;
+      out.push({ geometry: new THREE.CylinderGeometry(r - lift, r - lift, part.size[1], 48, 1, true), position: [0, 0, 0] });
+      for (const side of [1, -1]) {
+        out.push({ geometry: new THREE.RingGeometry(r, r + Math.max(1, r * 0.3), 48), position: [0, side * (half[1] + lift), 0], rotation: planeRotation("y", side) });
+        lines.push(circle(0, side * (half[1] + lift), 0, r));
+      }
+    } else if (feature.kind === "outer" && part.loopSpan === undefined) {
+      const r = feature.dimensions.diameter / 2 + lift;
+      out.push({ geometry: new THREE.CylinderGeometry(r, r, part.size[1], 64, 1, true), position: [0, 0, 0] });
+      for (const side of [1, -1]) lines.push(circle(0, side * half[1], 0, r));
+    } else if (feature.kind === "channel") {
+      const c = part.channel!;
+      out.push({ geometry: new THREE.PlaneGeometry(part.size[0], c.width), position: [0, -half[1] + c.depth - lift, 0], rotation: planeRotation("y", -1) });
+      const y = -half[1] + c.depth - lift, w = c.width / 2;
+      lines.push([[-half[0], y, -w], [half[0], y, -w], [half[0], y, w], [-half[0], y, w], [-half[0], y, -w]]);
+    } else if (feature.kind === "face" && feature.axis) {
+      const a = feature.axis, side = feature.side!, i = "xyz".indexOf(a);
+      const position = [0, 0, 0] as Vec3; position[i] = side * (half[i] + lift);
+      const geometry = round ? (part.shape === "tube" && part.holeDiameter && part.loopSpan === undefined && !part.sections
+        ? new THREE.RingGeometry(part.holeDiameter / 2, half[0], 64) : new THREE.CircleGeometry(half[0], 64))
+        : a === "y" ? new THREE.PlaneGeometry(part.size[0], part.size[2]) : a === "x" ? new THREE.PlaneGeometry(part.size[2], part.size[1]) : new THREE.PlaneGeometry(part.size[0], part.size[1]);
+      out.push({ geometry, position, rotation: planeRotation(a, side) });
+      if (round) lines.push(circle(0, position[1], 0, half[0]));
+      else {
+        const [u, v] = [0, 1, 2].filter(k => k !== i), corner = (su: number, sv: number) => { const q = [...position] as Vec3; q[u] = su * half[u]; q[v] = sv * half[v]; return q; };
+        lines.push([corner(-1, -1), corner(1, -1), corner(1, 1), corner(-1, 1), corner(-1, -1)]);
+      }
+    } else {
+      const n = new THREE.Vector3(...target.normal).normalize(), radius = Math.max(2, Math.max(...part.size) * 0.04);
+      out.push({ geometry: new THREE.CircleGeometry(radius, 32), position: new THREE.Vector3(...target.point).addScaledVector(n, lift).toArray() as Vec3,
+        quaternion: new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), n) });
+    }
+    return { out, lines };
+  }, [part, feature.id, feature.kind, feature.label, target.point.join(), target.normal.join()]);
+  useEffect(() => () => shapes.out.forEach(shape => shape.geometry.dispose()), [shapes]);
+  return <group>{shapes.lines.map((points, index) => <Line key={"line-" + index} points={points} color={colors.action} lineWidth={mode === "pinned" ? 3 : 2.5}
+    raycast={NO_RAYCAST} renderOrder={4} transparent depthWrite={false} />)}{shapes.out.map((shape, index) => <mesh key={index} geometry={shape.geometry} position={shape.position} rotation={shape.rotation} quaternion={shape.quaternion}
+    raycast={NO_RAYCAST} renderOrder={3} userData={{ surfaceHighlight: mode }}>
+    <meshBasicMaterial color={colors.action} transparent opacity={mode === "pinned" ? 0.55 : 0.38} side={THREE.DoubleSide} depthWrite={false}
+      polygonOffset polygonOffsetFactor={-2} polygonOffsetUnits={-2} toneMapped={false} />
+  </mesh>)}</group>;
+}
+export interface HoverHit { partId: string; target: SurfaceTarget; x: number; y: number }
+function HoverBridge({ enabled, parts, onHover, picker }: { enabled: boolean; parts: Part[]; onHover: (hit: HoverHit | null) => void; picker: React.MutableRefObject<(() => HoverHit | null) | null> }) {
   const { gl, scene, camera } = useThree();
   const latest = useRef(onHover); latest.current = onHover;
+  const byId = useRef(new Map<string, Part>()); byId.current = new Map(parts.map(part => [part.id, part]));
   useFrame(() => { picker.current?.(); });
   useEffect(() => {
     const canvas = gl.domElement, ray = new THREE.Raycaster(), point = new THREE.Vector2();
@@ -482,7 +566,7 @@ function HoverBridge({ enabled, onHover, picker }: { enabled: boolean; onHover: 
     const clear = () => { pointer = null; latest.current(null); };
     const down = () => { dragging = true; clear(); };
     const up = () => { dragging = false; clear(); };
-    const hit = () => {
+    const hit = (): HoverHit | null => {
       if (!enabled || dragging || !pointer) return null;
       const bounds = canvas.getBoundingClientRect();
       point.set((pointer.x - bounds.left) / bounds.width * 2 - 1, -(pointer.y - bounds.top) / bounds.height * 2 + 1);
@@ -490,8 +574,16 @@ function HoverBridge({ enabled, onHover, picker }: { enabled: boolean; onHover: 
       scene.updateMatrixWorld(true); camera.updateMatrixWorld(true);
       scene.traverseVisible(object => { if ((object as THREE.Mesh).isMesh && typeof object.userData.partId === "string") meshes.push(object); });
       ray.setFromCamera(point, camera);
-      const id = ray.intersectObjects(meshes, false)[0]?.object.userData.partId || null;
-      latest.current(id); return id;
+      // A see-through reference envelope never hides the solid part behind it.
+      const hits = ray.intersectObjects(meshes, false);
+      const intersection = hits.find(item => byId.current.get(item.object.userData.partId)?.role !== "reference") || hits[0];
+      const part = intersection && byId.current.get(intersection.object.userData.partId);
+      if (!intersection || !part || !intersection.face) { latest.current(null); return null; }
+      // Part-local hit point and face normal: the frame of the part's own features.
+      const local = intersection.object.worldToLocal(intersection.point.clone());
+      const result = { partId: part.id, target: surfaceTargetFromHit(part, local.toArray() as Vec3, intersection.face.normal.toArray() as Vec3),
+        x: pointer.x - bounds.left, y: pointer.y - bounds.top };
+      latest.current(result); return result;
     };
     picker.current = hit;
     const move = (event: PointerEvent) => {
@@ -536,27 +628,39 @@ export default function ModelCanvas(props: Props) {
   useEffect(() => { props.onPendingSelectionChange?.(candidates.length > 1); }, [candidates.length, props.onPendingSelectionChange]);
   const [checked, setChecked] = useState<string[]>([]);
   const [focusedCandidate, setFocusedCandidate] = useState<string | null>(null);
-  const [hovered, setHovered] = useState<string | null>(null);
-  const setHover = (id: string | null) => {
-    setHovered(id);
+  const [hover, setHoverState] = useState<HoverHit | null>(null);
+  const hoverKey = useRef(""), hoverLabel = useRef<HTMLSpanElement>(null);
+  const placeLabel = (hit: HoverHit | null) => {
+    const element = hoverLabel.current, width = labelPortal.current?.clientWidth || 0;
+    if (!hit || !element) return;
+    element.style.left = `${hit.x}px`; element.style.top = `${hit.y}px`;
+    element.classList.toggle("is-flipped", hit.x > width - 250);
   };
+  // State changes only when the pointed feature changes; the label follows the pointer directly.
+  const setHover = (hit: HoverHit | null) => {
+    const key = hit ? `${hit.partId}|${hit.target.featureId}|${hit.target.featureId === "surface" ? hit.target.point.join() : ""}` : "";
+    placeLabel(hit);
+    if (key === hoverKey.current) return;
+    hoverKey.current = key; setHoverState(hit);
+  };
+  const hovered = hover?.partId ?? null;
   const dismiss = () => { setCandidates([]); setChecked([]); setFocusedCandidate(null); setSelectionMessage(""); };
   const displayIds = candidates.length ? checked : props.selectedPartIds ?? (props.selected ? [props.selected] : []);
   const [selectionMessage, setSelectionMessage] = useState("");
   const picker = useRef<PolygonPicker>(null);
-  const hoverHit = useRef<(() => string | null) | null>(null);
+  const hoverHit = useRef<(() => HoverHit | null) | null>(null);
   useEffect(() => {
     if (!props.hoverPicker) return;
     props.hoverPicker.current = () => {
       if (!props.hoverEnabled || circleMode || candidates.length || !props.selectionContext) return null;
-      const id = hoverHit.current?.();
-      return id ? { ...props.selectionContext, partIds: [id], source: "hover" } : null;
+      const hit = hoverHit.current?.();
+      return hit ? { ...props.selectionContext, partIds: [hit.partId], source: "hover", surface: hit.target } : null;
     };
     return () => { if (props.hoverPicker) props.hoverPicker.current = null; };
   }, [props.hoverPicker, props.hoverEnabled, circleMode, candidates.length, props.selectionContext?.designId, props.selectionContext?.revision]);
   const animation = useRef<AssemblyFrame>({ progress: props.exploded ? 1 : 0, seconds: 0, poses: new Map() });
   const canSelect = !!(props.onSelect || props.onSelection);
-  const choose = (ids: string[], source: SelectionSource) => {
+  const choose = (ids: string[], source: SelectionSource, surface?: SurfaceTarget) => {
     const existing = [...new Set(ids)].filter(id => props.parts.some(part => part.id === id));
     if (!existing.length) return;
     if (existing.length > 1 && (!props.onSelection || !props.selectionContext)) {
@@ -565,8 +669,27 @@ export default function ModelCanvas(props: Props) {
     setCircleMode(false); setCandidates([]); setChecked([]); setFocusedCandidate(null);
     setSelectionMessage(existing.length === 1 ? `${props.parts.find(part => part.id === existing[0])!.name} selected.` : `${existing.length} parts selected.`);
     props.onSelect?.(existing[0]);
-    if (props.selectionContext) props.onSelection?.({ ...props.selectionContext, partIds: existing, source });
+    if (props.selectionContext) props.onSelection?.({ ...props.selectionContext, partIds: existing, source, ...(surface && existing.length === 1 && surface.partId === existing[0] ? { surface } : {}) });
   };
+  const partById = useMemo(() => new Map(props.parts.map(part => [part.id, part])), [props.parts]);
+  const pinned = useMemo(() => {
+    const surface = props.pointedTarget?.surface, part = surface && partById.get(surface.partId);
+    const shown = part && surface ? displayTarget(part, surface) : null;
+    return part && shown ? { partId: part.id, ...shown, label: `${part.name} · ${shown.feature.label}`, spoken: `${part.name}, ${shown.feature.label}` } : null;
+  }, [props.pointedTarget, partById]);
+  const hoverInfo = useMemo(() => {
+    const part = hover && partById.get(hover.partId);
+    if (!hover || !part) return null;
+    const feature = resolveSurfaceFeature(part, hover.target.point, hover.target.normal);
+    return { ...hover, feature, label: `${part.name} · ${feature.label}`, spoken: `${part.name}, ${feature.label}` };
+  }, [hover, partById]);
+  // A frozen utterance target is the only target drawn while it lasts.
+  const showHover = !!hoverInfo && !props.voiceTarget && !(pinned && pinned.partId === hoverInfo.partId && pinned.feature.id === hoverInfo.feature.id);
+  const [spokenHover, setSpokenHover] = useState("");
+  useEffect(() => {
+    const timer = setTimeout(() => setSpokenHover(hoverInfo?.spoken || ""), 450);
+    return () => clearTimeout(timer);
+  }, [hoverInfo?.spoken]);
   useEffect(() => { setCircleMode(false); setCandidates([]); setChecked([]); setFocusedCandidate(null); setSelectionMessage(""); }, [props.selectionContext?.designId, props.selectionContext?.revision]);
   useEffect(() => {
     setCandidates([]); setChecked([]); setFocusedCandidate(null);
@@ -598,6 +721,8 @@ export default function ModelCanvas(props: Props) {
       role={failed || canSelect ? "region" : "img"}
       data-highlighted-parts={displayIds.join(",")}
       data-hovered-part={hovered || ""}
+      data-hovered-surface={hoverInfo ? `${hoverInfo.partId}:${hoverInfo.feature.id}` : ""}
+      data-pointed-surface={pinned ? `${pinned.partId}:${pinned.feature.id}` : ""}
       data-ready={failed ? "error" : ready ? "true" : "false"}
       aria-busy={!ready && !failed}
       aria-label={
@@ -609,6 +734,9 @@ export default function ModelCanvas(props: Props) {
     >
       <div className="model-canvas-viewport">
       <div ref={labelPortal} className="model-label-layer" style={{ position: "absolute", inset: 0, pointerEvents: "none" }} />
+      {showHover && <span ref={hoverLabel} className={"surface-label is-hover" + (hoverInfo!.x > (labelPortal.current?.clientWidth || 0) - 250 ? " is-flipped" : "")} data-surface-label="hover" aria-hidden="true"
+        style={{ left: hoverInfo!.x, top: hoverInfo!.y }}>{hoverInfo!.label}</span>}
+      <p className="sr-only" aria-live="polite" data-testid="pointing-status">{pinned ? `Pointing at ${pinned.spoken}` : spokenHover ? `Pointer over ${spokenHover}` : ""}</p>
       <CanvasBoundary onFailure={() => setFailed(true)}>
         <Canvas
           shadows={!compact}
@@ -625,7 +753,7 @@ export default function ModelCanvas(props: Props) {
           <AssemblyAnimation parts={props.parts} exploded={!!props.exploded} playing={playing && !circleMode}
             speed={props.speed ?? 1} reduced={reduced} frozen={circleMode} frame={animation} />
           <SelectionBridge picker={picker} />
-          <HoverBridge enabled={!!props.hoverEnabled && !circleMode && !candidates.length} onHover={setHover} picker={hoverHit} />
+          <HoverBridge enabled={!!props.hoverEnabled && !circleMode && !candidates.length} parts={props.parts} onHover={setHover} picker={hoverHit} />
           <FrameSignal parts={parts} onReady={() => setReady(true)} />
           <color attach="background" args={[colors.surface]} />
           <StudioLight />
@@ -658,8 +786,14 @@ export default function ModelCanvas(props: Props) {
                 onSelect={canSelect && !circleMode ? id => choose([id], "click") : undefined}
                 selected={undefined}
                 selectedPartIds={displayIds}
-                focused={focusedCandidate === part.id || (props.voiceTarget?.partIds[0] || hovered) === part.id}
+                focused={focusedCandidate === part.id || (!props.voiceTarget?.surface && (props.voiceTarget?.partIds[0] || (showHover ? null : hovered)) === part.id)}
+                outlined={(props.voiceTarget?.partIds[0] || hovered) === part.id}
                 marker={candidates.includes(part.id) ? candidates.indexOf(part.id) + 1 : undefined}
+                onPick={canSelect && !circleMode && props.onSelection && props.selectionContext ? target => choose([target.partId], "click", target) : undefined}
+                surface={[
+                  ...(showHover && hoverInfo!.partId === part.id ? [{ target: hoverInfo!.target, feature: hoverInfo!.feature, mode: "hover" as const, label: hoverInfo!.label }] : []),
+                  ...(pinned && pinned.partId === part.id ? [{ target: pinned.target, feature: pinned.feature, mode: "pinned" as const, label: pinned.label }] : []),
+                ]}
                 part={part}
               />
             ))}
