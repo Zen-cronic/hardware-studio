@@ -53,6 +53,11 @@ export default function LandingStory({ navigate, still }: { navigate: Navigate; 
             </button>
           </li>)}
         </ol>
+        {/* Without scroll scrubbing (reduced motion, or a still page) the steps advance here; narrow screens show only the current step. */}
+        {!scrubbed && <div className="lp-step-nav" role="group" aria-label="Story steps">
+          <button type="button" className="button small" disabled={step === 0} onClick={() => go(step - 1)}>Previous step</button>
+          <button type="button" className="button small" disabled={step === STEPS.length - 1} onClick={() => go(step + 1)}>Next step</button>
+        </div>}
         <button className="button primary" onClick={() => navigate("/new")}>Try it on the drone <ChevronRight size={18}/></button>
       </div>
       <div className="lp-story-stage" data-step={step}>
