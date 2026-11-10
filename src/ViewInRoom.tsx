@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { AlertCircle, Box, Loader2 } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { tokenFromUrl } from "./lib/api";
 import "./components/room.css";
 
@@ -66,7 +66,7 @@ export default function ViewInRoom({ id }: { id: string }) {
   return (
     <main className="room-page">
       <header className="room-header">
-        <a className="brand" href="/" aria-label="Hardware Studio home"><span className="brand-mark"><Box size={21} strokeWidth={1.5} /></span><span>Hardware Studio</span></a>
+        <a className="brand" href="/" aria-label="Hardware Studio home"><span className="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><circle cx="5" cy="5" r="3.2" /><circle cx="19" cy="5" r="3.2" /><circle cx="5" cy="19" r="3.2" /><circle cx="19" cy="19" r="3.2" /><path d="M7.3 7.3 10 10M16.7 7.3 14 10M7.3 16.7 10 14M16.7 16.7 14 14" /><rect x="9.6" y="9.6" width="4.8" height="4.8" rx="1.2" /></svg></span><span>Hardware Studio</span></a>
         <h1>See it in your room</h1>
       </header>
       {state === "ready" ? <>
