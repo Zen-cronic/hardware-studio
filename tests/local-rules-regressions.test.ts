@@ -48,12 +48,15 @@ describe("group thickness edits", () => {
   it("changes the thin side of parts that are thin along X or Z, not their height", async () => {
     const { store, snapshot } = design(droneParts(), "Camera drone");
     const cheek = face(snapshot, "camera-mount-left", "face+y");
+    // The cheeks are thin along Z (a 3 mm wall); their length and height stay as they are.
+    const [x, y, z] = sizeOf(snapshot.design.customParts, "camera-mount-left");
+    expect(z).toBeLessThan(Math.min(x, y));
     const thick = await propose(store, snapshot, { prompt: "make these mounts 5 mm thick", actor: "Maker", selection: cheek }, "");
     expect(thick.source).toBe("local");
-    expect(sizeOf(thick.command.customParts, "camera-mount-left")).toEqual([20, 24, 5]);
-    expect(sizeOf(thick.command.customParts, "camera-mount-right")).toEqual([20, 24, 5]);
+    expect(sizeOf(thick.command.customParts, "camera-mount-left")).toEqual([x, y, 5]);
+    expect(sizeOf(thick.command.customParts, "camera-mount-right")).toEqual([x, y, 5]);
     const stiffer = await propose(store, snapshot, { prompt: "make both mounts stiffer", actor: "Maker", selection: cheek }, "");
-    expect(sizeOf(stiffer.command.customParts, "camera-mount-left")).toEqual([20, 24, 4.5]);
+    expect(sizeOf(stiffer.command.customParts, "camera-mount-left")).toEqual([x, y, Math.round(z * 1.5 * 2) / 2]);
 
     const panel = (id: string, x: number): Part => ({ id, name: `Side panel, ${id}`, shape: "box", size: [3, 60, 80], position: [x, 30, 0], color: "#808080", material: "PETG", process: "print" });
     const panels = design([panel("left", -50), panel("right", 50)]);

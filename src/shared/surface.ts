@@ -3,12 +3,13 @@ import type { SemanticEdit } from "./selection";
 
 // Surface targeting resolves a pointer hit on one rendered part to a feature
 // that the part model actually declares: a numbered hole, a tube bore, an
-// underside channel, a named planar face or a cylindrical outer surface.
+// underside channel, a named planar face, a cylindrical outer surface, the
+// rounded edges of a rounded box or the curved surface of an ellipsoid.
 // Anything else falls back to "face with normal ... near (x, y, z) mm".
 // Coordinates are part-local millimetres of the derived (scaled) part, the
 // same frame used to render the mesh. Holes run along local Y.
 
-export type SurfaceFeatureKind = "hole" | "bore" | "face" | "outer" | "channel" | "surface";
+export type SurfaceFeatureKind = "hole" | "bore" | "face" | "outer" | "channel" | "edge" | "surface";
 export interface SurfaceTarget {
   partId: string;
   featureId: string;
@@ -81,6 +82,15 @@ function outerFeature(part: Part, diameter: number): SurfaceFeature {
   return { id: "outer", kind: "outer", label: part.loopSpan !== undefined ? "outer loop surface" : `outer surface Ø${formatMm(diameter)} mm`,
     short: part.loopSpan !== undefined ? "outer loop surface" : "outer surface", dimensions: { diameter: clean(diameter, 3), length: clean(part.size[1], 3) } };
 }
+function edgeFeature(part: Part): SurfaceFeature {
+  const r = part.edgeRadius!;
+  return { id: "edge", kind: "edge", label: `rounded edge, ${formatMm(r)} mm radius`, short: "rounded edge", dimensions: { radius: clean(r, 3) } };
+}
+function ellipsoidFeature(part: Part): SurfaceFeature {
+  const [d, h] = part.size, ball = Math.abs(d - h) < 1e-6;
+  return { id: "outer", kind: "outer", label: ball ? `ball surface Ø${formatMm(d)} mm` : `rounded surface Ø${formatMm(d)} × ${formatMm(h)} mm`,
+    short: ball ? "ball surface" : "rounded surface", dimensions: { diameter: clean(d, 3), length: clean(h, 3) } };
+}
 function channelFeature(part: Part): SurfaceFeature {
   const c = part.channel!;
   return { id: "channel", kind: "channel", label: `underside channel ${formatMm(c.width)} mm wide`, short: "underside channel",
@@ -129,10 +139,13 @@ export function resolveSurfaceFeature(part: Part, point: Vec3, normal: Vec3): Su
       return channelFeature(part);
     const candidates = ([0, 1, 2] as const).filter(axis => Math.abs(Math.abs(point[axis]) - half[axis]) <= tol);
     const axis = candidates.length ? candidates.reduce((best, a) => Math.abs(normal[a]) > Math.abs(normal[best]) ? a : best) : dominantAxis(normal);
+    // A rounded box is flat only inside its fillets; anything else is the rounded edge.
+    if (part.edgeRadius) return candidates.includes(axis) && Math.abs(normal[axis]) >= 0.98 ? faceFeature(part, axis, point[axis] >= 0 ? 1 : -1) : edgeFeature(part);
     if (!candidates.length && Math.abs(normal[axis]) < 0.9) return fallbackFeature(point, normal);
     const side: 1 | -1 = candidates.includes(axis) ? (point[axis] >= 0 ? 1 : -1) : (normal[axis] >= 0 ? 1 : -1);
     return faceFeature(part, axis, side);
   }
+  if (part.shape === "ellipsoid") return ellipsoidFeature(part);
   if (part.loopSpan !== undefined) {
     const dx = Math.max(0, Math.abs(x) - part.loopSpan / 2), r = Math.hypot(dx, z);
     if (ny >= 0.5 && (onCap(1) || onCap(-1))) return faceFeature(part, 1, y >= 0 ? 1 : -1);
@@ -176,6 +189,9 @@ function representative(part: Part, feature: SurfaceFeature): SurfaceTarget | nu
     tries.push(part.loopSpan !== undefined ? { point: [0, 0, r], normal: [0, 0, 1] } : { point: [r, 0, 0], normal: [1, 0, 0] });
   } else if (feature.kind === "channel") {
     tries.push({ point: [0, -half[1] + part.channel!.depth, 0], normal: [0, -1, 0] });
+  } else if (feature.kind === "edge") {
+    const r = part.edgeRadius!, c = Math.SQRT1_2;
+    tries.push({ point: [half[0] - r + r * c, half[1] - r + r * c, 0], normal: [c, c, 0] });
   } else if (feature.kind === "face") {
     const a = AXES.indexOf(feature.axis!), others = [0, 1, 2].filter(i => i !== a);
     for (const u of [0, 0.35, -0.35, 0.7, -0.7]) for (const v of [0, 0.35, -0.35, 0.7, -0.7]) {
@@ -201,6 +217,9 @@ export function partFeatures(part: Part): { feature: SurfaceFeature; target: Sur
     const order: [0 | 1 | 2, 1 | -1][] = [[0, 1], [0, -1], [1, 1], [1, -1], [2, 1], [2, -1]];
     for (const [axis, side] of order) list.push(faceFeature(part, axis, side));
     if (part.channel) list.push(channelFeature(part));
+    if (part.edgeRadius) list.push(edgeFeature(part));
+  } else if (part.shape === "ellipsoid") {
+    list.push(ellipsoidFeature(part));
   } else {
     const middle = sectionAt(part, 0);
     if (part.shape === "tube" && (middle.bore > 0 || part.loopSpan !== undefined))
@@ -290,6 +309,7 @@ const NOUN_KINDS: Record<string, (feature: SurfaceFeature) => boolean> = {
   top: f => f.kind === "face" && f.axis === "y" && f.side === 1,
   bottom: f => f.kind === "face" && f.axis === "y" && f.side === -1,
   side: f => (f.kind === "face" && f.short.includes("side")) || f.kind === "outer",
+  edge: f => f.kind === "edge",
 };
 
 /** Returns a clarification when the request names a feature other than the pointed one. */
@@ -298,7 +318,7 @@ export function surfaceConflict(prompt: string, target: ResolvedSurfaceTarget): 
   const { numbers } = namedHoles(text);
   for (const n of numbers) if (feature.kind !== "hole" || n !== feature.holeIndex! + 1)
     return `You pointed at ${target.label}, but the request names hole ${n}. Point at the hole you mean, or clear the pointer and name it.`;
-  for (const match of text.matchAll(/\b(this|that)\s+(hole|bore|channel|slot|end|top|bottom|side)\b/g)) {
+  for (const match of text.matchAll(/\b(this|that)\s+(hole|bore|channel|slot|end|top|bottom|side|edge)\b/g)) {
     if (!NOUN_KINDS[match[2]](feature))
       return `You pointed at ${target.label}, but the request says “${match[0]}”. Point at the feature you mean, or clear the pointer and describe it.`;
   }

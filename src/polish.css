@@ -1,0 +1,144 @@
+/* Polish pass, loaded last.
+   Blue has one job: light blue marks your main action. A selected tab or segment is a neutral
+   raised fill. Every disclosure opens with a chevron on the right. Body copy reads at body size. */
+
+/* Line breaks: no one-word last lines in copy, balanced headings */
+:root h1, :root h2, :root h3 {text-wrap:balance;}
+:root p {text-wrap:pretty;}
+:root .new-ask>p, :root .lp-sub, :root .browse-heading p, :root .lp-closing p {text-wrap:balance;}
+
+/* Selected tabs and segments */
+:root .button.selected, :root .button[aria-pressed=true], :root .button.primary[aria-pressed=true],
+:root .filter-tabs button.selected, :root .workspace-tabs button.active, :root .development-tabs button.active,
+:root .studio-more-panel .workspace-tabs button.active, :root .studio-viewer-toolbar>.button.selected,
+:root .studio-viewer-toolbar>.button[aria-label="Pause mechanism"], :root .studio-viewer-toolbar>.button.primary,
+:root .landing-size-buttons .button[aria-pressed=true], :root .landing-output-options .button[aria-pressed=true],
+:root .scene-mode .button.primary, :root .studio-more>.button.selected, :root .mobile-editor-switch button.active {
+  background:var(--surface-hover);color:var(--text);border:1px solid var(--muted);border-radius:10px;
+}
+:root .filter-tabs button, :root .workspace-tabs button, :root .development-tabs button {border-radius:10px;}
+:root .filter-tabs button.selected, :root .workspace-tabs button.active, :root .development-tabs button.active {font-weight:600;}
+:root .workspace-tabs button.active::after, :root .development-tabs button.active::after {display:none;}
+
+/* Labels, titles and step numbers are not actions, so they are not blue */
+:root .eyebrow {color:var(--muted);}
+:root .judge-steps .step-number {color:var(--text);}
+:root .proof-how>summary {color:var(--text);}
+:root .landing-build-sheet>header strong {color:var(--text);}
+
+/* Error messages stay readable on the dark page */
+:root .error, :root p.error, :root p.lp-error, :root .workspace-alert.error, :root p[role=alert]:not(.room-status) {color:var(--danger);}
+
+/* Hover keeps AA contrast */
+:root .landing-page .button.primary:hover, :root .site-header>.button:hover, :root .site-header.landing-header>.button:hover,
+:root .studio-header .button.primary:hover, :root .hero-copy>.button.primary:hover {
+  background:var(--primary-hover);color:var(--on-primary);border-color:var(--primary-hover);
+}
+:root .landing-page .button:not(.primary):hover, :root .studio-header .button:not(.primary):hover {
+  background:var(--surface-hover);color:var(--text);border-color:var(--border);
+}
+
+/* The build button stands apart from the blue prompt panel */
+:root .lp-prompt .lp-build {border:1px solid var(--primary);box-shadow:0 0 0 2px var(--on-primary);}
+:root .lp-prompt .lp-build:hover {border-color:var(--primary-hover);}
+:root .lp-field textarea::placeholder {text-wrap:balance;}
+
+/* One disclosure pattern: label on the left, chevron on the right that turns when open */
+:root details>summary:not(.button) {list-style:none;display:flex;align-items:center;gap:8px;cursor:pointer;}
+:root details>summary:not(.button)::-webkit-details-marker {display:none;}
+:root details>summary:not(.button)::before {content:none;display:none;}
+:root details>summary:not(.button)::after {
+  content:"";flex:none;margin-left:auto;width:7px;height:7px;border:0;
+  border-right:2px solid currentColor;border-bottom:2px solid currentColor;
+  transform:translateY(-2px) rotate(45deg);transition:transform .16s var(--ease);color:var(--muted);
+}
+:root details[open]>summary:not(.button)::after {transform:translateY(2px) rotate(-135deg);}
+:root .history-panel>summary::after, :root .parts-disclosure>summary::after, :root .engineering-notes>summary::after {font-size:0;}
+:root .lp-how summary::before, :root .proof-card summary::before, :root .agent-outcomes summary::before {content:none;display:none;}
+:root .lp-how summary {justify-content:flex-start;}
+:root .lp-how summary::after {margin-left:12px;}
+
+/* Studio drawer and change card: body size and contrast */
+:root .parameter>small {font-size:var(--s-base);line-height:1.45;color:var(--muted);}
+:root .proposal p, :root .proposal .proposal-summary {font-size:var(--s-base);line-height:1.5;color:var(--text);}
+:root .proposal .proposal-target {color:var(--muted);}
+:root .proposal dl dt {font-size:var(--s-base);color:var(--text);}
+:root .left-panel .subtle, :root .right-panel .subtle {font-size:var(--s-base);}
+:root .engineering-notes p, :root .metric-list span {font-size:var(--s-base);}
+
+/* The strength check sits flat inside the change card, under a divider, not as a card in a card */
+:root .proposal .check-result, :root .proposal .check-result[data-verdict] {
+  background:transparent!important;border:0!important;border-top:1px solid var(--line)!important;
+  border-radius:0!important;padding:16px 0 0!important;margin-top:4px;
+}
+:root .proposal .check-result details p, :root .proposal .check-numbers {font-size:var(--s-base);}
+:root .proposal .check-result .check-verdict {color:var(--success);}
+:root .proposal .check-result[data-verdict="worse"] .check-verdict {color:var(--danger);}
+:root .proposal .check-result:is([data-verdict="unknown"], [data-verdict="preliminary"], [data-verdict="mixed"], [data-verdict="unchanged"], [data-verdict="not_comparable"], [data-verdict="incomplete"]) .check-verdict {color:var(--warning);}
+
+/* Development page: the studio's top bar */
+:root .development-header {
+  display:flex;flex-direction:row;align-items:center;gap:10px;height:64px;min-height:64px;padding:0 14px;
+  margin:0 calc(-1 * var(--page-inset));max-width:none;background:var(--bg);border-bottom:1px solid var(--line);
+}
+:root .development-header>div {display:flex;align-items:baseline;gap:12px;min-width:0;}
+:root .development-header h1 {margin:0;font-size:var(--s-xl);font-weight:780;letter-spacing:-.015em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+:root .development-header p {margin:0;font-size:var(--s-sm);color:var(--muted);white-space:nowrap;}
+:root .development-header .development-brand {width:44px;height:44px;display:inline-grid;place-items:center;color:var(--primary);background:transparent;border:0;padding:0;}
+:root .development-header .button.quiet {min-height:40px;color:var(--muted);}
+:root .development-header .button.quiet:hover {color:var(--text);background:var(--surface);}
+:root .development-tabs {padding-top:14px;}
+@media (max-width:820px) {
+  :root .development-header {height:60px;min-height:60px;padding:0 8px;gap:6px;}
+  :root .development-header .button.quiet {font-size:0;gap:0;min-width:44px;min-height:44px;justify-content:center;}
+  :root .development-header h1 {font-size:var(--s-base);}
+}
+
+/* Five-step guide page: separate step cards, one main action, footer on the content edge */
+:root .judge-steps {display:grid;gap:8px;}
+:root .guide-values td, :root .guide-values td:last-child {color:var(--text);}
+:root .judge-page + .site-footer {padding-left:calc(max(0px, (100% - 1200px) / 2) + 5.5%);padding-right:calc(max(0px, (100% - 1200px) / 2) + 5.5%);}
+:root .site-header:has(+ .judge-page)>.button {background:var(--surface);color:var(--text);border-color:var(--border);}
+:root .site-header:has(+ .judge-page)>.button:hover {background:var(--surface-hover);color:var(--text);border-color:var(--muted);}
+
+/* /browse: the filters line up with the heading */
+:root .catalog-page .collection-toolbar {padding-left:0;padding-right:0;background:transparent;}
+
+/* Development helper text at body size */
+:root .development-controls p, :root .development-controls .subtle {font-size:var(--s-base);}
+
+/* Landing gallery: full rows at every width */
+@media (min-width:1001px) {
+  :root .landing-example-list {grid-template-columns:repeat(6,minmax(0,1fr));}
+  :root .landing-example-list>.lp-example-extra {grid-column:span 3;}
+  :root .landing-example-list>.landing-example:nth-child(n) {grid-column:span 2;}
+}
+
+/* Phone studio: the view tools sit in a rail beside the model on the Model tab, and leave on the
+   Dimensions and Change tabs, so only the assistant bar and the tab bar stack under the model */
+@media (max-width:820px) {
+  :root .mobile-editor-switch button {border-radius:10px;}
+  :root .mobile-editor-switch button.active {font-weight:600;}
+  :root .studio-main.is-design:not(.mobile-canvas) .studio-viewer-toolbar {display:none;}
+  :root .studio-main.is-design.mobile-canvas>.scene-panel>.model-canvas>.model-canvas-viewport {margin-right:58px;}
+  :root .studio-main.is-design.mobile-canvas .studio-viewer-toolbar {
+    position:absolute;top:60px;right:12px;left:auto;bottom:auto;transform:none;width:52px;
+    flex-direction:column;align-items:stretch;gap:2px;padding:4px;margin:0;
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;z-index:4;
+  }
+  :root .studio-main.is-design.mobile-canvas .studio-viewer-toolbar>.button {min-width:44px;min-height:44px;padding:0;justify-content:center;}
+  :root .studio-main.is-design.mobile-canvas .studio-viewer-toolbar>.button>span {position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;}
+  :root .studio-main.is-design.mobile-canvas .studio-viewer-toolbar .speed-control {display:flex;}
+  :root .studio-main.is-design.mobile-canvas .studio-viewer-toolbar .speed-control select {
+    width:44px;min-height:44px;padding:0;text-align:center;text-align-last:center;background-image:none!important;border-color:transparent;
+  }
+}
+
+/* Phone Assemble and Build: a Model / Steps / Details switch under the model opens each panel */
+@media (max-width:820px) {
+  :root .studio-main:not(.is-design) {grid-template-rows:auto auto auto;}
+  :root .studio-main:not(.is-design)>.mobile-panel-switch {display:flex;grid-row:2;grid-column:1/-1;align-self:start;height:auto;}
+  :root .studio-main:not(.is-design)>.left-panel, :root .studio-main:not(.is-design)>.right-panel {grid-row:3;grid-column:1/-1;}
+  :root .studio-main:not(.is-design):not(.left-panel-collapsed)>.left-panel {display:block;}
+  :root .studio-main:not(.is-design).right-panel-collapsed>.right-panel {display:none;}
+}

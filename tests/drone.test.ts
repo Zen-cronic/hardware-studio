@@ -18,8 +18,15 @@ describe("camera drone starter", () => {
     expect(parts.filter(p => /^motor-(front|rear)/.test(p.id))).toHaveLength(4);
     expect(count("prop-")).toBe(4);
     expect(count("leg-")).toBe(4);
-    expect(parts.filter(p => p.id.endsWith("-plate"))).toHaveLength(2);
-    for (const id of ["battery", "flight-controller", "camera-mount-left", "camera-mount-right"]) expect(parts.some(p => p.id === id)).toBe(true);
+    expect(parts.filter(p => p.id.endsWith("-plate"))).toHaveLength(1);
+    for (const id of ["battery", "flight-controller", "camera-mount-left", "camera-mount-right", "camera", "camera-lens", "status-light"]) expect(parts.some(p => p.id === id)).toBe(true);
+    // A low rounded body the arms tuck under, not a box stacked on top: a hollow printed shell, the battery behind it.
+    const shell = parts.find(p => p.id === "body-shell")!, battery = parts.find(p => p.id === "battery")!, arm = parts.find(p => p.id === "arm-front-right")!;
+    expect(shell).toMatchObject({ shape: "box", edgeRadius: 12, wall: 2, process: "print" });
+    expect(shell.position[1] - shell.size[1] / 2).toBeCloseTo(arm.position[1] + arm.size[1] / 2, 6);
+    expect(battery.position[0] + battery.size[0] / 2).toBeCloseTo(shell.position[0] - shell.size[0] / 2, 6);
+    expect(battery.position[1] - battery.size[1] / 2).toBeCloseTo(shell.position[1] - shell.size[1] / 2, 6);
+    expect(parts.find(p => p.id === "camera")).toMatchObject({ shape: "ellipsoid", size: [26, 26, 26] });
     // Bought parts, never reference envelopes: they belong in the parts list and the in-room model.
     expect(parts.filter(p => p.id.startsWith("prop-") || /^motor-(front|rear)/.test(p.id) || p.id === "battery" || p.id === "flight-controller")
       .every(p => p.process === "buy" && p.role !== "reference")).toBe(true);
@@ -44,6 +51,15 @@ describe("camera drone starter", () => {
       // Every hole is a pointable feature of the arm.
       expect(partFeatures(arm).filter(f => f.feature.kind === "hole")).toHaveLength(5);
     }
+  });
+
+  it("offers ducted propellers as a variant with the same arms and motors", () => {
+    const ducted = droneParts({ ducts: true }), open = droneParts();
+    expect(ducted.filter(p => p.id.startsWith("duct-"))).toHaveLength(4);
+    expect(open.some(p => p.id.startsWith("duct-"))).toBe(false);
+    for (const id of DRONE_ARM_IDS) expect(ducted.find(p => p.id === id)).toEqual(open.find(p => p.id === id));
+    const d = { ...createDesign("custom", "Camera drone", ducted), id: "ducted", createdAt: "", updatedAt: "" };
+    validateDesign(d);
   });
 
   it("thickens the arms 4 to 6 mm through a spoken-style edit and through the version helper", () => {

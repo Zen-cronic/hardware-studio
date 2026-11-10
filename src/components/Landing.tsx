@@ -23,8 +23,13 @@ export default function Landing({ navigate }: { navigate: Navigate }) {
     <section className="lp-barrier" aria-labelledby="lp-barrier-title">
       <h2 id="lp-barrier-title">Most design tools make you learn the tool first.</h2>
       <div>
-        <p>Here you point at the part and say what you want. The assistant changes the 3D model, checks it, and you decide what to keep.</p>
-        <p className="lp-who">For makers, students and small hardware teams. Today it designs desk arms, turntables, sliders, conveyors, lamps, planters and holders. It designs and checks the parts; you print, cut or order them yourself.</p>
+        <p>Here you point at the part and say what you want. The assistant names the part back, proposes the change in numbers, and runs the same strength test before and after, under the same load. You decide what to keep.</p>
+        <p className="lp-who">For makers, students and small hardware teams. Today it starts from a camera drone, a desk arm and six other working designs. It designs and checks the parts; you print, cut or order them yourself.</p>
+        <details className="lp-how">
+          <summary>How we checked</summary>
+          <p>Under the same 1 kgf (9.8 N) peak motor thrust, upward at the motor end, Arm, front right bends 70% less (1.19 mm to 0.36 mm) and its typical stress drops 52%.</p>
+          <p>It is a strength simulation of the one arm, held where it meets the frame, refined until the result stopped changing. Holding the arm fully fixed at the frame is a simplification.</p>
+        </details>
       </div>
     </section>
     <LandingPanels navigate={navigate} still={still}/>
@@ -128,7 +133,6 @@ function TurntableSection({ navigate }: { navigate: Navigate }) {
       <section className="landing-hero" ref={hero} aria-labelledby="landing-turntable-title" data-chapter={chapter}>
         <LandingScene parts={current.parts} playing={moving} separated={separated} manual={manual} reduced={reduced} progress={progress} diameter={diameter} onAssembly={setReportedAssembly}/>
         <div className="landing-copy">
-          <span className="landing-product-label">Try it yourself: motorized turntable</span>
           <h2 id="landing-turntable-title">{chapter === 0 ? "Change one size. Everything follows." : chapter === 1 ? "Inside the mechanism." : "Connected dimensions."}</h2>
           <p className="landing-intro">{chapter === 0 ? "A real, working design. Look inside, then pick a size and watch the base follow." : chapter === 1 ? "Follow the motor, shaft and rotating platter." : "A wider platter needs a wider base. Choose a size and see both change."}</p>
           <div className="landing-actions"><button className="button primary" data-testid="landing-try" onClick={() => navigate("/designs/turntable")}>Try the turntable <ChevronRight size={18}/></button>{chapter === 0 && <button className="button action-secondary" data-testid="landing-browse" onClick={() => navigate("/browse")}>Browse designs</button>}</div>

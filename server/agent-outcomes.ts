@@ -11,7 +11,7 @@ function canonical(value: unknown): string {
   return "{" + Object.entries(value).filter(([, v]) => v !== undefined).sort(([a], [b]) => a.localeCompare(b)).map(([k, v]) => JSON.stringify(k) + ":" + canonical(v)).join(",") + "}";
 }
 const holeFields = (part: Part) => ({ shape: part.shape, holes: part.holes, holeDiameter: part.holeDiameter,
-  sections: part.sections, loopSpan: part.loopSpan });
+  sections: part.sections, loopSpan: part.loopSpan, edgeRadius: part.edgeRadius, wall: part.wall });
 export interface RecordedOperationRow { command_id: string; command: string; before_snapshot: string; result: string }
 export function projectAgentOutcomes(input: {
   versionId: string; proposedDesignId: string; proposedRevision: number; status: VersionOutcomes["status"];

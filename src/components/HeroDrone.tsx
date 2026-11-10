@@ -1,10 +1,10 @@
 import { Component, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { ContactShadows, Edges } from "@react-three/drei";
+import { Edges } from "@react-three/drei";
 import * as THREE from "three";
-import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
-import { featuredGeometry } from "../lib/partGeometry";
-import { bladeGeometry, discTexture, twillTexture } from "../lib/droneLook";
+import { featuredGeometry, hasCreases, needsFeaturedGeometry } from "../lib/partGeometry";
+import { bladeGeometry, boxProjectUv, discTexture, finishFor, finishMaterial, isCarbonFibre, twillTexture } from "../lib/droneLook";
+import { StageEnvironment, StageGround, StageLights } from "./StudioStage";
 import { colors } from "../lib/tokens";
 import type { Part, Vec3 } from "../shared/types";
 
@@ -12,23 +12,11 @@ import type { Part, Vec3 } from "../shared/types";
 // It renders the real starter parts with finishes that match their declared materials.
 // `still` draws one settled pose and stops, for captures and reduced motion.
 
-function StudioEnvironment() {
-  const { gl, scene } = useThree();
-  useEffect(() => {
-    const pmrem = new THREE.PMREMGenerator(gl);
-    const map = pmrem.fromScene(new RoomEnvironment(), 0.04);
-    scene.environment = map.texture; scene.environmentIntensity = 0.6;
-    pmrem.dispose();
-    return () => { scene.environment = null; map.dispose(); };
-  }, [gl, scene]);
-  return null;
-}
-
 type Kind = "carbon" | "motor" | "prop" | "alu" | "pcb" | "battery" | "camera" | "tpu" | "other";
 function kindOf(part: Part): Kind {
   const m = part.material || "";
   if (/^prop-/.test(part.id)) return "prop";
-  if (/carbon fib/i.test(m)) return "carbon";
+  if (isCarbonFibre(m)) return "carbon";
   if (/^motor-mount/.test(part.id)) return "tpu";
   if (/^motor-/.test(part.id)) return "motor";
   if (/^prop-/.test(part.id)) return "prop";
@@ -40,24 +28,9 @@ function kindOf(part: Part): Kind {
   return "other";
 }
 
+// Finishes come from the shared render kit, so the studio and this stage agree.
 function materialFor(part: Part, twill: THREE.Texture): THREE.MeshPhysicalMaterial {
-  const k = kindOf(part);
-  if (k === "carbon") {
-    const map = twill.clone(); map.needsUpdate = true;
-    map.repeat.set(Math.max(1, part.size[0] / 14), Math.max(1, part.size[2] / 14));
-    return new THREE.MeshPhysicalMaterial({ color: "#ffffff", map, roughnessMap: map, metalness: 0.12, roughness: 0.55, clearcoat: 0.5, clearcoatRoughness: 0.3 });
-  }
-  const spec: Record<Exclude<Kind, "carbon">, THREE.MeshPhysicalMaterialParameters> = {
-    motor: { color: "#15181d", metalness: 0.75, roughness: 0.3 },
-    prop: { color: "#2b3542", metalness: 0.1, roughness: 0.22, clearcoat: 1, transparent: true, opacity: 0.88 },
-    alu: { color: "#b9c3ce", metalness: 0.92, roughness: 0.26 },
-    pcb: { color: "#22513b", metalness: 0.2, roughness: 0.5 },
-    battery: { color: "#202429", metalness: 0.1, roughness: 0.6 },
-    camera: { color: "#111317", metalness: 0.45, roughness: 0.28 },
-    tpu: { color: "#1a1d22", metalness: 0.05, roughness: 0.62 },
-    other: { color: part.color, metalness: 0.1, roughness: 0.5 },
-  };
-  return new THREE.MeshPhysicalMaterial(spec[k]);
+  return finishMaterial(finishFor(part), twill);
 }
 
 const copper = new THREE.MeshStandardMaterial({ color: "#b8733f", metalness: 0.95, roughness: 0.3 });
@@ -67,9 +40,10 @@ const lens = new THREE.MeshPhysicalMaterial({ color: "#0b1626", metalness: 0.2, 
 
 function geometryFor(part: Part) {
   if (kindOf(part) === "prop") return bladeGeometry(part.size[0], part.size[2]);
-  if (part.holes?.length || part.shape === "tube" || part.channel || part.sections) return featuredGeometry(part, false);
-  if (part.shape === "box") return new THREE.BoxGeometry(...part.size);
-  return new THREE.CylinderGeometry(part.size[0] / 2, part.size[0] / 2, part.size[1], 48);
+  const geometry = needsFeaturedGeometry(part) ? featuredGeometry(part, false)
+    : part.shape === "box" ? new THREE.BoxGeometry(...part.size) : new THREE.CylinderGeometry(part.size[0] / 2, part.size[0] / 2, part.size[1], 48);
+  // Millimetre texture coordinates, so the weave has the same scale on every carbon part.
+  return kindOf(part) === "carbon" ? boxProjectUv(geometry) : geometry;
 }
 
 type Hover = (part: Part | null, x?: number, y?: number) => void;
@@ -110,14 +84,14 @@ function PartMesh({ part, twill, disc, still, highlighted, dimmed, offset, onHov
   }
   return <group ref={holder} position={home} rotation={[rot[0], rot[1], rot[2]]}>
     <mesh geometry={geometry} material={material} castShadow receiveShadow {...events}>
-      {highlighted && <Edges threshold={20} color={colors.primary} lineWidth={2}/>}
+      {highlighted && hasCreases(part) && <Edges threshold={20} color={colors.primary} lineWidth={2}/>}
     </mesh>
     {kindOf(part) === "motor" && !dimmed && <mesh position={[0, -part.size[1] / 2 + 3, 0]} material={copper}><cylinderGeometry args={[part.size[0] / 2 - 1.2, part.size[0] / 2 - 1.2, 4, 48]}/></mesh>}
-    {kindOf(part) === "battery" && !dimmed && <>
+    {kindOf(part) === "battery" && !part.edgeRadius && !dimmed && <>
       <mesh position={[part.size[0] * 0.28, 0, 0]} material={band}><boxGeometry args={[4, part.size[1] + 0.4, part.size[2] + 0.4]}/></mesh>
       <mesh material={strap}><boxGeometry args={[14, part.size[1] + 1.6, part.size[2] + 1.6]}/></mesh>
     </>}
-    {kindOf(part) === "camera" && !dimmed && <mesh position={[part.size[0] / 2 + 1.5, 0, 0]} rotation={[0, 0, Math.PI / 2]} material={lens}><cylinderGeometry args={[6.5, 7.5, 4, 40]}/></mesh>}
+    {kindOf(part) === "camera" && part.shape === "box" && !dimmed && <mesh position={[part.size[0] / 2 + 1.5, 0, 0]} rotation={[0, 0, Math.PI / 2]} material={lens}><cylinderGeometry args={[6.5, 7.5, 4, 40]}/></mesh>}
   </group>;
 }
 
@@ -129,6 +103,7 @@ function Drone({ parts, still, exploded, highlight, dimOthers, idle, onHover, on
   const { camera, size } = useThree();
   const probe = useMemo(() => new THREE.Vector3(), []);
   const twill = useMemo(twillTexture, []), disc = useMemo(discTexture, []);
+  useEffect(() => () => { twill.dispose(); disc.dispose(); }, [twill, disc]);
   const group = useRef<THREE.Group>(null);
   const offset = useRef(exploded ? 1 : 0), frames = useRef(0);
   const { invalidate } = useThree();
@@ -190,6 +165,14 @@ export function DroneStage({ parts, still, exploded = false, highlight = [], dim
 }) {
   const [hover, setHover] = useState<{ name: string; x: number; y: number } | null>(null);
   const [ready, setReady] = useState(false), [visible, setVisible] = useState(true);
+  // Every stage, including the phone frame, holds one settled pose when motion is reduced.
+  const [reduced, setReduced] = useState(() => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches);
+  useEffect(() => {
+    if (typeof matchMedia !== "function") return;
+    const q = matchMedia("(prefers-reduced-motion: reduce)"), on = () => setReduced(q.matches);
+    q.addEventListener("change", on); return () => q.removeEventListener("change", on);
+  }, []);
+  still = still || reduced;
   const host = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!host.current) return;
@@ -206,17 +189,12 @@ export function DroneStage({ parts, still, exploded = false, highlight = [], dim
       frameloop={live ? "always" : "demand"}
       onCreated={({ camera: c }) => c.lookAt(...target)}
       onPointerMissed={() => setHover(null)}>
-      <StudioEnvironment/>
+      <StageEnvironment intensity={0.7}/>
       {fitWidth && <FitWidth camera={camera} target={target}/>}
-      <ambientLight intensity={0.15}/>
-      <directionalLight position={[220, 420, 260]} intensity={2.1} castShadow shadow-mapSize={[1024, 1024]}
-        shadow-camera-left={-260} shadow-camera-right={260} shadow-camera-top={260} shadow-camera-bottom={-260}/>
-      <directionalLight position={[-320, 160, -260]} intensity={2.0} color={colors.primary}/>
-      <directionalLight position={[300, 60, -200]} intensity={0.5}/>
+      <StageLights extent={240}/>
       <Drone parts={parts} still={still} exploded={exploded} highlight={highlight} dimOthers={dimOthers} idle={idle} assistant={assistant} agentEl={agentEl} onReady={() => setReady(true)}
         onHover={hoverLabels ? (part, x, y) => setHover(part ? { name: part.name, x: x ?? 0, y: y ?? 0 } : null) : undefined}/>
-      {floor && <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -34.5, 0]} receiveShadow><circleGeometry args={[260, 64]}/><meshStandardMaterial color="#1d2633" roughness={0.9} transparent opacity={0.85}/></mesh>}
-      <ContactShadows position={[0, -34, 0]} scale={520} far={120} blur={2.6} opacity={0.6} resolution={512} color="#000000" frames={live ? Infinity : 1}/>
+      <StageGround y={-30} radius={floor ? 300 : 260} live={live} opacity={0.7}/>
     </Canvas>
     {assistant && <span ref={agentEl} className="hero-agent-anchor" aria-hidden="true"><span className={"hero-agent" + (still ? " is-still" : "")}><i/><b>{assistant.label}</b></span></span>}
     {hover && <span className="hero-drone-label" style={{ left: hover.x, top: hover.y }} aria-hidden="true"><i/>Pointing at: {hover.name}</span>}

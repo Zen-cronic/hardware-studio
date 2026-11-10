@@ -131,7 +131,7 @@ test.describe("desktop", () => {
     expect(sent[0].selection).toMatchObject({ partIds: ["upper-arm"], source: "click", surface: { partId: "upper-arm", featureId: "hole-0" } });
     expect(sent[0].selection.surface.point).toHaveLength(3); expect(sent[0].selection.surface.normal).toHaveLength(3);
     await expect(review.getByTestId("proposal-target")).toHaveText("Applied to: Upper arm link, Ø6.4 mm hole 1");
-    await expect(review).toContainText("hole 1 diameter → 8 mm");
+    await expect(review).toContainText(/Upper arm link: hole 1, [\d.]+ → 8 mm across/);
     await expect(page.locator(".model-canvas")).toHaveAttribute("data-pointed-surface", "upper-arm:hole-0");
     await capture(page, "proposal-applied-to", hole);
     expect((await partsOf(request, created)).revision).toBe(0);
@@ -237,7 +237,7 @@ test.describe("phone", () => {
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.getByTestId("propose-change").click();
     await expect(page.getByTestId("proposal-target")).toHaveText("Applied to: Lower arm link, top face");
-    await expect(page.getByRole("region", { name: "Proposed change" })).toContainText("local Y dimension → 6 mm");
+    await expect(page.getByRole("region", { name: "Proposed change" })).toContainText(/Lower arm link: [\d.]+ → 6 mm thick/);
     await capture(page, "mobile-proposal");
     expect(errors).toEqual([]);
   });

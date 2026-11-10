@@ -12,6 +12,7 @@ import "./interface.css";
 import "./theme.css";
 import "./studio-shell.css";
 import "./pages.css";
+import "./polish.css";
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <App />

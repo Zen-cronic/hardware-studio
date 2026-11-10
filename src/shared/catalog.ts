@@ -349,7 +349,7 @@ export const CUSTOM_PRODUCT: ProductDefinition = {
       3,
       0.05,
       1,
-      "Scales the complete primitive assembly.",
+      "Makes the whole design bigger or smaller.",
     ),
   ],
 };

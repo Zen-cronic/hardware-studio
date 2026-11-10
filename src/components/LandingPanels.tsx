@@ -5,20 +5,12 @@ import { heroProduct } from "../lib/heroProduct";
 import { DroneStage } from "./HeroDrone";
 
 // Two panels in the order a change happens: point, say and check it holds; then see it in your room.
+// The first panel illustrates the statement above it, so it carries no heading of its own.
 // Each shows the real interface pattern on a tinted grid, not a picture of it.
 export default function LandingPanels({ navigate, still = false }: { navigate: Navigate; still?: boolean }) {
   const parts = useMemo(() => heroProduct.parts().filter(part => part.role !== "reference"), []);
   return <section className="lp-panels" aria-label="What happens when you ask for a change">
     <article className="lp-panel lp-panel-wide">
-      <div className="lp-panel-copy">
-        <h2>Point at it, say it, and see that it still holds.</h2>
-        <p>The assistant names the part back to you and proposes the change in numbers. Before you say yes, the same strength test runs on the part before and after, under the same load.</p>
-        <details className="lp-how">
-            <summary>How we checked</summary>
-            <p>Under the same 1 kgf (9.8 N) peak motor thrust, upward at the motor end, Arm, front right bends 70% less (1.19 mm to 0.36 mm) and its typical stress drops 52%.</p>
-            <p>It is a strength simulation of the one arm, held where it meets the frame, refined until the result stopped changing. Holding the arm fully fixed at the frame is a simplification.</p>
-          </details>
-      </div>
       <div className="lp-panel-backdrop lp-wide-backdrop" aria-hidden="true">
         <div className="lp-card lp-chat">
           <p className="lp-pointing"><span className="lp-you-dot"/>Pointing at: <strong>{heroProduct.focusPartName}</strong></p>

@@ -19,10 +19,13 @@ export interface CheckPreset {
 
 export const GRAVITY = 9.80665;
 const MATERIALS: [RegExp, CheckMaterial][] = [
-  [/carbon/i, { name: "Carbon fibre plate, typical quasi-isotropic values", youngModulusMPa: 50000, poissonRatio: 0.3, densityKgM3: 1550, yieldStrengthMPa: 400 }],
+  // Whole material names: "Polycarbonate" and "Carbon steel" are not carbon fibre.
+  [/\bcarbon fib(re|er)\b/i, { name: "Carbon fibre plate, typical quasi-isotropic values", youngModulusMPa: 50000, poissonRatio: 0.3, densityKgM3: 1550, yieldStrengthMPa: 400 }],
   [/alumin/i, { name: "Aluminum 6061-T6, typical elastic properties", youngModulusMPa: 70000, poissonRatio: 0.33, densityKgM3: 2700, yieldStrengthMPa: 240 }],
   [/steel/i, { name: "Steel, typical elastic properties", youngModulusMPa: 200000, poissonRatio: 0.29, densityKgM3: 7850, yieldStrengthMPa: 250 }],
   [/petg/i, { name: "PETG print, typical values", youngModulusMPa: 2000, poissonRatio: 0.38, densityKgM3: 1270, yieldStrengthMPa: 45 }],
+  [/\bpa12\b|\bnylon\b/i, { name: "PA12 nylon print, typical values", youngModulusMPa: 1700, poissonRatio: 0.4, densityKgM3: 1010, yieldStrengthMPa: 48 }],
+  [/polycarbonate/i, { name: "Polycarbonate, typical values", youngModulusMPa: 2300, poissonRatio: 0.37, densityKgM3: 1200, yieldStrengthMPa: 62 }],
   [/tpu/i, { name: "TPU 95A print, typical values", youngModulusMPa: 26, poissonRatio: 0.45, densityKgM3: 1210, yieldStrengthMPa: 8 }],
   [/./, { name: "PLA print, typical values", youngModulusMPa: 3500, poissonRatio: 0.36, densityKgM3: 1240, yieldStrengthMPa: 50 }],
 ];
@@ -36,7 +39,8 @@ const mesh = { maxSizeMm: 4, refinements: 2 };
  */
 export function checkPreset(snapshot: Snapshot, partId: string): CheckPreset | null {
   const part = snapshot.derived.parts.find(p => p.id === partId);
-  if (!part || part.shape !== "box" || part.role === "reference" || part.process === "buy") return null;
+  // Plain beams only: a rounded or hollow shell is not a cantilevered bar.
+  if (!part || part.shape !== "box" || part.edgeRadius !== undefined || part.role === "reference" || part.process === "buy") return null;
   if (part.size[0] < Math.max(part.size[1], part.size[2])) return null;
   const ids = new Set(snapshot.derived.parts.map(p => p.id));
   const droneArm = /^arm-/.test(part.id) && [...ids].some(id => /^motor-(front|rear)/.test(id));

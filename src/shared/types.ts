@@ -7,6 +7,8 @@ export type ProductKind =
   | "holder"
   | "custom";
 export type Vec3 = [number, number, number];
+export type PartShape = "box" | "cylinder" | "tube" | "ellipsoid";
+export const PART_SHAPES: readonly PartShape[] = ["box", "cylinder", "tube", "ellipsoid"];
 export interface ParameterSpec {
   key: string;
   label: string;
@@ -38,7 +40,7 @@ export interface Motion {
 export interface Part {
   id: string;
   name: string;
-  shape: "box" | "cylinder" | "tube";
+  shape: PartShape;
   size: Vec3;
   position: Vec3;
   rotation?: Vec3;
@@ -58,6 +60,12 @@ export interface Part {
   }[];
   // Box-only: centered underside relief, full local X length; width along Z.
   channel?: { width: number; depth: number };
+  // Box-only: every edge rounded to this radius (corners become sphere octants).
+  // Not combined with holes or a channel.
+  edgeRadius?: number;
+  // Rounded-box-only: a closed hollow shell with this wall; the inside is the same
+  // rounded box offset inward, so the wall is even everywhere.
+  wall?: number;
   color: string;
   material: string;
   role?: "component" | "reference";
@@ -67,6 +75,8 @@ export interface Part {
 }
 // World coordinates: millimetres, Y up; Euler rotations in radians, XYZ order.
 // Cylinder/tube size = [outer diameter, axial height, outer diameter]; axis Y.
+// Ellipsoid size = [diameter, height, diameter]: an ellipse revolved about local Y
+// (a sphere when all three match). Rotate the part to lay it along another axis.
 // Tube holeDiameter is a through bore along Y. All positions are part centres.
 export interface BomItem {
   id: string;

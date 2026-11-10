@@ -166,15 +166,10 @@ function Catalog({ navigate }: { navigate: Navigate }) {
   return (
     <main className="catalog-page">
       <header className="browse-heading">
-        <h1>Find your starting point.</h1>
+        <h1 id="collection-heading">Find your starting point.</h1>
         <p>Try a mechanism, make a copy, and change it together.</p>
       </header>
       <section className="collection" aria-labelledby="collection-heading">
-        <div className="section-heading">
-          <div>
-            <h2 id="collection-heading">Browse designs</h2>
-          </div>
-        </div>
         <div className="collection-toolbar">
           <div
             className="filter-tabs"
@@ -499,7 +494,7 @@ function Work({ navigate }: { navigate: Navigate }) {
 }
 function NewDesign({ navigate }: { navigate: Navigate }) {
   const [name, setName] = useState("My desk organizer"),
-    [shape, setShape] = useState<"box" | "cylinder" | "tube">("box"),
+    [shape, setShape] = useState<"box" | "rounded" | "cylinder" | "tube" | "ellipsoid">("box"),
     [width, setWidth] = useState(120),
     [height, setHeight] = useState(60),
     [depth, setDepth] = useState(80),
@@ -508,9 +503,10 @@ function NewDesign({ navigate }: { navigate: Navigate }) {
   const part: Part = {
     id: "body",
     name: "Body",
-    shape,
-    size: [width, height, shape === "box" ? depth : width],
+    shape: shape === "rounded" ? "box" : shape,
+    size: [width, height, shape === "box" || shape === "rounded" ? depth : width],
     holeDiameter: shape === "tube" ? width * 0.75 : undefined,
+    edgeRadius: shape === "rounded" ? Math.round(Math.min(width, height, depth) * 2.5) / 10 : undefined,
     position: [0, height / 2, 0],
     color: colors.border,
     material: "PLA",
@@ -541,7 +537,7 @@ function NewDesign({ navigate }: { navigate: Navigate }) {
     }
   }
   const starters = [
-    { name: "Camera drone", label: "Start with a camera drone", testId: "start-drone", line: "A 250 mm quadcopter frame with motors, battery and a camera mount.", image: "/previews/drone.png", start: () => void starter("Camera drone", droneParts()) },
+    { name: "Camera drone", label: "Start with a camera drone", testId: "start-drone", line: "A 250 mm quadcopter with carbon arms, a rounded body and a camera on a gimbal.", image: "/previews/drone.png", start: () => void starter("Camera drone", droneParts()) },
     { name: "Articulated camera arm", label: "Start with an articulated camera arm", testId: "start-arm", line: "A desk-clamped arm that holds a phone or a small camera.", image: "/previews/arm.png", start: () => void starter("Articulated camera arm", deskArmParts()) },
     ...CATALOG.filter((p) => p.kind !== "custom").map((p) => ({ name: p.name, label: "Explore " + p.name, testId: undefined as string | undefined, line: p.description, image: `/previews/${p.kind}.png`, start: () => navigate("/designs/" + p.kind) })),
   ];
@@ -571,7 +567,7 @@ function NewDesign({ navigate }: { navigate: Navigate }) {
       </section>
       <section className="new-shape-section" aria-labelledby="new-shape-title">
         <h2 id="new-shape-title">Or start from a simple shape</h2>
-        <p>Pick a box, cylinder or tube and set its size. You can add parts in the studio.</p>
+        <p>Pick a shape and set its size. You can add parts in the studio.</p>
       <div className="new-layout">
         <div className="new-stage">
           <ModelCanvas parts={[part]} dimensions />
@@ -599,14 +595,16 @@ function NewDesign({ navigate }: { navigate: Navigate }) {
               onChange={(e) => setShape(e.target.value as typeof shape)}
             >
               <option value="box">Box</option>
+              <option value="rounded">Rounded box</option>
               <option value="cylinder">Cylinder</option>
               <option value="tube">Tube</option>
+              <option value="ellipsoid">Ellipsoid (ball or egg shape)</option>
             </select>
           </label>
           {[
             ["Width", width, setWidth],
             ["Height", height, setHeight],
-            ...(shape === "box" ? [["Depth", depth, setDepth]] : []),
+            ...(shape === "box" || shape === "rounded" ? [["Depth", depth, setDepth]] : []),
           ].map(([label, value, set]) => (
             <label key={String(label)}>
               {String(label)} (mm)
