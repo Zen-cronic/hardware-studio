@@ -662,7 +662,7 @@ export default function Studio({
           >
             <MessageSquare size={18} />
           </button>
-          <button className="button small room-entry" aria-label="See it in your room" aria-haspopup="dialog" aria-expanded={room} onClick={() => setRoom(!room)}>
+          <button className="button small room-entry action-room" data-testid="see-in-room" aria-label="See it in your room" aria-haspopup="dialog" aria-expanded={room} onClick={() => setRoom(!room)}>
             <Smartphone size={16} />
             <span>See it in your room</span>
           </button>

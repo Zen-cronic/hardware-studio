@@ -246,7 +246,10 @@
 :root .lp-d-bolt {right:8%;bottom:3%;}
 @media (max-width:640px) {
   :root .lp-hero h1 {font-size:2.6rem;}
-  .hero-drone.is-image {width:calc(100% + 32px);margin:4px -16px -6px;}
+  .hero-drone.is-image {width:min(360px,100%);margin:6px auto -4px;}
+  :root .lp-hero .lp-d-prop,:root .lp-hero .lp-d-bearing {display:none;}
+  :root .lp-hero .lp-d-gear {left:-58px;top:64px;width:92px;}
+  :root .lp-hero .lp-d-motor {right:-18px;bottom:8px;width:84px;}
 }
 
 .lp-story-model .hero-drone,.lp-phone-screen .hero-drone {position:absolute;inset:0;width:100%;height:100%;margin:0;}

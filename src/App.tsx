@@ -169,7 +169,6 @@ function Catalog({ navigate }: { navigate: Navigate }) {
           <div>
             <h2 id="collection-heading">Browse designs</h2>
           </div>
-          <span className="mono count">{shown.length} designs to explore</span>
         </div>
         <div className="collection-toolbar">
           <div
@@ -226,14 +225,13 @@ function Catalog({ navigate }: { navigate: Navigate }) {
       <section className="workflow-strip">
         <div>
           <Box size={24} />
-          <strong>A model you can actually use.</strong>
+          <strong>Want something else?</strong>
         </div>
         <p>
-          Change a dimension and follow what it changes: the mechanism, the
-          parts, and the steps to put it together.
+          Describe it, and the assistant starts from the closest working design.
         </p>
-        <button className="button" onClick={() => navigate("/new")}>
-          Start from scratch <Plus size={16} />
+        <button className="button primary" onClick={() => navigate("/new")}>
+          Describe what you want <ChevronRight size={16} />
         </button>
       </section>
     </main>
@@ -538,9 +536,9 @@ function NewDesign({ navigate }: { navigate: Navigate }) {
     }
   }
   const starters = [
-    { name: "Camera drone", line: "A 250 mm quadcopter frame with motors, battery and a camera mount.", image: "/previews/drone.png", start: () => void starter("Camera drone", droneParts()) },
-    { name: "Articulated camera arm", line: "A desk-clamped arm that holds a phone or a small camera.", image: "/previews/arm.png", start: () => void starter("Articulated camera arm", deskArmParts()) },
-    ...CATALOG.filter((p) => p.kind !== "custom").map((p) => ({ name: p.name, line: p.description, image: `/previews/${p.kind}.png`, start: () => navigate("/designs/" + p.kind) })),
+    { name: "Camera drone", label: "Start with a camera drone", testId: "start-drone", line: "A 250 mm quadcopter frame with motors, battery and a camera mount.", image: "/previews/drone.png", start: () => void starter("Camera drone", droneParts()) },
+    { name: "Articulated camera arm", label: "Start with an articulated camera arm", testId: "start-arm", line: "A desk-clamped arm that holds a phone or a small camera.", image: "/previews/arm.png", start: () => void starter("Articulated camera arm", deskArmParts()) },
+    ...CATALOG.filter((p) => p.kind !== "custom").map((p) => ({ name: p.name, label: "Explore " + p.name, testId: undefined as string | undefined, line: p.description, image: `/previews/${p.kind}.png`, start: () => navigate("/designs/" + p.kind) })),
   ];
   return (
     <main className="new-page">
@@ -553,7 +551,7 @@ function NewDesign({ navigate }: { navigate: Navigate }) {
         <h2 id="new-starters-title">Start from a working design</h2>
         <div className="starter-grid">
           {starters.map((s) => (
-            <button key={s.name} className="starter-card" disabled={busy} onClick={s.start} aria-label={"Start with the " + s.name.toLowerCase()}>
+            <button key={s.name} className="starter-card" data-testid={s.testId} disabled={busy} onClick={s.start} aria-label={s.label}>
               <img src={s.image} alt="" loading="lazy" width="550" height="403" />
               <strong>{s.name}</strong>
               <span>{s.line}</span>
@@ -632,8 +630,8 @@ function NewDesign({ navigate }: { navigate: Navigate }) {
     </main>
   );
 }
-// Returns { path } for a design whose before-and-after card is ready, or { path: null }.
-const PROOF_EXAMPLE_ENDPOINT = "/api/examples/proof";
+// The server names a seeded design whose before-and-after card is ready: { proofPath } or { proofPath: null }.
+const EXAMPLES_ENDPOINT = "/api/examples";
 function Judge({ navigate }: { navigate: Navigate }) {
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
@@ -641,8 +639,8 @@ function Judge({ navigate }: { navigate: Navigate }) {
   const [proofExample, setProofExample] = useState("");
   useEffect(() => {
     let stop = false;
-    fetch(PROOF_EXAMPLE_ENDPOINT).then((r) => (r.ok ? r.json() : null)).then((body) => {
-      if (!stop && body && typeof body.path === "string" && body.path.startsWith("/")) setProofExample(body.path);
+    fetch(EXAMPLES_ENDPOINT).then((r) => (r.ok ? r.json() : null)).then((body) => {
+      if (!stop && body && typeof body.proofPath === "string" && body.proofPath.startsWith("/") && !body.proofPath.startsWith("//")) setProofExample(body.proofPath);
     }).catch(() => {});
     return () => { stop = true; };
   }, []);

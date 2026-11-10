@@ -64,7 +64,7 @@ function LandingHero({ navigate, still }: { navigate: Navigate; still: boolean }
 function HeroModel({ still }: { still: boolean }) {
   const parts = useMemo(() => heroProduct.parts(), []);
   const [phone] = useState(() => matchMedia("(max-width: 640px)").matches);
-  if (phone) return <div className="hero-drone is-image"><img src="/previews/drone-hero.png" alt={heroProduct.name + ", 3D model"} width="1200" height="640"/></div>;
+  if (phone) return <div className="hero-drone is-image"><img src="/previews/drone.png" alt={heroProduct.name + ", 3D model"} width="650" height="445"/></div>;
   return <Suspense fallback={<div className="hero-drone"/>}><HeroDrone parts={parts} still={still}/></Suspense>;
 }
 
