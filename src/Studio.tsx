@@ -35,6 +35,8 @@ import {
   PackageOpen,
   RefreshCw,
   FlaskConical,
+  Smartphone,
+  FileDown,
 } from "lucide-react";
 import type {
   Access,
@@ -70,6 +72,7 @@ import ReferenceInput, { VoiceButton } from "./components/ReferenceInput";
 import { Brand, type Navigate } from "./App";
 import { colors } from "./lib/tokens";
 import { useDialog } from "./lib/useDialog";
+import { FIRST_REQUEST_KEY } from "./lib/heroProduct";
 type Tab = "design" | "assemble" | "build";
 export default function Studio({
   id,
@@ -123,7 +126,21 @@ export default function Studio({
       "canvas",
     );
   const [leftPanelOpen, setLeftPanelOpen] = useState(false),
-    [rightPanelOpen, setRightPanelOpen] = useState(false);
+    [rightPanelOpen, setRightPanelOpen] = useState(false),
+    [room, setRoom] = useState(false);
+  // A request typed or spoken on the home page arrives here as the first request.
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(FIRST_REQUEST_KEY);
+      if (!raw) return;
+      const first = JSON.parse(raw) as { id: string; text: string; image?: string | null };
+      if (first.id !== id) return;
+      sessionStorage.removeItem(FIRST_REQUEST_KEY);
+      setPrompt(first.text);
+      if (first.image) setImage(first.image);
+      setLeftPanelOpen(true); setRightPanelOpen(false); setMobileEditor("prompt");
+    } catch { /* Storage can be unavailable; the studio still opens normally. */ }
+  }, [id]);
   const previousSelection = useRef<SelectionRef | null>(null);
   useEffect(() => {
     const previous = previousSelection.current; previousSelection.current = selection;
@@ -512,6 +529,8 @@ export default function Studio({
   let pointedFeature = "";
   try { pointedFeature = selection ? resolveSelectionSurface(snapshot, selection)?.feature.label || "" : ""; } catch { pointedFeature = "Surface changed"; }
   const pending = Object.keys(draft).length > 0;
+  const firstParam = product?.parameters[0];
+  const dockExample = firstParam ? `Make the ${firstParam.label.toLowerCase()} ${Math.round(Number(design.params[firstParam.key] ?? firstParam.default) + (firstParam.step ?? 10) * 2)} ${firstParam.unit}` : "Make this hole 8 mm";
   const myHistory = [...history].reverse();
   return (
     <div className="studio-shell">
@@ -555,12 +574,31 @@ export default function Studio({
           >
             <MessageSquare size={18} />
           </button>
+          <button className="button small room-entry" aria-label="See it in your room" aria-haspopup="dialog" aria-expanded={room} onClick={() => setRoom(!room)}>
+            <Smartphone size={16} />
+            <span>See it in your room</span>
+          </button>
+          <button className="button small primary files-entry" aria-label="Get build files" onClick={() => { setTab("build"); setLeftPanelOpen(false); setRightPanelOpen(true); setMobileEditor("canvas"); }}>
+            <FileDown size={16} />
+            <span>Get build files</span>
+          </button>
           <button className="button small action-share" onClick={() => setShare(true)}>
             <Share2 size={16} />
             <span>Share</span>
           </button>
         </div>
       </header>
+      {room && (
+        <div className="room-sheet" role="dialog" aria-label="See it in your room" onKeyDown={(event) => { if (event.key === "Escape") { setRoom(false); document.querySelector<HTMLButtonElement>(".room-entry")?.focus(); } }}>
+          <div className="room-sheet-head">
+            <strong>See it in your room</strong>
+            <button className="button icon-only" aria-label="Close room view" onClick={() => setRoom(false)}><X size={16} /></button>
+          </div>
+          <div className="room-slot" data-slot="view-in-room">
+            <p>Open this design on your phone to place it on a table at real size.</p>
+          </div>
+        </div>
+      )}
       <div className="workspace-bar">
         <button
           className="button quiet small"
@@ -631,7 +669,7 @@ export default function Studio({
           aria-controls="studio-right-panel"
           onClick={() => { setRightPanelOpen(!rightPanelOpen); if (!rightPanelOpen) setLeftPanelOpen(false); }}
         >
-          {tab === "design" ? "Dimensions" : tab === "assemble" ? "Step details" : "Build files"}
+          {tab === "design" ? "Engineering details" : tab === "assemble" ? "Step details" : "Build files"}
           {rightPanelOpen ? (
             <PanelRightClose size={17} />
           ) : (
@@ -990,6 +1028,7 @@ export default function Studio({
           )}
         </aside>
         <section className="scene-panel" aria-label="3D design workspace">
+          <div className="stage-overlay" data-slot="companion-layer" aria-hidden="true" />
           <div className="scene-heading">
             <span className="eyebrow">
               {tab === "assemble"
@@ -1079,6 +1118,28 @@ export default function Studio({
               >
                 <X size={14} />
               </button>
+            </div>
+          )}
+          {tab === "design" && (
+            <div className="agent-dock" data-slot="agent-dock" role="region" aria-label="Assistant">
+              {proposal && !leftPanelOpen ? (
+                <div className="agent-dock-reply">
+                  <span className="agent-dot" aria-hidden="true" />
+                  <p><strong>Assistant</strong>{proposal.target?.label ? " on " + proposal.target.label + ": " : ": "}{proposal.explanation}</p>
+                  <button className="button small primary" onClick={() => { setLeftPanelOpen(true); setRightPanelOpen(false); setMobileEditor("prompt"); }}>Review the change</button>
+                </div>
+              ) : (
+                <div className="agent-dock-idle">
+                  <span className="agent-dot" aria-hidden="true" />
+                  <p>{readOnly ? "Make your own copy to ask for changes." : requestTarget?.surface || selection?.partIds.length ? "Now say or type what to change about " + (pointedFeature || "this part").toLowerCase() + "." : "Point at a part, then say or type what to change."}</p>
+                  {!readOnly && dockExample && (
+                    <button className="agent-example" aria-label={"Use example request: " + dockExample} onClick={() => { setPrompt(dockExample); setUnboundVoice(false); setLeftPanelOpen(true); setRightPanelOpen(false); setMobileEditor("prompt"); }}>“{dockExample}”</button>
+                  )}
+                  {!readOnly && (
+                    <button className="button small primary" onClick={() => { setLeftPanelOpen(true); setRightPanelOpen(false); setMobileEditor("prompt"); requestAnimationFrame(() => document.getElementById("design-prompt")?.focus()); }}>Ask the assistant</button>
+                  )}
+                </div>
+              )}
             </div>
           )}
           <div className="viewer-toolbar studio-viewer-toolbar">
