@@ -74,7 +74,6 @@ import CompanionCursor, { AgentDock, type AgentPointer } from "./components/Comp
 import RoomSheet from "./components/RoomSheet";
 import ProposalCheck, { type ProposalCheckHandle } from "./components/ProposalCheck";
 import { replyLines, useVoiceAgent } from "./lib/voiceAgent";
-import { normalizeSpokenNumbers } from "./shared/spoken-numbers";
 import { askWhichPart, clarifyCandidates, isClarification, resolveAnswer } from "./lib/clarify";
 import type { PartTargetRequest, ScreenTarget } from "./lib/projection";
 import { Brand, type Navigate } from "./App";
@@ -395,7 +394,7 @@ export default function Studio({
     const name = target && snapshot ? targetLabel(snapshot, target) : "";
     setVoiceMessage(name ? `Listening about ${name}.` : "No part under the pointer. Your words will be kept as a draft.");
   }
-  function spokenRequest(text: string) {
+  function spokenRequest(text: string, wholeDesign = false) {
     const target = utteranceRef.current;
     utteranceRef.current = null;
     setPrompt(text); setRequestSelection(target); setUnboundVoice(!target);
@@ -403,8 +402,9 @@ export default function Studio({
     if (!target || !snapshot) {
       const ask = snapshot && !proposal && !readOnly && tab === "design" ? askWhichPart(snapshot, text, actor, uid()) : null;
       if (ask) { setProposalBinding(null); setProposal(ask); return; }
-      // Nothing pointed at and no "this" or "these": a request about the whole design.
-      if (snapshot && !proposal && !readOnly && tab === "design" && !/\b(this|that|these|those|here|there|it)\b/i.test(text)) {
+      // Hold-to-talk with nothing pointed at and no "this" or "these": a request about the whole design.
+      // The click-to-talk button keeps such words as a draft.
+      if (wholeDesign && snapshot && !proposal && !readOnly && tab === "design" && !/\b(this|that|these|those|here|there|it)\b/i.test(text)) {
         setUnboundVoice(false); setRequestSelection(null); setVoiceMessage("");
         void propose(text, null, true); return;
       }
@@ -466,7 +466,7 @@ export default function Studio({
   const voice = useVoiceAgent({
     disabled: !snapshot || readOnly || busy || promptBusy || (!!proposal && !clarifying) || pendingCircleSelection || tab !== "design",
     spaceToTalk: !!snapshot && !readOnly && tab === "design",
-    onSpeechStart: companionSpeechStarted, onText: text => clarifying ? answerClarification(text) : spokenRequest(text), onError: setError, onListeningChange: voiceListening,
+    onSpeechStart: companionSpeechStarted, onText: text => clarifying ? answerClarification(text) : spokenRequest(text, true), onError: setError, onListeningChange: voiceListening,
     reply: proposal ? { key: proposal.command.id, lines: [...replyLines(proposal),
       ...(candidates.length && !proposal.questions?.some(q => /say this one/i.test(q)) ? ["Point at one and say this one, or say the left one or the right one."] : [])].slice(0, 4) } : null,
   });
@@ -1225,7 +1225,7 @@ export default function Studio({
                 )}
                 <div className="voice-control">
                 <VoiceButton label="Click to talk" disabled={readOnly || busy || promptBusy || !!proposal || pendingCircleSelection}
-                  onText={text => { voice.expectReply(); spokenRequest(normalizeSpokenNumbers(text)); }} onError={setError} onSpeechStart={speechStarted}
+                  onText={text => { voice.expectReply(); spokenRequest(text); }} onError={setError} onSpeechStart={speechStarted}
                   onListeningChange={voiceListening} />
                 {(voiceOn || voiceMessage || proposal) && <p className="voice-status" role="status" data-testid="voice-status">{proposal && !clarifying ? "Review or dismiss this proposal before using voice." : clarifying && !voiceMessage ? "Hold Space or the mic and answer the question aloud." : voiceMessage}</p>}
                 </div>
