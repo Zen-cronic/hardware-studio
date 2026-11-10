@@ -29,6 +29,17 @@ test("the view page renders model-viewer at real size, and the studio sheet offe
   await expect(preview).toHaveAttribute("src", `/api/designs/${id}/model.glb?token=${encodeURIComponent(editorToken)}`, { timeout: 90000 });
   const qr = sheet.getByRole("img", { name: "Code to open this design in AR on a phone" });
   await expect(qr).toHaveAttribute("src", /^data:image\/png;base64,/);
+  // Filmed at about two-thirds size: at least 280 px on screen, dark modules on white with a quiet zone.
+  const qrBox = (await qr.boundingBox())!;
+  expect(qrBox.width).toBeGreaterThanOrEqual(280); expect(qrBox.height).toBeGreaterThanOrEqual(280);
+  const corner = await qr.evaluate(async (img: HTMLImageElement) => {
+    const c = document.createElement("canvas"); c.width = img.naturalWidth; c.height = img.naturalHeight;
+    const ctx = c.getContext("2d")!; ctx.drawImage(img, 0, 0);
+    const px = (x: number, y: number) => Array.from(ctx.getImageData(x, y, 1, 1).data.slice(0, 3));
+    return { size: img.naturalWidth, margin: px(4, 4), finder: px(Math.round(img.naturalWidth * 0.14), Math.round(img.naturalWidth * 0.14)) };
+  });
+  expect(corner.size).toBeGreaterThanOrEqual(560);
+  expect(corner.margin).toEqual([255, 255, 255]);
   await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
   await sheet.getByRole("button", { name: "Copy view link", exact: true }).click();
   const link = await page.evaluate(() => navigator.clipboard.readText());

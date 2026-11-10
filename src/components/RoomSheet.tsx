@@ -29,7 +29,8 @@ export default function RoomSheet({ designId, token, readOnly, onClose }: {
   useEffect(() => {
     if (!link) return;
     let stop = false;
-    QRCode.toDataURL(link, { errorCorrectionLevel: "M", margin: 1, width: 240, color: { dark: "#132344", light: "#FFFFFF" } })
+    // Filmable and scannable: medium error correction, the standard 4-module quiet zone, dark on white, drawn at 2x.
+    QRCode.toDataURL(link, { errorCorrectionLevel: "M", margin: 4, width: 576, color: { dark: "#0B1320", light: "#FFFFFF" } })
       .then(url => { if (!stop) setQr(url); }).catch(() => { if (!stop) setQr(""); });
     return () => { stop = true; };
   }, [link]);
@@ -68,7 +69,7 @@ export default function RoomSheet({ designId, token, readOnly, onClose }: {
           </div>
           <div className="room-sheet-phone">
             {link ? <>
-              {qr ? <img className="room-qr" src={qr} width={240} height={240} alt="Code to open this design in AR on a phone" /> : <div className="room-qr" />}
+              {qr ? <img className="room-qr" src={qr} width={288} height={288} alt="Code to open this design in AR on a phone" /> : <div className="room-qr" />}
               <p className="room-scan"><Smartphone size={16} aria-hidden="true" /> Scan with your phone camera. It opens this design at real size in your room, on iPhone and Android.</p>
               {/* On a phone the code is not needed: open the room view here. */}
               <a className="button primary room-open-link" href={link}>Open it in your room</a>
