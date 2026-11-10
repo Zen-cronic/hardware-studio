@@ -142,11 +142,20 @@ export interface Command {
   summary?: string;
   undoOf?: string;
 }
+export interface ProposalTarget {
+  partIds: string[];
+  /** Pointed feature id when the request was bound to one surface feature. */
+  featureId?: string;
+  /** Human-readable binding, e.g. "Upper arm link · Ø6.4 mm hole 1". */
+  label: string;
+}
 export interface Proposal {
   command: Command;
   explanation: string;
   source: "ai" | "local";
   questions?: string[];
+  /** What the request was bound to, resolved by the server from current geometry. */
+  target?: ProposalTarget;
 }
 export interface BuildJob {
   id: string;
