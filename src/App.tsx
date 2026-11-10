@@ -572,7 +572,7 @@ function NewDesign({ navigate }: { navigate: Navigate }) {
       </section>
       <section className="new-shape-section" aria-labelledby="new-shape-title">
         <h2 id="new-shape-title">Or start from a simple shape</h2>
-        <p>Pick a box, rounded box, cylinder, tube or ellipsoid and set its size. You can add parts in the studio.</p>
+        <p>Pick a shape and set its size. You can add parts in the studio.</p>
       <div className="new-layout">
         <div className="new-stage">
           <ModelCanvas parts={[part]} dimensions />
@@ -603,7 +603,7 @@ function NewDesign({ navigate }: { navigate: Navigate }) {
               <option value="rounded">Rounded box</option>
               <option value="cylinder">Cylinder</option>
               <option value="tube">Tube</option>
-              <option value="ellipsoid">Ellipsoid</option>
+              <option value="ellipsoid">Ellipsoid (ball or egg shape)</option>
             </select>
           </label>
           {[

@@ -1967,7 +1967,7 @@ function NewPartModal({
               <option value="rounded">Rounded box</option>
             <option value="cylinder">Cylinder</option>
             <option value="tube">Tube</option>
-              <option value="ellipsoid">Ellipsoid</option>
+              <option value="ellipsoid">Ellipsoid (ball or egg shape)</option>
           </select>
         </label>
         <div className="three-inputs">

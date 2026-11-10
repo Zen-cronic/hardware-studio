@@ -617,7 +617,7 @@ function bom(parts: Part[]): BomItem[] {
             ? p.size.map(round).join(" × ") +
               " mm" +
               (p.edgeRadius
-                ? ` / edges rounded R${round(p.edgeRadius)} mm`
+                ? ` / edges rounded, ${round(p.edgeRadius)} mm radius`
                 : "") +
               (p.wall ? ` / hollow shell, ${round(p.wall)} mm wall` : "")
             : p.shape === "ellipsoid"

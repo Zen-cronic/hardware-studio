@@ -19,7 +19,7 @@ describe("rounded boxes and ellipsoids", () => {
     const scaled = deriveDesign({ ...d, params: { ...d.params, scale: 2 } }).parts;
     expect(scaled.find(p => p.id === "shell")).toMatchObject({ size: [240, 60, 112], edgeRadius: 24, wall: 4 });
     const bom = deriveDesign(d).bom;
-    expect(bom.find(b => b.id === "shell")!.specification).toBe("120 × 30 × 56 mm / edges rounded R12 mm / hollow shell, 2 mm wall");
+    expect(bom.find(b => b.id === "shell")!.specification).toBe("120 × 30 × 56 mm / edges rounded, 12 mm radius / hollow shell, 2 mm wall");
     expect(bom.find(b => b.id === "ball")!.specification).toBe("26 mm ball");
     expect(bom.find(b => b.id === "dome")!.specification).toBe("80 mm diameter × 30 mm rounded solid");
   });

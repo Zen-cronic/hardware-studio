@@ -83,7 +83,7 @@ export function droneParts(options: { ducts?: boolean } = {}): Part[] {
       color: SATIN_BLACK, material: 'TPU 95A', process: 'print' },
     { id: 'camera-mount-right', name: 'Camera mount, right cheek', shape: 'box', size: [14, 22, 3], edgeRadius: 1.2, position: [70, ARM_TOP - 11, 15],
       color: SATIN_BLACK, material: 'TPU 95A', process: 'print' },
-    { id: 'camera', name: 'Camera ball, 26 mm gimbal envelope', shape: 'ellipsoid', size: [26, 26, 26], position: [74, 22, 0],
+    { id: 'camera', name: 'Gimbal camera, 26 mm ball', shape: 'ellipsoid', size: [26, 26, 26], position: [74, 22, 0],
       color: GRAPHITE, material: 'Camera module (purchased)', process: 'buy' },
     // Lens window on the camera's +X axis.
     { id: 'camera-lens', name: 'Camera lens window', shape: 'cylinder', size: [12, 2, 12], position: [88, 22, 0], rotation: [0, 0, -Math.PI / 2],
