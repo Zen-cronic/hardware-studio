@@ -39,7 +39,8 @@ const mesh = { maxSizeMm: 4, refinements: 2 };
  */
 export function checkPreset(snapshot: Snapshot, partId: string): CheckPreset | null {
   const part = snapshot.derived.parts.find(p => p.id === partId);
-  if (!part || part.shape !== "box" || part.role === "reference" || part.process === "buy") return null;
+  // Plain beams only: a rounded or hollow shell is not a cantilevered bar.
+  if (!part || part.shape !== "box" || part.edgeRadius !== undefined || part.role === "reference" || part.process === "buy") return null;
   if (part.size[0] < Math.max(part.size[1], part.size[2])) return null;
   const ids = new Set(snapshot.derived.parts.map(p => p.id));
   const droneArm = /^arm-/.test(part.id) && [...ids].some(id => /^motor-(front|rear)/.test(id));

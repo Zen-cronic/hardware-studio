@@ -4,6 +4,8 @@ import { applySemanticEdit, createSelection, getSelectionControls } from "../src
 import { partFeatures, resolveSurfaceFeature, surfaceTargetFromHit } from "../src/shared/surface";
 import { featuredGeometry, needsFeaturedGeometry } from "../src/lib/partGeometry";
 import { finishFor, isCarbonFibre } from "../src/lib/droneLook";
+import { checkPreset } from "../src/shared/check-presets";
+import { droneParts } from "../src/shared/drone";
 import type { Part } from "../src/shared/types";
 
 const base = { color: "#69737F", material: "PA12 nylon, printed", process: "print" as const, position: [0, 20, 0] as [number, number, number] };
@@ -63,6 +65,14 @@ describe("rounded boxes and ellipsoids", () => {
     expect(g.boundingBox!.max.toArray().map(v => Math.round(v * 1000) / 1000)).toEqual([40, 15, 40]);
     const b = featuredGeometry(shell); b.computeBoundingBox();
     expect(b.boundingBox!.max.toArray().map(v => Math.round(v * 1000) / 1000)).toEqual([60, 15, 28]);
+  });
+});
+
+describe("strength check presets", () => {
+  it("stay on the drone arms and skip the rounded body shell", () => {
+    const d = design(droneParts()), snapshot = { design: d, derived: deriveDesign(d), history: [] };
+    expect(checkPreset(snapshot, "arm-front-right")?.load).toBe("1 kgf (9.8 N) peak motor thrust, upward at the motor end");
+    expect(checkPreset(snapshot, "body-shell")).toBeNull();
   });
 });
 
