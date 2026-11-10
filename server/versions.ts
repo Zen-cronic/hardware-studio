@@ -8,7 +8,9 @@ import type {
 } from "../src/shared/versions";
 import { HttpError, Store, validateCommand } from "./store";
 import { projectAgentOutcomes, type RecordedOperationRow } from "./agent-outcomes";
-import type { EngineeringJob } from "./engineering-jobs";
+import { studySourceHash, type EngineeringJob } from "./engineering-jobs";
+import { buildProofCard, type ProofCard } from "../src/shared/proof";
+import type { BuildJob } from "../src/shared/types";
 import { AgentService, registerAgentRoutes, type AnalysisTool } from "./agents";
 
 function canonical(value: unknown): string {
@@ -257,6 +259,22 @@ export class VersionService {
         studies: studies(version.proposedDesignId) }, compareSnapshots);
     })();
   }
+  // Before/after proof from saved records only: no study or build is started here.
+  proof(id: string, token: string, studies: (designId: string) => EngineeringJob[], latestBuild: (designId: string) => BuildJob | null, partId?: string): ProofCard {
+    this.authorize(id, token);
+    return this.store.db.transaction(() => {
+      const row = this.row(id), version: ProposedVersion = JSON.parse(row.record);
+      const base: Snapshot = JSON.parse(row.base_snapshot);
+      const main = this.store.get(version.parentDesignId), proposed = this.store.get(version.proposedDesignId);
+      return buildProofCard({
+        version, base, main, proposed, diff: compareSnapshots(base, proposed),
+        originalStudies: studies(version.parentDesignId), proposedStudies: studies(version.proposedDesignId),
+        originalSourceHash: studySourceHash(base), proposedSourceHash: studySourceHash(proposed),
+        latestBuild: latestBuild(version.parentDesignId),
+        ...(typeof partId === "string" && partId ? { partId: partId.slice(0, 200) } : {}),
+      });
+    })();
+  }
   preview(id: string, token: string, input: AgentCommandInput): AgentPreview {
     const credential = this.agent(id, token), version = this.requireOpen(id), before = this.store.get(version.proposedDesignId);
     const command: Command = { ...input, actor: agentActor(credential) };
@@ -305,6 +323,7 @@ export interface VersionRouteOptions {
   aiKey?: string;
   analyze?: AnalysisTool;
   studies?: (designId: string) => EngineeringJob[];
+  latestBuild?: (designId: string) => BuildJob | null;
   allowedOrigins?: string[];
 }
 export function registerVersionRoutes(app: FastifyInstance, options: VersionRouteOptions) {
@@ -314,6 +333,8 @@ export function registerVersionRoutes(app: FastifyInstance, options: VersionRout
   app.get("/api/designs/:id/proposed-versions", async (r) => versions.list(idOf(r), versionTokenOf(r)));
   app.get("/api/proposed-versions/:id", async (r) => versions.view(idOf(r), versionTokenOf(r)));
   app.get("/api/proposed-versions/:id/outcomes", async (r) => versions.outcomes(idOf(r), versionTokenOf(r), options.studies || (() => [])));
+  app.get("/api/proposed-versions/:id/proof", async (r) => versions.proof(idOf(r), versionTokenOf(r), options.studies || (() => []),
+    options.latestBuild || (() => null), (r.query as { part?: unknown })?.part as string | undefined));
   app.post("/api/proposed-versions/:id/accept", async (r) => versions.accept(idOf(r), versionTokenOf(r), r.body as AcceptVersionInput));
   app.post("/api/proposed-versions/:id/reject", async (r) => versions.reject(idOf(r), versionTokenOf(r)));
   app.post("/api/proposed-versions/:id/agent-credentials", async (r, reply) => reply.code(201).send(versions.issueAgent(idOf(r), versionTokenOf(r), r.body as any)));

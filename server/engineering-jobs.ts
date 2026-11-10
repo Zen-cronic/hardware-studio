@@ -16,6 +16,8 @@ export interface EngineeringJob {
 }
 const token = (r: FastifyRequest) => r.headers.authorization?.replace(/^Bearer /, "") || "";
 const digest = (value: unknown) => createHash("sha256").update(JSON.stringify(value)).digest("hex");
+// Fingerprint of the geometry a study ran against; stored on every job as snapshotHash.
+export const studySourceHash = (snapshot: Snapshot) => digest({ design:snapshot.design, parts:snapshot.derived.parts });
 export class EngineeringJobs {
   private queue: { job: EngineeringJob; input: any; ticket: ResourceTicket }[] = [];
   private active?: { job: EngineeringJob; ticket: ResourceTicket; worker?: ReturnType<typeof startCadWorker>; done: Promise<void> };
@@ -49,7 +51,7 @@ export class EngineeringJobs {
     if (this.queue.length >= 8 || this.stopping) throw new HttpError(429,"Several studies are waiting. Please try again shortly.");
     const part = geometry ? undefined : snapshot.derived.parts.find(p=>p.id === body.partId);
     if (body.type === "strength" && !geometry && (!part || part.role === "reference")) throw new HttpError(422,"Select a physical component for strength analysis.");
-    const snapshotHash = digest({ design:snapshot.design, parts:snapshot.derived.parts });
+    const snapshotHash = studySourceHash(snapshot);
     const job: EngineeringJob = {id:randomUUID(),designId:snapshot.design.id,revision:snapshot.design.revision,snapshotHash,partId:part?.id,setup:{partId:geometry?undefined:part?.id,importId:geometry?.importId,importJobId:geometry?.importJobId,importInputHash:geometry?.importInputHash,importedSourceHash:geometry?.sourceHash,scaleToMm:geometry?.scaleToMm,bodyIndex:geometry?.bodyIndex,mesh:body.mesh,processProfile:body.processProfile,material:body.material,supports:body.supports,loads:body.loads,profile:body.profile,mechanism:body.mechanism},type:body.type,status:"queued",createdAt:new Date().toISOString()};
     const input = {geometry,type:body.type,source:{designId:job.designId,revision:job.revision,snapshotHash},snapshot:geometry?undefined:snapshot,part,partId:part?.id,material:body.material,supports:body.supports,loads:body.loads,mesh:body.mesh,profile:body.profile,processProfile:body.processProfile,mechanism:body.mechanism};
     if (JSON.stringify(input).length > 2_000_000) throw new HttpError(413,"This study is too large. Analyze one component at a time.");
