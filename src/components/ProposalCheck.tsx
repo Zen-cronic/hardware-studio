@@ -60,7 +60,12 @@ const ProposalCheck = forwardRef<ProposalCheckHandle, {
       versions.clear();
     };
   }, [token]);
-  useEffect(() => { run.current++; setResult(null); setStep(""); setBusy(false); }, [proposal.command.id]);
+  useEffect(() => {
+    // A new proposal voids a running check and discards versions checked for the old one.
+    run.current++; setResult(null); setStep(""); setBusy(false);
+    for (const versionId of unapplied.current) void discardCheckedVersion(versionId, token);
+    unapplied.current.clear();
+  }, [proposal.command.id]);
   const resultRef = useRef(result); resultRef.current = result;
   const proposalRef = useRef(proposal); proposalRef.current = proposal;
   useImperativeHandle(ref, () => ({
