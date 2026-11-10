@@ -53,9 +53,10 @@ export function droneParts(): Part[] {
       position: at(MOTOR_RADIUS, c.angle, armTop + 1), color: '#4d7fbf', material: 'TPU 95A', process: 'print' });
     parts.push({ id: 'motor-' + c.key, name: `Motor 2306 envelope, ${c.label}`, shape: 'cylinder', size: [28, 18, 28],
       position: at(MOTOR_RADIUS, c.angle, armTop + 2 + 9), color: '#1d2127', material: 'Brushless motor 2306, 2450 KV', process: 'buy' });
-    parts.push({ id: 'prop-' + c.key, name: `Propeller swept disc 5 in, ${c.label}`, shape: 'cylinder', size: [127, 2, 127],
-      position: at(MOTOR_RADIUS, c.angle, armTop + 2 + 18 + 4), color: '#8fb8e8', material: 'Polycarbonate 5 in propeller (reference envelope)',
-      process: 'buy', role: 'reference' });
+    // A two-blade 5 in propeller, across the arm so it does not hide it; bought, so it is in the parts list and the AR model.
+    parts.push({ id: 'prop-' + c.key, name: `Propeller 5 in, ${c.label}`, shape: 'box', size: [127, 3, 12],
+      position: at(MOTOR_RADIUS, c.angle, armTop + 2 + 18 + 2.5), rotation: [0, -c.angle + Math.PI / 2, 0], color: '#8fb8e8',
+      material: 'Polycarbonate 5 in two-blade propeller (purchased)', process: 'buy' });
     parts.push({ id: 'leg-' + c.key, name: `Landing leg, ${c.label}`, shape: 'cylinder', size: [10, LEG_HEIGHT + 3, 10],
       position: at(MOTOR_RADIUS - 12, c.angle, (LEG_HEIGHT + 3) / 2), color: '#4d7fbf', material: 'TPU 95A', process: 'print' });
   }

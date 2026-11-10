@@ -20,8 +20,10 @@ describe("camera drone starter", () => {
     expect(count("leg-")).toBe(4);
     expect(parts.filter(p => p.id.endsWith("-plate"))).toHaveLength(2);
     for (const id of ["battery", "flight-controller", "camera-mount-left", "camera-mount-right"]) expect(parts.some(p => p.id === id)).toBe(true);
-    expect(parts.filter(p => p.id.startsWith("prop-")).every(p => p.role === "reference")).toBe(true);
-    expect(parts.filter(p => /^motor-(front|rear)/.test(p.id) || p.id === "battery" || p.id === "flight-controller").every(p => p.process === "buy")).toBe(true);
+    // Bought parts, never reference envelopes: they belong in the parts list and the in-room model.
+    expect(parts.filter(p => p.id.startsWith("prop-") || /^motor-(front|rear)/.test(p.id) || p.id === "battery" || p.id === "flight-controller")
+      .every(p => p.process === "buy" && p.role !== "reference")).toBe(true);
+    expect(deriveDesign(d).bom.some(item => /Propeller/.test(item.name))).toBe(true);
   });
 
   it("places four motors on a 250 mm wheelbase, with arms on the diagonals pointing at them", () => {
