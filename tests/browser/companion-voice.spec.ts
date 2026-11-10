@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { droneParts } from "../../src/shared/drone";
-import { ARM, ARM_TOP, camera, open, pointAt, speak, world } from "./voice-tools";
+import { ARM, ARM_TOP, camera, open, pointAt, say, speak, spoken, world } from "./voice-tools";
 
 // Hold-to-talk with the circle companion, against mocked browser speech in and out.
 const evidence = process.env.COMPANION_EVIDENCE;
@@ -57,7 +57,8 @@ test("hold Space over an arm, the target freezes at speech onset, the reply is s
   expect(spoken[0]).toBe("Arm, front right: local Y dimension to 6 millimetres.");
   expect(spoken.length).toBeGreaterThan(1);
   expect(spoken.every(line => line.length <= 141)).toBe(true);
-  await expect(page.getByTestId("agent-reply")).toContainText("local Y dimension to 6 millimetres");
+  // The dock shows the short form; only speech says the unit in full.
+  await expect(page.getByTestId("agent-reply")).toContainText("local Y dimension → 6 mm");
   await shot(page, "companion-agent-landed");
 
   // Accepting keeps the existing flow; the assistant circle leaves with the proposal.
@@ -166,5 +167,38 @@ test("a question asked before any assistant call is spoken, circles fly to each 
   await expect(page.getByTestId("proposal-target")).toHaveText(new RegExp(`^Applied to: Arm, front right, Ø[\\d.]+ mm hole ${leftmost + 1}$`));
   await expect(page.getByRole("region", { name: "Proposed change" })).toContainText(`hole ${leftmost + 1} diameter → 4 mm`);
   expect(proposals.every(p => p.source === "local")).toBe(true);
+  expect(errors).toEqual([]);
+});
+
+test("a free-form spoken wish with nothing pointed at goes to the assistant as a whole-design request; circles go to the parts it changes", async ({ page, request }) => {
+  const errors: string[] = []; page.on("pageerror", e => errors.push(e.message));
+  const created = await open(page, request, true);
+  let sent: any;
+  // SYNTHETIC assistant reply in the shape the provider path returns; no request leaves the machine.
+  await page.route("**/propose", async route => {
+    sent = route.request().postDataJSON();
+    const parts = structuredClone(created.snapshot.design.customParts);
+    const set = (id: string, change: (p: any) => void) => change(parts.find((p: any) => p.id === id));
+    set("camera", p => { p.size = [22, 22, 22]; });
+    set("camera-mount-left", p => { p.position = [p.position[0], p.position[1], -13.5]; });
+    set("camera-mount-right", p => { p.position = [p.position[0], p.position[1], 13.5]; });
+    await route.fulfill({ json: { source: "ai", questions: [], explanation: "A 22 mm camera fits once the two mount cheeks move 1.5 mm apart. Nothing else changes.",
+      command: { id: "synthetic-room", baseRevision: 0, actor: "Maker", changes: {}, readSet: created.snapshot.design.params, customParts: parts, summary: "Make room for a bigger camera" } } });
+  });
+  await page.mouse.move(5, 5);
+  await say(page, "Make room for a bigger camera");
+  await expect(page.getByRole("region", { name: "Proposed change" })).toContainText("A 22 mm camera fits once the two mount cheeks move 1.5 mm apart.");
+  expect(sent.prompt).toBe("Make room for a bigger camera");
+  expect(sent.selection).toBeUndefined();
+  const agents = page.locator('[data-companion="agent"]');
+  await expect(agents).toHaveCount(3);
+  for (const id of ["camera", "camera-mount-left", "camera-mount-right"])
+    await expect(page.locator(`[data-companion="agent"][data-agent-target="${id}"]`)).toHaveAttribute("data-agent-state", "arrived");
+  await expect.poll(async () => (await spoken(page)).join(" ")).toContain("A 22 millimetres camera fits once the two mount cheeks move 1.5 millimetres apart.");
+  // A spoken "this" with nothing pointed at stays a draft, as before.
+  await page.getByRole("button", { name: "Dismiss proposal", exact: true }).click();
+  await page.mouse.move(5, 5);
+  await say(page, "make this smaller");
+  await expect(page.getByTestId("voice-status")).toContainText("No part was targeted");
   expect(errors).toEqual([]);
 });

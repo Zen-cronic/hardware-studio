@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from "react";
+import { normalizeSpokenNumbers } from "../shared/spoken-numbers";
 
 // Hold-to-talk speech input and spoken replies, built on the browser's own Web Speech APIs.
 // No audio leaves the browser through this app, and no paid voice service is used.
@@ -100,12 +101,17 @@ export function startHold(callbacks: HoldCallbacks): HoldSession | null {
   };
 }
 
-/** Plain spoken words for symbols the screen uses. */
+/** Plain spoken words for the symbols and short units the screen uses; applied only to speech. */
 export function speakable(text: string) {
   return text
     .replace(/Ø\s*/g, "diameter ")
     .replace(/(\d)\s*mm\b/g, "$1 millimetres")
+    .replace(/(\d)\s*cm\b/g, "$1 centimetres")
+    .replace(/(\d)\s*kgf\b/g, "$1 kilogram-force")
+    .replace(/(\d)\s*kg\b/g, "$1 kilograms")
+    .replace(/(\d)\s*MPa\b/g, "$1 megapascals")
     .replace(/(\d)\s*N\b/g, "$1 newtons")
+    .replace(/(\d)\s*%/g, "$1 percent")
     .replace(/\s*[·•|]\s*/g, ", ")
     .replace(/→/g, " to ")
     .replace(/×/g, " by ")
@@ -115,7 +121,7 @@ export function speakable(text: string) {
 
 /** Splits a reply into a few short sentences, each short enough to follow by ear. */
 export function shortSentences(text: string, maxSentences = 3, maxChars = 140): string[] {
-  const sentences = speakable(text).split(/(?<=[.!?])\s+/).map(s => s.trim()).filter(Boolean);
+  const sentences = text.replace(/\s+/g, " ").trim().split(/(?<=[.!?])\s+/).map(s => s.trim()).filter(Boolean);
   const out: string[] = [];
   for (const sentence of sentences) {
     if (sentence.length <= maxChars) { out.push(sentence); continue; }
@@ -156,7 +162,7 @@ export function speakLines(lines: string[], events: { onStart?: () => void; onEn
     const voice = synth.getVoices().find(v => /^en(-|_)/i.test(v.lang) && /natural|enhanced|premium|google/i.test(v.name))
       || synth.getVoices().find(v => /^en(-|_)/i.test(v.lang));
     for (const line of lines) {
-      const u = new SpeechSynthesisUtterance(line);
+      const u = new SpeechSynthesisUtterance(speakable(line));
       u.lang = voice?.lang || "en-US";
       if (voice) u.voice = voice;
       u.rate = 1.03;
@@ -247,7 +253,8 @@ export function useVoiceAgent(options: VoiceAgentOptions): VoiceAgent {
       },
       onSpeechStart: () => latest.current.onSpeechStart(),
       onInterim: text => setTranscript(text),
-      onText: text => { setTranscript(text); awaitingReply.current = true; latest.current.onText(text); },
+      // "Six millimetres" reaches the request as "6 mm", which the local rules can read.
+      onText: text => { const words = normalizeSpokenNumbers(text); setTranscript(words); awaitingReply.current = true; latest.current.onText(words); },
       onError: message => latest.current.onError(message),
     });
     session.current = started;

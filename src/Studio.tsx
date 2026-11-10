@@ -46,6 +46,7 @@ import type {
   Part,
   Presence,
   Proposal,
+  ProposalTarget,
   Snapshot,
   Vec3,
 } from "./shared/types";
@@ -364,9 +365,9 @@ export default function Studio({
           .join(", "),
     });
   }
-  async function propose(text = prompt, target = requestSelection === undefined ? selection : requestSelection) {
+  async function propose(text = prompt, target = requestSelection === undefined ? selection : requestSelection, wholeDesign = false) {
     if (!snapshot || !text.trim() || readOnly || promptBusy) return;
-    if (unboundVoice && target === null) { setError("Hover over a part and speak again, or edit the typed request before sending it."); return; }
+    if (unboundVoice && target === null && !wholeDesign) { setError("Hover over a part and speak again, or edit the typed request before sending it."); return; }
     setPromptBusy(true);
     setError("");
     setNotice("");
@@ -393,7 +394,7 @@ export default function Studio({
     const name = target && snapshot ? targetLabel(snapshot, target) : "";
     setVoiceMessage(name ? `Listening about ${name}.` : "No part under the pointer. Your words will be kept as a draft.");
   }
-  function spokenRequest(text: string) {
+  function spokenRequest(text: string, wholeDesign = false) {
     const target = utteranceRef.current;
     utteranceRef.current = null;
     setPrompt(text); setRequestSelection(target); setUnboundVoice(!target);
@@ -401,6 +402,12 @@ export default function Studio({
     if (!target || !snapshot) {
       const ask = snapshot && !proposal && !readOnly && tab === "design" ? askWhichPart(snapshot, text, actor, uid()) : null;
       if (ask) { setProposalBinding(null); setProposal(ask); return; }
+      // Hold-to-talk with nothing pointed at and no "this" or "these": a request about the whole design.
+      // The click-to-talk button keeps such words as a draft.
+      if (wholeDesign && snapshot && !proposal && !readOnly && tab === "design" && !/\b(this|that|these|those|here|there|it)\b/i.test(text)) {
+        setUnboundVoice(false); setRequestSelection(null); setVoiceMessage("");
+        void propose(text, null, true); return;
+      }
       setVoiceMessage("No part was targeted. Hover over a part and try again, or edit the typed request."); return;
     }
     try { assertCurrentSelection(snapshot, target); }
@@ -459,19 +466,26 @@ export default function Studio({
   const voice = useVoiceAgent({
     disabled: !snapshot || readOnly || busy || promptBusy || (!!proposal && !clarifying) || pendingCircleSelection || tab !== "design",
     spaceToTalk: !!snapshot && !readOnly && tab === "design",
-    onSpeechStart: companionSpeechStarted, onText: text => clarifying ? answerClarification(text) : spokenRequest(text), onError: setError, onListeningChange: voiceListening,
+    onSpeechStart: companionSpeechStarted, onText: text => clarifying ? answerClarification(text) : spokenRequest(text, true), onError: setError, onListeningChange: voiceListening,
     reply: proposal ? { key: proposal.command.id, lines: [...replyLines(proposal),
       ...(candidates.length && !proposal.questions?.some(q => /say this one/i.test(q)) ? ["Point at one and say this one, or say the left one or the right one."] : [])].slice(0, 4) } : null,
   });
+  // Parts a proposal changes, for a whole-design reply that names no target (at most six).
+  const changedPartIds = useMemo(() => {
+    if (!proposal?.command.customParts || !snapshot) return [];
+    const before = new Map((snapshot.design.customParts || []).map(p => [p.id, JSON.stringify(p)]));
+    const ids = proposal.command.customParts.filter(p => before.get(p.id) !== JSON.stringify(p)).map(p => p.id);
+    return ids.length <= 6 ? ids : [];
+  }, [proposal, snapshot?.design.revision]);
   const agentPointer = useMemo<AgentPointer | null>(() => {
-    const target = proposal?.target;
+    const target: ProposalTarget | undefined = proposal?.target ?? (proposal && changedPartIds.length ? { partIds: changedPartIds, label: `${changedPartIds.length} parts` } : undefined);
     if (!proposal || !target?.partIds.length) return null;
     const targets = candidates.length
       ? candidates.map(c => ({ key: c.key, label: c.label, partIds: [c.partId], featureId: c.featureId, labelled: candidates.length <= 4 }))
       : target.partIds.length > 1 ? target.partIds.map(id => ({ key: id, label: id, partIds: [id], labelled: false }))
       : [{ key: "target", label: target.label, partIds: target.partIds, featureId: target.featureId, labelled: !target.featureId }];
     return { key: proposal.command.id, targets, locate: t => projector.current?.({ partIds: t.partIds, featureId: t.featureId }) ?? null };
-  }, [proposal, candidates]);
+  }, [proposal, candidates, changedPartIds]);
   async function undo() {
     if (!snapshot) return;
     const item = [...snapshot.history].reverse().find((h) => h.actor === actor);
@@ -1162,7 +1176,7 @@ export default function Studio({
             onCamera={cameraChanged}
             projector={projector}
             onHoverChange={hover => setHoverLabel(hover?.label ?? null)}
-            highlightPartIds={proposal?.target?.partIds}
+            highlightPartIds={proposal?.target?.partIds ?? changedPartIds}
           />
           {tab === "design" && <CompanionCursor hoverLabel={hoverLabel} phase={voice.phase} transcript={voice.transcript}
             agent={agentPointer} speaking={voice.speaking} />}

@@ -13,6 +13,8 @@ export const DRONE_ARM_THICKNESS_MM = 4;
 export const DRONE_ARM_IDS = ['arm-front-right', 'arm-front-left', 'arm-rear-left', 'arm-rear-right'] as const;
 
 const CARBON = 'Carbon fibre plate (3K twill)';
+// Declared colours follow the studio's finishes, so the in-room model looks like the studio one.
+const CARBON_GREY = '#353C46', SATIN_BLACK = '#1A1D22', CHARCOAL = '#24282E', PROP_GREY = '#2B3542', ALUMINIUM = '#8C98A6';
 const MOTOR_RADIUS = DRONE_WHEELBASE_MM / 2;
 const ARM = { inner: 28, outer: 137, width: 14 };
 const BOTTOM_TOP = 33; // Top face of the 3 mm bottom plate; the arms sit on it.
@@ -31,16 +33,16 @@ export function droneParts(): Part[] {
   const at = (radius: number, angle: number, y: number): Vec3 => [round(radius * Math.cos(angle)), y, round(radius * Math.sin(angle))];
   const parts: Part[] = [
     { id: 'bottom-plate', name: 'Bottom frame plate', shape: 'box', size: [110, 3, 80], position: [0, BOTTOM_TOP - 1.5, 0],
-      color: '#2b3138', material: CARBON, process: 'cut',
+      color: CARBON_GREY, material: CARBON, process: 'cut',
       holes: [{ x: -30, z: 0, diameter: 16 }, { x: 0, z: 26, diameter: 6 }, { x: 0, z: -26, diameter: 6 }] },
     { id: 'top-plate', name: 'Top frame plate', shape: 'box', size: [100, 2, 70], position: [0, 59, 0],
-      color: '#2b3138', material: CARBON, process: 'cut',
+      color: CARBON_GREY, material: CARBON, process: 'cut',
       holes: [{ x: 0, z: 24, diameter: 6 }, { x: 0, z: -24, diameter: 6 }] },
   ];
   for (const c of corners) {
     parts.push({
       id: 'arm-' + c.key, name: `Arm, ${c.label}`, shape: 'box', size: [armLength, DRONE_ARM_THICKNESS_MM, ARM.width],
-      position: at(armCentre, c.angle, armY), rotation: [0, -c.angle, 0], color: '#3a424c', material: CARBON, process: 'cut',
+      position: at(armCentre, c.angle, armY), rotation: [0, -c.angle, 0], color: CARBON_GREY, material: CARBON, process: 'cut',
       // Two frame bolts at the hub end; an M3 motor pair and a shaft clearance hole at the tip.
       holes: [
         { x: -armLength / 2 + 6, z: 0, diameter: 3.2 }, { x: -armLength / 2 + 20, z: 0, diameter: 3.2 },
@@ -50,29 +52,29 @@ export function droneParts(): Part[] {
   }
   for (const c of corners) {
     parts.push({ id: 'motor-mount-' + c.key, name: `Motor soft mount, ${c.label}`, shape: 'cylinder', size: [28, 2, 28],
-      position: at(MOTOR_RADIUS, c.angle, armTop + 1), color: '#4d7fbf', material: 'TPU 95A', process: 'print' });
+      position: at(MOTOR_RADIUS, c.angle, armTop + 1), color: SATIN_BLACK, material: 'TPU 95A', process: 'print' });
     parts.push({ id: 'motor-' + c.key, name: `Motor 2306 envelope, ${c.label}`, shape: 'cylinder', size: [28, 18, 28],
       position: at(MOTOR_RADIUS, c.angle, armTop + 2 + 9), color: '#1d2127', material: 'Brushless motor 2306, 2450 KV', process: 'buy' });
     // A two-blade 5 in propeller, across the arm so it does not hide it; bought, so it is in the parts list and the AR model.
     parts.push({ id: 'prop-' + c.key, name: `Propeller 5 in, ${c.label}`, shape: 'box', size: [127, 3, 12],
-      position: at(MOTOR_RADIUS, c.angle, armTop + 2 + 18 + 2.5), rotation: [0, -c.angle + Math.PI / 2, 0], color: '#8fb8e8',
+      position: at(MOTOR_RADIUS, c.angle, armTop + 2 + 18 + 2.5), rotation: [0, -c.angle + Math.PI / 2, 0], color: PROP_GREY,
       material: 'Polycarbonate 5 in two-blade propeller (purchased)', process: 'buy' });
     parts.push({ id: 'leg-' + c.key, name: `Landing leg, ${c.label}`, shape: 'cylinder', size: [10, LEG_HEIGHT + 3, 10],
-      position: at(MOTOR_RADIUS - 12, c.angle, (LEG_HEIGHT + 3) / 2), color: '#4d7fbf', material: 'TPU 95A', process: 'print' });
+      position: at(MOTOR_RADIUS - 12, c.angle, (LEG_HEIGHT + 3) / 2), color: SATIN_BLACK, material: 'TPU 95A', process: 'print' });
   }
   for (const [x, z] of [[46, 12], [46, -12], [-46, 12], [-46, -12]] as const)
     parts.push({ id: `standoff-${x > 0 ? 'front' : 'rear'}-${z > 0 ? 'right' : 'left'}`, name: 'M3 aluminium standoff, 25 mm', shape: 'tube',
-      size: [5, 25, 5], holeDiameter: 2.5, position: [x, BOTTOM_TOP + 12.5, z], color: '#9aa7b4', material: 'Aluminum 6061-T6', process: 'buy' });
+      size: [5, 25, 5], holeDiameter: 2.5, position: [x, BOTTOM_TOP + 12.5, z], color: ALUMINIUM, material: 'Aluminum 6061-T6', process: 'buy' });
   parts.push(
     { id: 'flight-controller', name: 'Flight controller stack, 30.5 mm', shape: 'box', size: [36, 6, 36], position: [-4, BOTTOM_TOP + 9, 0],
       color: '#2f6b4f', material: 'FR-4 circuit board (purchased)', process: 'buy',
       holes: [{ x: 15.25, z: 15.25, diameter: 3.2 }, { x: 15.25, z: -15.25, diameter: 3.2 }, { x: -15.25, z: 15.25, diameter: 3.2 }, { x: -15.25, z: -15.25, diameter: 3.2 }] },
     { id: 'battery', name: '4S 1300 mAh battery envelope', shape: 'box', size: [75, 35, 38], position: [-4, 60 + 17.5, 0],
-      color: '#c9a227', material: 'LiPo pack (purchased envelope)', process: 'buy' },
+      color: CHARCOAL, material: 'LiPo pack (purchased envelope)', process: 'buy' },
     { id: 'camera-mount-left', name: 'Camera mount, left cheek', shape: 'box', size: [20, 24, 3], position: [45, BOTTOM_TOP + 12.5, -12],
-      color: '#4d7fbf', material: 'TPU 95A', process: 'print' },
+      color: SATIN_BLACK, material: 'TPU 95A', process: 'print' },
     { id: 'camera-mount-right', name: 'Camera mount, right cheek', shape: 'box', size: [20, 24, 3], position: [45, BOTTOM_TOP + 12.5, 12],
-      color: '#4d7fbf', material: 'TPU 95A', process: 'print' },
+      color: SATIN_BLACK, material: 'TPU 95A', process: 'print' },
     { id: 'camera', name: '19 mm camera module envelope', shape: 'box', size: [19, 19, 19], position: [45, BOTTOM_TOP + 12.5, 0],
       rotation: [0, 0, -0.35], color: '#15181c', material: 'Camera module (purchased)', process: 'buy' },
   );

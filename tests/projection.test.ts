@@ -60,6 +60,12 @@ describe("spoken replies", () => {
     expect(lines.every(line => line.length <= 81)).toBe(true);
   });
 
+  it("says units in full for speech only; the screen keeps short forms", () => {
+    expect(speakable("Under the same 1 kgf (9.8 N) load it bends 70% less: 22.3 MPa, 0.5 kg payload, 3 cm"))
+      .toBe("Under the same 1 kilogram-force (9.8 newtons) load it bends 70 percent less: 22.3 megapascals, 0.5 kilograms payload, 3 centimetres");
+    expect(shortSentences("All 4 arms go from 4 mm to 6 mm thick. Check it.")).toEqual(["All 4 arms go from 4 mm to 6 mm thick.", "Check it."]);
+  });
+
   it("speaks the explanation then the questions, at most four lines", () => {
     expect(replyLines({ explanation: "I can change that. It needs a size.", questions: ["What thickness should the arm be?", "Which arm?"] }))
       .toEqual(["I can change that.", "It needs a size.", "What thickness should the arm be?", "Which arm?"]);
