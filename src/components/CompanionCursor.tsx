@@ -118,18 +118,20 @@ export default function CompanionCursor({ hoverLabel, phase, transcript, agent, 
     // Leave from the pointer circle when it is on screen, else from the lower middle of the view.
     const start = drawn.current && over ? { ...drawn.current } : { x: innerWidth / 2, y: innerHeight - 120 };
     const state = new Map(agent.targets.map(t => [t.key, { p: { ...start }, v: { x: 0, y: 0 }, landed: false }]));
-    let id = 0, previous = 0, reported = 0;
+    let id = 0, idle = 0, previous = 0, reported = 0, moved = true;
     const tick = (time: number) => {
       const current = agentRef.current;
       if (!current) return;
       const dt = Math.min(0.05, previous ? (time - previous) / 1000 : 1 / 60);
       previous = time;
       let landedCount = 0;
+      moved = false;
       for (const target of current.targets) {
         const s = state.get(target.key), el = bots.current.get(target.key);
         if (!s) continue;
         const at = current.locate(target);
         if (at) {
+          if (Math.abs(s.p.x - at.x) > 0.5 || Math.abs(s.p.y - at.y) > 0.5 || !s.landed) moved = true;
           if (stillRef.current) { s.p = { x: at.x, y: at.y }; s.landed = true; }
           else {
             const settled = spring(s.p, s.v, at, dt);
@@ -147,10 +149,12 @@ export default function CompanionCursor({ hoverLabel, phase, transcript, agent, 
         }
       }
       if (landedCount !== reported) { reported = landedCount; setArrived(current.targets.filter(t => state.get(t.key)?.landed).map(t => t.key)); }
-      id = requestAnimationFrame(tick);
+      // Once every circle has landed and nothing moved, look again four times a second instead of every frame.
+      if (!moved && landedCount === current.targets.length) { previous = 0; idle = window.setTimeout(() => { id = requestAnimationFrame(tick); }, 250); }
+      else id = requestAnimationFrame(tick);
     };
     id = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(id);
+    return () => { cancelAnimationFrame(id); window.clearTimeout(idle); };
   }, [agent?.key]);
 
   const listening = phase !== "idle";
