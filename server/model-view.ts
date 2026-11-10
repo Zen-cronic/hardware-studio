@@ -1,4 +1,4 @@
-import type { FastifyInstance, FastifyRequest } from "fastify";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { createReadStream, existsSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { HttpError, type Store } from "./store";
@@ -15,33 +15,41 @@ export interface ModelFile { path: string; job: BuildJob; current: boolean }
 
 /** The newest ready package's assembly.glb, preferring one built from the current revision. */
 export function latestModel(store: Store, designId: string): ModelFile | null {
-  const revision = store.get(designId).design.revision;
-  const rows = store.db.prepare("SELECT job, archive FROM builds WHERE design_id=? ORDER BY rowid DESC").all(designId) as { job: string; archive: string | null }[];
-  let fallback: ModelFile | null = null;
+  const design = store.db.prepare("SELECT json_extract(snapshot,'$.design.revision') AS revision FROM designs WHERE id=?").get(designId) as { revision: number } | undefined;
+  if (!design) return null;
+  // Only ready packages with files, newest first, read through the design index; each job is parsed only when used.
+  const rows = store.db.prepare("SELECT job, archive, json_extract(job,'$.revision') AS revision FROM builds WHERE design_id=? AND archive IS NOT NULL AND json_extract(job,'$.status')='ready' ORDER BY rowid DESC")
+    .iterate(designId) as Iterable<{ job: string; archive: string; revision: number }>;
+  let fallback: { path: string; job: string } | null = null;
   for (const row of rows) {
-    const job: BuildJob = JSON.parse(row.job);
-    if (job.status !== "ready" || !row.archive) continue;
     const path = join(dirname(row.archive), "assembly.glb");
     if (!existsSync(path)) continue;
-    if (job.revision === revision) return { path, job, current: true };
-    fallback ??= { path, job, current: false };
+    if (row.revision === design.revision) return { path, job: JSON.parse(row.job), current: true };
+    fallback ??= { path, job: row.job };
   }
-  return fallback;
+  return fallback ? { path: fallback.path, job: JSON.parse(fallback.job), current: false } : null;
 }
 
 export function registerModelRoutes(app: FastifyInstance, store: Store) {
-  app.get("/api/designs/:id/model.glb", async (r, reply) => {
+  const model = (r: FastifyRequest) => {
     const id = String((r.params as { id: string }).id);
     store.authorize(id, tokenOf(r));
-    const model = latestModel(store, id);
-    if (!model)
+    const found = latestModel(store, id);
+    if (!found)
       throw new HttpError(409, "No 3D model is ready for this design yet. Open the design, choose Build, then Generate build package, and try again.", "MODEL_NOT_BUILT");
-    return reply
-      .header("Cache-Control", "private, no-store")
-      .header("Content-Length", statSync(model.path).size)
-      .header("X-Model-Revision", String(model.job.revision))
-      .header("X-Model-Current", model.current ? "true" : "false")
-      .type("model/gltf-binary")
-      .send(createReadStream(model.path));
+    return found;
+  };
+  const headers = (reply: FastifyReply, found: ModelFile) => reply
+    .header("Cache-Control", "private, no-store")
+    .header("Content-Length", statSync(found.path).size)
+    .header("X-Model-Revision", String(found.job.revision))
+    .header("X-Model-Current", found.current ? "true" : "false")
+    .type("model/gltf-binary");
+  // The room view asks whether a model exists and is current: a file stat, never the file itself.
+  // Registered before GET so it replaces the automatic HEAD route.
+  app.head("/api/designs/:id/model.glb", async (r, reply) => headers(reply, model(r)).send());
+  app.get("/api/designs/:id/model.glb", async (r, reply) => {
+    const found = model(r);
+    return headers(reply, found).send(createReadStream(found.path));
   });
 }

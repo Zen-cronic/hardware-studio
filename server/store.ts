@@ -68,6 +68,7 @@ export class Store {
         base_snapshot TEXT NOT NULL, record TEXT NOT NULL
       );
       CREATE INDEX IF NOT EXISTS proposed_versions_parent ON proposed_versions(parent_design_id);
+      CREATE INDEX IF NOT EXISTS builds_design ON builds(design_id);
       CREATE TABLE IF NOT EXISTS version_receipts (
         version_id TEXT NOT NULL REFERENCES proposed_versions(id), operation_id TEXT NOT NULL,
         request_hash TEXT NOT NULL, result TEXT NOT NULL, PRIMARY KEY(version_id, operation_id)

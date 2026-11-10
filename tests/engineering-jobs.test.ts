@@ -17,6 +17,11 @@ test('study API uses actual immutable geometry, protects results, preserves inva
   for(let i=0;i<200;i++){result=(await app.inject({method:'GET',url:'/api/studies/'+job.id,headers})).json();if(!['queued','running'].includes(result.status))break;await new Promise(r=>setTimeout(r,100));}
   expect(result.status,result.error||JSON.stringify(result.result)).toBe('ready');expect(['solved','unconverged']).toContain(result.result.status);expect(result.designId).toBe(id);expect(result.revision).toBe(0);expect(result.result.maxDisplacementMm).toBeGreaterThan(.04);expect(result.result.maxDisplacementMm).toBeLessThan(.05);
   expect(result.result.mesh.surface.length).toBeGreaterThan(0);expect(result.stale).toBe(false);
+  // The summary for polling: same status and numbers, no mesh or field arrays, same capability rule.
+  const summary=await app.inject({method:'GET',url:'/api/studies/'+job.id+'/summary',headers});expect(summary.statusCode).toBe(200);
+  expect(summary.json()).toMatchObject({id:job.id,status:'ready',result:{status:result.result.status,maxDisplacementMm:result.result.maxDisplacementMm,p95VonMisesMPa:result.result.p95VonMisesMPa}});
+  expect(summary.json().result.mesh).toBeUndefined();expect(summary.body.length).toBeLessThan(JSON.stringify(result).length/4);
+  expect((await app.inject({method:'GET',url:'/api/studies/'+job.id+'/summary'})).statusCode).toBe(403);
   const changed={...part,size:[100,6,10]};
   const edit=await app.inject({method:'POST',url:`/api/designs/${id}/commands`,headers,payload:{id:'thicker',actor:'Tester',baseRevision:0,changes:{},readSet:snapshot.design.params,customParts:[changed]}});expect(edit.statusCode).toBe(200);
   expect((await app.inject({method:'GET',url:'/api/studies/'+job.id,headers})).json().stale).toBe(true);

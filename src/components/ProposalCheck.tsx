@@ -25,9 +25,10 @@ export interface CheckResult {
   before: Study; after: Study;
 }
 
+// Polls the study's summary (status and headline numbers), not the full job with its mesh.
 async function waitFor(id: string, token: string, alive: () => boolean) {
   for (;;) {
-    const job = await api<Study>("/studies/" + id, token);
+    const job = await api<Study>("/studies/" + id + "/summary", token);
     if (!["queued", "running"].includes(job.status) || !alive()) return job;
     await new Promise(r => setTimeout(r, 1200));
   }

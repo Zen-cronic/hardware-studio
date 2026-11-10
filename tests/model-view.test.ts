@@ -59,6 +59,22 @@ describe("model for viewing in a room", () => {
       // 100 × 20 × 50 mm resting on the floor: metres, Y up, nothing rotated into Z-up.
       expect(size.x).toBeCloseTo(0.1, 4); expect(size.y).toBeCloseTo(0.02, 4); expect(size.z).toBeCloseTo(0.05, 4);
       expect(box.min.y).toBeCloseTo(0, 4);
+      // HEAD answers from a file stat: the same headers, no body.
+      const head = await app.inject({ method: "HEAD", url: url + "?token=" + viewerToken });
+      expect(head.statusCode).toBe(200);
+      expect(head.headers["x-model-current"]).toBe("true");
+      expect(Number(head.headers["content-length"])).toBe(served.rawPayload.length);
+      expect(head.rawPayload.length).toBe(0);
+      expect((await app.inject({ method: "HEAD", url: url + "?token=not-a-token" })).statusCode).toBe(403);
+      // After an edit the model is from an earlier revision.
+      const snapshot = (await app.inject({ method: "GET", url: `/api/designs/${id}`, headers: { authorization: "Bearer " + editorToken } })).json();
+      const edited = await app.inject({ method: "POST", url: `/api/designs/${id}/commands`, headers: { authorization: "Bearer " + editorToken }, payload: {
+        id: "taller", actor: "Maker", baseRevision: 0, changes: {}, readSet: snapshot.design.params,
+        customParts: [{ ...snapshot.design.customParts[0], size: [100, 30, 50] }] } });
+      expect(edited.statusCode).toBe(200);
+      const old = await app.inject({ method: "HEAD", url: url + "?token=" + viewerToken });
+      expect(old.headers["x-model-current"]).toBe("false");
+      expect(old.headers["x-model-revision"]).toBe("0");
       // The bearer header works too, and an unrelated token does not.
       expect((await app.inject({ method: "GET", url, headers: { authorization: "Bearer " + editorToken } })).statusCode).toBe(200);
       expect((await app.inject({ method: "GET", url: url + "?token=not-a-token" })).statusCode).toBe(403);

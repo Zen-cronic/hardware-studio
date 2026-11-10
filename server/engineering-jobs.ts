@@ -41,6 +41,14 @@ export class EngineeringJobs {
     if(job.setup?.importId){try{resolveImportGeometry(this.store,job.designId,job.setup.importId,{jobId:job.setup.importJobId,inputHash:job.setup.importInputHash});}catch{return true;}}
     return false;
   }
+  /** The job without its mesh and field arrays: status and headline numbers, for polling. */
+  summary(id: string): EngineeringJob {
+    const row = this.store.db.prepare("SELECT json_remove(job,'$.result.mesh','$.result.displacement','$.result.vonMises','$.result.frames') AS summary FROM engineering_jobs WHERE id=?").get(id) as {summary:string}|undefined;
+    if (!row) throw new HttpError(404, "Study not found.");
+    const job: EngineeringJob = JSON.parse(row.summary);
+    job.stale = this.isStale(job);
+    return job;
+  }
   list(designId: string): EngineeringJob[] {
     this.store.get(designId);
     return (this.store.db.prepare("SELECT json_remove(job,'$.result.mesh','$.result.displacement','$.result.vonMises','$.result.frames') AS summary FROM engineering_jobs WHERE design_id=? ORDER BY rowid DESC LIMIT 30").all(designId) as {summary:string}[]).map(r=>{const job=JSON.parse(r.summary);return {...job,stale:this.isStale(job)};});
@@ -104,6 +112,7 @@ export class EngineeringJobs {
 export function registerEngineeringRoutes(app:FastifyInstance,store:Store,jobs:EngineeringJobs) {
   app.get("/api/designs/:id/studies",async r=>{const id=String((r.params as any).id);store.authorize(id,token(r));return jobs.list(id);});
   app.post("/api/designs/:id/studies",async(r,reply)=>{const id=String((r.params as any).id);store.authorize(id,token(r),true);const body=r.body as any;const geometry=body?.importId?resolveImportGeometry(store,id,String(body.importId),{jobId:body.expectedImportJobId,inputHash:body.expectedImportInputHash}):undefined;return reply.code(202).send(jobs.submit(store.get(id),body,geometry));});
+  app.get("/api/studies/:jobId/summary",async r=>{const job=jobs.summary(String((r.params as any).jobId));store.authorize(job.designId,token(r));return job;});
   app.get("/api/studies/:jobId",async r=>{const job=jobs.get(String((r.params as any).jobId));store.authorize(job.designId,token(r));return job;});
   app.post("/api/studies/:jobId/cancel",async r=>{const job=jobs.get(String((r.params as any).jobId));store.authorize(job.designId,token(r),true);return jobs.cancel(job.id);});
 }
