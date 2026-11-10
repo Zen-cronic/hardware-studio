@@ -87,3 +87,19 @@
   :root .studio-main > .scene-panel > .scene-heading:has(.voice-control) { display: flex; position: static; padding: 0; width: 100%; pointer-events: auto; }
   :root .scene-heading:has(.voice-control) > .eyebrow { display: none; }
 }
+
+/* Surface targeting */
+.surface-label { display: inline-block; white-space: nowrap; max-width: 260px; overflow: hidden; text-overflow: ellipsis; padding: 3px 8px; border-radius: 5px; font-size: var(--s-xs); line-height: 1.35; pointer-events: none; }
+.surface-label.is-hover { position: absolute; z-index: 3; transform: translate(14px, 16px); background: var(--panel); color: var(--text); border: 1px solid var(--action); box-shadow: 0 4px 14px rgb(19 35 68 / 0.16); }
+.surface-label.is-hover.is-flipped { transform: translate(calc(-100% - 14px), 16px); }
+.surface-label.is-pinned { transform: translate(18px, calc(-100% - 12px)); background: var(--action); color: var(--on-action, #fff); border: 1px solid var(--action); }
+.pointing-chip { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; margin: 0; padding: 3px 2px 3px 10px; border: 1px solid var(--action); border-radius: 8px; background: var(--panel); color: var(--text); font-size: var(--s-xs); }
+.pointing-chip > span { overflow-wrap: anywhere; line-height: 1.35; }
+.pointing-chip > button { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; flex: none; border: 0; border-radius: 999px; background: transparent; color: var(--action); cursor: pointer; }
+.pointing-chip > button:hover { background: var(--surface); }
+.pointing-chip > button:focus-visible { outline: 2px solid var(--action); outline-offset: 1px; }
+.proposal-target { font-size: var(--s-xs); color: var(--text); margin: 0 0 8px; }
+.proposal-target strong { color: var(--action); }
+.feature-cycler { display: flex; align-items: center; gap: 4px; margin-top: 4px; min-width: 0; }
+.feature-cycler > span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+:root .feature-cycler > .button { min-width: 28px; min-height: 28px; padding: 0; }

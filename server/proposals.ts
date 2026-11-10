@@ -1,9 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { productForDesign } from "../src/shared/catalog";
 import { deriveDesign, readSetFor, validateDesign } from "../src/shared/engine";
-import type { Snapshot, Proposal, Part } from "../src/shared/types";
+import type { Snapshot, Proposal, Part, ProposalTarget } from "../src/shared/types";
 import { Store, HttpError } from "./store";
-import { assertCurrentSelection, getSelectionControls, type SelectionRef } from "../src/shared/selection";
+import { applySemanticEdit, assertCurrentSelection, getSelectionControls, resolveSelectionSurface, type SelectionRef, type SemanticEdit } from "../src/shared/selection";
+import { localSurfaceEdit, surfaceConflict, targetContext, type ResolvedSurfaceTarget } from "../src/shared/surface";
+import { DesignError } from "../src/shared/engine";
 import { selectedAiKey, selectedAiModel, providerRequest, providerHeaders, providerJson, validateInputCount, providerUsage, providerText, FRONTIER_PRICING } from "./ai-provider";
 function localProposal(
   snapshot: Snapshot,
@@ -74,6 +76,51 @@ function localProposal(
     questions,
   };
 }
+function emptyCommand(snapshot: Snapshot, actor: string, prompt: string) {
+  return { id: randomUUID(), baseRevision: snapshot.design.revision, actor, changes: {}, readSet: { ...snapshot.design.params }, summary: prompt.slice(0, 180) };
+}
+function clarification(snapshot: Snapshot, body: { prompt: string; actor: string }, explanation: string, question: string, source: Proposal["source"], target?: ProposalTarget): Proposal {
+  return { source, explanation, questions: [question], command: emptyCommand(snapshot, body.actor, body.prompt), ...(target ? { target } : {}) };
+}
+function proposalTarget(snapshot: Snapshot, selection: SelectionRef | undefined, pointed: ResolvedSurfaceTarget | null): ProposalTarget | undefined {
+  if (!selection) return undefined;
+  if (pointed) return { partIds: [pointed.partId], featureId: pointed.feature.id, label: pointed.label };
+  return { partIds: [...selection.partIds], label: selection.partIds.map(id => snapshot.derived.parts.find(p => p.id === id)!.name).join(", ") };
+}
+/** Strict shape check for a model-proposed edit of the pointed feature. */
+export function parseTargetEdit(raw: unknown): SemanticEdit {
+  const edit = raw as Record<string, unknown>;
+  const invalid = () => new HttpError(502, "The assistant returned an unsupported targeted edit.", "AI_INVALID");
+  if (!edit || typeof edit !== "object" || Array.isArray(edit)) throw invalid();
+  const keys = Object.keys(edit), positive = (v: unknown) => typeof v === "number" && Number.isFinite(v) && v > 0;
+  const only = (...allowed: string[]) => keys.every(key => allowed.includes(key));
+  if (edit.type === "hole" && only("type", "holeIndex", "diameter") && positive(edit.diameter) &&
+      (edit.holeIndex === "bore" || (Number.isInteger(edit.holeIndex) && (edit.holeIndex as number) >= 0)))
+    return { type: "hole", holeIndex: edit.holeIndex as number | "bore", diameter: edit.diameter as number };
+  if (edit.type === "dimension" && only("type", "axis", "value") && ["x", "y", "z"].includes(edit.axis as string) && positive(edit.value))
+    return { type: "dimension", axis: edit.axis as "x" | "y" | "z", value: edit.value as number };
+  if (edit.type === "wallThickness" && only("type", "value") && positive(edit.value)) return { type: "wallThickness", value: edit.value as number };
+  if (edit.type === "parameter" && only("type", "key", "value") && typeof edit.key === "string" && typeof edit.value === "number" && Number.isFinite(edit.value))
+    return { type: "parameter", key: edit.key, value: edit.value };
+  throw invalid();
+}
+/** A hole edit must address the pointed hole or bore; other features may only change dimensions. */
+export function editMatchesTarget(edit: SemanticEdit, pointed: ResolvedSurfaceTarget): boolean {
+  if (edit.type !== "hole") return true;
+  if (pointed.feature.kind === "hole") return edit.holeIndex === pointed.feature.holeIndex;
+  if (pointed.feature.kind === "bore") return edit.holeIndex === "bore";
+  return false;
+}
+function boundProposal(snapshot: Snapshot, selection: SelectionRef, edit: SemanticEdit, body: { prompt: string; actor: string }, source: Proposal["source"], target: ProposalTarget, explanation?: string): Proposal {
+  try {
+    const preview = applySemanticEdit(snapshot, selection, edit, body.actor);
+    return { source, target, questions: [], explanation: explanation || preview.explanation,
+      command: { ...preview.command, summary: body.prompt.slice(0, 180) } };
+  } catch (error) {
+    if (!(error instanceof DesignError)) throw error;
+    return clarification(snapshot, body, `That change to ${target.label} is not possible: ${error.message}`, "What measurement should the pointed feature have instead?", source, target);
+  }
+}
 export async function propose(
   store: Store,
   snapshot: Snapshot,
@@ -92,6 +139,8 @@ export async function propose(
   )
     throw new HttpError(422, "Provide a short design request and your name.");
   if (body.selection) assertCurrentSelection(snapshot, body.selection);
+  const pointed = body.selection ? resolveSelectionSurface(snapshot, body.selection) : null;
+  const target = proposalTarget(snapshot, body.selection, pointed);
   const images = body.images || (body.image ? [body.image] : []);
   if (
     !Array.isArray(images) ||
@@ -107,7 +156,19 @@ export async function propose(
       422,
       "Attach up to four PNG, JPEG or WebP reference images under 2 MB each.",
     );
+  if (pointed) {
+    // Deictic words bind to the pointed feature. A request naming another
+    // feature is never guessed; it costs nothing and asks first.
+    const conflict = surfaceConflict(body.prompt, pointed);
+    if (conflict) return clarification(snapshot, body, conflict, "Which feature should this change?", "local", target);
+    const part = snapshot.derived.parts.find(p => p.id === pointed.partId)!;
+    const local = !images.length && snapshot.design.kind === "custom" ? localSurfaceEdit(body.prompt, pointed, part) : null;
+    if (local) return boundProposal(snapshot, body.selection!, local, body, "local", target!);
+  }
   if (!apiKey) {
+    if (pointed && !images.length)
+      return clarification(snapshot, body, `This request about ${pointed.label} needs the design assistant. Give one measurement, such as “make this 8 mm”, or use the part controls.`,
+        "What measurement should the pointed feature have?", "local", target);
     if (images.length)
       return {
         ...localProposal(snapshot, "", body.actor),
@@ -116,7 +177,7 @@ export async function propose(
         questions: ["What measured dimensions should this reference change?"],
       };
     if (body.selection) return {
-      ...localProposal(snapshot, "", body.actor),
+      ...localProposal(snapshot, "", body.actor), ...(target ? { target } : {}),
       explanation: "This targeted request needs an AI connection; use the part controls to change a measured dimension.",
       questions: ["Which dimension would you like to change in the part controls?"],
     };
@@ -133,9 +194,11 @@ export async function propose(
       customParts: d.customParts,
       selectedParts: body.selection ? assertCurrentSelection(snapshot, body.selection) : undefined,
       selectionControls: body.selection ? getSelectionControls(snapshot, body.selection) : undefined,
+      pointedTarget: pointed ? targetContext(pointed) : undefined,
       parameters: productForDesign(d).parameters,
     }) +
-    ". For a selected-part request preserve every unaffected part, stable IDs, parent relationships, holes, counterbores, channels, coaxial sections and loopSpan. Do not erase supported existing features while changing a dimension. Return no payment, procurement or fabrication claims.";
+    ". For a selected-part request preserve every unaffected part, stable IDs, parent relationships, holes, counterbores, channels, coaxial sections and loopSpan. Do not erase supported existing features while changing a dimension. Return no payment, procurement or fabrication claims." +
+    (pointed ? " The user is pointing at pointedTarget, one feature of one part. Deictic words such as this, that, here, it, this hole and that end refer to pointedTarget only. For a measured change to the pointed feature return targetEdit, exactly one of {type:\"hole\",holeIndex:number or \"bore\",diameter:number}, {type:\"dimension\",axis:\"x\"|\"y\"|\"z\",value:number} or {type:\"wallThickness\",value:number}, in millimetres in the part's own axes, with changes {} and partChanges null; the application applies it with its own geometry rules. Use partChanges instead only when the change needs a position or several fields of the pointed part, such as moving one end while the other end stays fixed, and never edit other parts. If the request names a different feature or part than pointedTarget, make no change and ask one short question." : "");
   const ticket = store.aiProvider.acquire(signal);
   let reserved = false, possiblyCharged = false;
   try {
@@ -183,6 +246,19 @@ export async function propose(
           .slice(0, 3)
           .map((q: string) => q.slice(0, 300))
       : [];
+    if (pointed && parsed.targetEdit !== undefined && parsed.targetEdit !== null) {
+      if (Object.keys(changes).length || (parsed.partChanges !== undefined && parsed.partChanges !== null) || (Array.isArray(parsed.customParts) && parsed.customParts.length))
+        throw new HttpError(502, "The assistant returned incompatible part edits.", "AI_INVALID");
+      const edit = parseTargetEdit(parsed.targetEdit);
+      if (!editMatchesTarget(edit, pointed))
+        return clarification(snapshot, body, `The suggested edit does not match ${pointed.label}. Nothing was changed.`, "Which feature should this change?", "ai", target);
+      const explanation = typeof parsed.explanation === "string" ? parsed.explanation.slice(0, 1200) : undefined;
+      return boundProposal(snapshot, body.selection!, edit, body, "ai", target!, explanation);
+    }
+    if (pointed && Array.isArray(parsed.partChanges) && parsed.partChanges.some((update: any) => update?.id !== pointed.partId))
+      return clarification(snapshot, body, `The suggested change also edits parts other than ${pointed.partName}. Nothing was changed.`, "Point at each part you want to change, one request at a time.", "ai", target);
+    if (pointed && Array.isArray(parsed.customParts) && parsed.customParts.length)
+      return clarification(snapshot, body, `The suggested change would replace the assembly rather than ${pointed.label}. Nothing was changed.`, "Which measurement of the pointed feature should change?", "ai", target);
     let customParts =
       d.kind === "custom" &&
       Array.isArray(parsed.customParts) &&
@@ -214,6 +290,7 @@ export async function propose(
       questions.push("What dimensions or behavior would you like to change?");
     return {
       source: "ai",
+      ...(target ? { target } : {}),
       explanation:
         typeof parsed.explanation === "string"
           ? parsed.explanation.slice(0, 1200)

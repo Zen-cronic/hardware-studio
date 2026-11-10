@@ -1,6 +1,7 @@
 import type { Command, Part, Snapshot } from "./types";
 import { deriveDesign, DesignError, readSetFor } from "./engine";
 import { productForDesign } from "./catalog";
+import { resolveSurfaceTarget, SurfaceTargetError, type ResolvedSurfaceTarget, type SurfaceTarget } from "./surface";
 
 export type SelectionSource = "click" | "circle" | "list" | "hover";
 export interface SelectionRef {
@@ -8,6 +9,8 @@ export interface SelectionRef {
   revision: number;
   partIds: string[];
   source: SelectionSource;
+  /** Exact pointed surface of the single targeted part, validated against current geometry. */
+  surface?: SurfaceTarget;
 }
 export type SemanticEdit =
   | { type: "parameter"; key: string; value: number }
@@ -74,9 +77,10 @@ export function createSelection(
   snapshot: Snapshot,
   partIds: string[],
   source: SelectionSource = "click",
+  surface?: SurfaceTarget,
 ): SelectionRef {
-  const selection = { designId: snapshot.design.id, revision: snapshot.design.revision,
-    partIds: [...new Set(partIds)], source };
+  const selection: SelectionRef = { designId: snapshot.design.id, revision: snapshot.design.revision,
+    partIds: [...new Set(partIds)], source, ...(surface ? { surface } : {}) };
   assertCurrentSelection(snapshot, selection);
   return selection;
 }
@@ -86,11 +90,22 @@ export function assertCurrentSelection(snapshot: Snapshot, selection: SelectionR
   if (!Array.isArray(selection.partIds) || !selection.partIds.length ||
       new Set(selection.partIds).size !== selection.partIds.length)
     throw new DesignError("Select at least one distinct part.", "INVALID_SELECTION");
-  return selection.partIds.map(id => {
+  const parts = selection.partIds.map(id => {
     const part = snapshot.derived.parts.find(p => p.id === id);
     if (!part) throw new DesignError("A selected part is no longer in this design.", "STALE_SELECTION");
     return part;
   });
+  if (selection.surface !== undefined) resolveSelectionSurface(snapshot, selection);
+  return parts;
+}
+/** The server-resolved pointed feature, or null for a part-level target. */
+export function resolveSelectionSurface(snapshot: Snapshot, selection: SelectionRef): ResolvedSurfaceTarget | null {
+  if (selection.surface === undefined) return null;
+  try { return resolveSurfaceTarget(snapshot.derived.parts, selection.partIds, selection.surface); }
+  catch (error) {
+    if (error instanceof SurfaceTargetError) throw new DesignError(error.message, error.code);
+    throw error;
+  }
 }
 
 export function getSelectionControls(snapshot: Snapshot, selection: SelectionRef): SelectionControl[] {

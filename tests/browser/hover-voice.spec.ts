@@ -42,11 +42,12 @@ test("SYNTHETIC: hover front surface without click, freeze speech-onset target, 
  await page.route("**/propose",async route=>{sent=route.request().postDataJSON();await route.fulfill({json:{source:"ai",explanation:"The mounting plate is now 12 mm thick. Review the proposed geometry.",questions:[],command:{id:"synthetic-proposal",actor:"Maker",baseRevision:0,changes:{},readSet:d.snapshot.design.params,customParts:parts.map(p=>p.id==="left"?{...p,size:[40,12,45]}:p),summary:"Change mounting plate thickness"}}});});
  await page.getByRole("button",{name:"Speak an instruction",exact:true}).click();
  await hoverPart(page,"left");await expect(page.locator(".part-selection")).toHaveCount(0);await capture(page,"after-hover");
- await emit(page,"speech");await expect(page.getByTestId("voice-status")).toHaveText("Listening about Mounting plate.");
- await hoverPart(page,"right");await expect(page.getByTestId("voice-status")).toHaveText("Listening about Mounting plate.");
- await expect(page.locator('[data-part-marker="left"]')).toContainText("Mounting plate");await capture(page,"after-speech-target-locked");
+ await emit(page,"speech");await expect(page.getByTestId("voice-status")).toHaveText(/^Listening about Mounting plate · .+\.$/);
+ const locked=await page.getByTestId("voice-status").textContent();
+ await hoverPart(page,"right");await expect(page.getByTestId("voice-status")).toHaveText(locked!);
+ await expect(page.locator('[data-surface-label="pinned"]')).toHaveText(locked!.replace(/^Listening about /,"").replace(/\.$/,""));await capture(page,"after-speech-target-locked");
  await emit(page,"partial");expect(sent).toBeUndefined();await emit(page,"final","Make this plate 12 mm thick");
- await expect(page.getByRole("region",{name:"Proposed change"})).toBeVisible();expect(sent.selection).toEqual({designId:d.snapshot.design.id,revision:0,partIds:["left"],source:"hover"});
+ await expect(page.getByRole("region",{name:"Proposed change"})).toBeVisible();expect(sent.selection).toMatchObject({designId:d.snapshot.design.id,revision:0,partIds:["left"],source:"hover",surface:{partId:"left"}});
  await expect(page.getByRole("button",{name:"Speak an instruction",exact:true})).toBeDisabled();
  await capture(page,"after-proposal-review");
  const snap=await request.get(`/api/designs/${d.snapshot.design.id}`,{headers:{Authorization:`Bearer ${d.access.editorToken}`}});expect((await snap.json()).design.revision).toBe(0);
@@ -108,8 +109,8 @@ test("SYNTHETIC: editing a spoken draft keeps its target; explicit selection and
  await page.getByLabel("Choose a part from the list",{exact:true}).click();await page.getByRole("button",{name:"Support block",exact:true}).click();await closePanels(page);
  await page.getByRole("button",{name:"Speak an instruction",exact:true}).click();await hoverPart(page,"left");await emit(page,"speech");await emit(page,"final","Make this 12 mm thick");
  await expect(page.getByRole("region",{name:"Proposed change"})).toBeVisible();expect(sent[0].selection.partIds).toEqual(["left"]);
- await expect(page.locator(".model-canvas")).toHaveAttribute("data-highlighted-parts","");await expect(page.locator(".part-selection")).toHaveCount(0);await expect(page.getByTestId("request-target")).toHaveText("Request for Mounting plate");await capture(page,"after-old-selection-voice-proposal");
- await page.getByRole("button",{name:"Dismiss proposal",exact:true}).click();await page.getByTestId("design-prompt").fill("Make this 14 mm thick");await expect(page.getByTestId("request-target")).toHaveText("Request for Mounting plate");await page.getByTestId("propose-change").click();
+ await expect(page.locator(".model-canvas")).toHaveAttribute("data-highlighted-parts","");await expect(page.locator(".part-selection")).toHaveCount(0);await expect(page.getByTestId("request-target")).toHaveText(/^Pointing at: Mounting plate · /);await capture(page,"after-old-selection-voice-proposal");
+ await page.getByRole("button",{name:"Dismiss proposal",exact:true}).click();await page.getByTestId("design-prompt").fill("Make this 14 mm thick");await expect(page.getByTestId("request-target")).toHaveText(/^Pointing at: Mounting plate · /);await page.getByTestId("propose-change").click();
  await expect.poll(()=>sent.length).toBe(2);expect(sent[1].selection.partIds).toEqual(["left"]);
  await page.getByRole("button",{name:"Dismiss proposal",exact:true}).click();await page.getByLabel("Choose a part from the list",{exact:true}).click();await page.getByRole("button",{name:"Support block",exact:true}).click();await openPrompt(page);await expect(page.getByTestId("request-target")).toHaveText("Request for Support block");
  await page.getByRole("button",{name:"Clear selected part",exact:true}).click();await expect(page.getByTestId("request-target")).toHaveText("Request for the whole design");
@@ -135,5 +136,5 @@ test("external Components selection replaces pending circle membership, includin
 
 test("SYNTHETIC: zooming with a stationary pointer retains its current visible target",async({page,request})=>{
  await open(page,request);await page.getByRole("button",{name:"Speak an instruction",exact:true}).click();await hoverPart(page,"left");
- await page.mouse.wheel(0,-80);await expect(page.locator(".model-canvas")).toHaveAttribute("data-hovered-part","left");await emit(page,"speech");await expect(page.getByTestId("voice-status")).toHaveText("Listening about Mounting plate.");
+ await page.mouse.wheel(0,-80);await expect(page.locator(".model-canvas")).toHaveAttribute("data-hovered-part","left");await emit(page,"speech");await expect(page.getByTestId("voice-status")).toHaveText(/^Listening about Mounting plate · .+\.$/);
 });
