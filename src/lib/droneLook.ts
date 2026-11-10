@@ -61,6 +61,9 @@ export interface Finish {
   twill?: boolean;
 }
 
+// Named finish colours for props drawn outside the parts list (the landing camera payload).
+export const KIT = { graphite: "#2A3038", satinBlack: "#1A1D22", aluminium: "#A9B3BF", glass: "#0E1A2A" } as const;
+
 // Whole material names or codes, so "Polycarbonate" never reads as carbon fibre.
 const CARBON_FIBRE = /\bcarbon fib(re|er)\b/i;
 export const isCarbonFibre = (material = "") => CARBON_FIBRE.test(material);
