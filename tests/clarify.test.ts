@@ -84,7 +84,7 @@ describe("a named-feature conflict is answered without the assistant", () => {
   });
 });
 
-describe("demo requests decided locally", () => {
+describe("common requests decided locally", () => {
   it("moves all four drone arms together for an explicit thickness or a stiffer request", async () => {
     const { store, snapshot } = drone();
     const top = face(snapshot, "arm-front-right", "face+y");

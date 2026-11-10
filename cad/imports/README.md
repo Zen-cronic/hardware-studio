@@ -32,7 +32,7 @@ Run from the product directory, using the established pyenv environment:
 
 ```bash
 cd /opt/hardware-studio
-export VIRTUAL_ENV=/Users/zin-kg/.pyenv/versions/.victoria-hardware
+export VIRTUAL_ENV="$(pyenv root)/versions/.victoria-hardware"
 export PATH="$VIRTUAL_ENV/bin:$PATH"
 poetry run python -m pytest /opt/hardware-studio/tests/reconstruction_test.py -q
 npx vitest run /opt/hardware-studio/tests/imports.test.ts

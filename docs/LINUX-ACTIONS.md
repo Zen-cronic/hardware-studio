@@ -18,9 +18,9 @@ On the default GitHub checkout, the entry points are `/home/runner/work/hardware
 
 ```sh
 cd /opt/hardware-studio
-export VIRTUAL_ENV=/Users/zin-kg/.pyenv/versions/.victoria-hardware
-export PATH=/Users/zin-kg/.pyenv/versions/.victoria-hardware/bin:$PATH
-export CAD_PYTHON=/Users/zin-kg/.pyenv/versions/.victoria-hardware/bin/python
+export VIRTUAL_ENV="$(pyenv root)/versions/.victoria-hardware"
+export PATH="$VIRTUAL_ENV/bin:$PATH"
+export CAD_PYTHON="$VIRTUAL_ENV/bin/python"
 OPENAI_API_KEY='' AI_BUDGET_USD=0 npx --no-install tsx /opt/hardware-studio/scripts/runtime-workloads.ts
 ```
 

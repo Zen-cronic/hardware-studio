@@ -29,7 +29,7 @@ test("the view page renders model-viewer at real size, and the studio sheet offe
   await expect(preview).toHaveAttribute("src", `/api/designs/${id}/model.glb?token=${encodeURIComponent(editorToken)}`, { timeout: 90000 });
   const qr = sheet.getByRole("img", { name: "Code to open this design in AR on a phone" });
   await expect(qr).toHaveAttribute("src", /^data:image\/png;base64,/);
-  // Filmed at about two-thirds size: at least 280 px on screen, dark modules on white with a quiet zone.
+  // Still scannable at about two-thirds size: at least 280 px on screen, dark modules on white with a quiet zone.
   const qrBox = (await qr.boundingBox())!;
   expect(qrBox.width).toBeGreaterThanOrEqual(280); expect(qrBox.height).toBeGreaterThanOrEqual(280);
   const corner = await qr.evaluate(async (img: HTMLImageElement) => {

@@ -29,7 +29,7 @@ export default function RoomSheet({ designId, token, readOnly, onClose }: {
   useEffect(() => {
     if (!link) return;
     let stop = false;
-    // Filmable and scannable: medium error correction, the standard 4-module quiet zone, dark on white, drawn at 2x.
+    // Readable by a phone camera at a distance: medium error correction, the standard 4-module quiet zone, dark on white, drawn at 2x.
     QRCode.toDataURL(link, { errorCorrectionLevel: "M", margin: 4, width: 576, color: { dark: "#0B1320", light: "#FFFFFF" } })
       .then(url => { if (!stop) setQr(url); }).catch(() => { if (!stop) setQr(""); });
     return () => { stop = true; };

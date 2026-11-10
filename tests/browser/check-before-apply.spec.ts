@@ -4,7 +4,7 @@ import { deskArmParts } from "../../src/shared/desk-arm";
 import type { Vec3 } from "../../src/shared/types";
 import { ARM, ARM_TOP, openDesign, pointAt, say, spoken } from "./voice-tools";
 
-// Spoken demo lines that stay local, then a matched check before applying. Real strength studies run.
+// Spoken requests decided locally, then a matched check before applying. Real strength studies run.
 const evidence = process.env.COMPANION_EVIDENCE;
 const UPPER_TOP: Vec3[] = [[-28, 2, 7], [-30, 2, -7], [-25, 2, 0], [-20, 2, 8], [-35, 2, 8], [10, 2, 6], [0, 2, -6]];
 const HOLE_RIM: Vec3[] = [[-45, 2, 4.4], [-45, 2, 4.8], [-45 + 4.2, 2, 2], [-45 - 4.2, 2, 2], [-45, 2, -4.4]];
