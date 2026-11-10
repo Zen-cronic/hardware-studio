@@ -29,6 +29,7 @@ import Studio from "./Studio";
 import Development from "./Development";
 import ClipRender from "./ClipRender";
 import { deskArmParts } from "./shared/desk-arm";
+import { droneParts } from "./shared/drone";
 import GuideExample from "./components/GuideExample";
 import Landing from "./components/Landing";
 import { create, pathFor, recent, type Recent } from "./lib/api";
@@ -531,6 +532,7 @@ function NewDesign({ navigate }: { navigate: Navigate }) {
         </button>
         <h1>Make room for your idea.</h1>
         <p>Start with a shape. Add parts and refine it in your workspace.</p>
+        <button className="button" data-testid="start-drone" disabled={busy} onClick={async()=>{setBusy(true);setError("");try{const r=await create("custom","Camera drone",droneParts());navigate(pathFor(r.snapshot.design.id,r.access.editorToken));}catch(e){setError((e as Error).message);}finally{setBusy(false);}}}>Start with a camera drone</button>
         <button className="button" disabled={busy} onClick={async()=>{setBusy(true);setError("");try{const r=await create("custom","Articulated camera arm",deskArmParts());navigate(pathFor(r.snapshot.design.id,r.access.editorToken));}catch(e){setError((e as Error).message);}finally{setBusy(false);}}}>Start with an articulated camera arm</button>
       </div>
       <div className="new-layout">
