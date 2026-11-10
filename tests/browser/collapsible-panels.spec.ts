@@ -1,5 +1,5 @@
 import { test, expect, type Page, type APIRequestContext } from '@playwright/test';
-import { openDimensions, openPrompt, closePanels } from './workspace-tools';
+import { openDimensions, openPrompt, closePanels, studioTab } from './workspace-tools';
 
 async function openDesign(page: Page, request: APIRequestContext) {
   const response = await request.post('/api/designs', {
@@ -85,8 +85,8 @@ test('phone starts with the model and exposes one task with visible focus restor
 
 test('assembly and build open actionable panels and let the model reclaim space', async ({ page, request }) => {
   await openDesign(page, request);
-  for (const name of ['Assemble', 'Build']) {
-    await page.getByRole('tab', { name, exact: true }).click();
+  for (const name of ['Assemble', 'Build'] as const) {
+    await studioTab(page, name);
     await expect(page.locator('.right-panel')).toBeVisible();
     await expect(page.locator('.left-panel')).toBeHidden();
     await closePanels(page);

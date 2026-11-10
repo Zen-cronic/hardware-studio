@@ -1,4 +1,4 @@
-import { openDimensions } from './workspace-tools';
+import { openDimensions, studioTab } from './workspace-tools';
 import { test, expect } from "@playwright/test";
 import { mkdir } from "node:fs/promises";
 
@@ -31,7 +31,7 @@ test("assembly practice preserves the native camera and rendered view; revision 
     const button = (name: string) =>
       page.getByRole("button", { name, exact: true });
     await expect(view).toHaveAttribute("data-ready", "true");
-    await page.getByRole("tab", { name: "Assemble", exact: true }).click();
+    await studioTab(page, "Assemble");
     await button("Toggle exploded assembly").click();
     await expect(page.locator(".left-panel")).toBeHidden();
     await button("Reset camera").click();
@@ -103,7 +103,7 @@ test("assembly practice preserves the native camera and rendered view; revision 
     expect(await current.json()).toEqual(snapshot);
     await button("Reset camera").click();
     await expect(canvas).not.toHaveAttribute("data-view", native!);
-    await page.getByRole("tab", { name: "Design", exact: true }).click();
+    await studioTab(page, "Design");
     await button("Expand left panel").click();
     await button("Reset camera").click();
     await canvas.evaluate(

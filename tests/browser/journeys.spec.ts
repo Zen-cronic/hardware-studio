@@ -1,4 +1,4 @@
-import { openDimensions } from './workspace-tools';
+import { openDimensions, studioTab } from './workspace-tools';
 import { test, expect } from "@playwright/test";
 import type { APIRequestContext } from "@playwright/test";
 const kinds = [
@@ -63,7 +63,7 @@ for (const kind of kinds)
         await page.getByRole("button", { name: "Run mechanism", exact: true }).click();
         await expect(page.getByRole("button", { name: "Pause mechanism", exact: true })).toBeVisible();
       }
-      await page.getByRole("tab", { name: "Assemble", exact: true }).click();
+      await studioTab(page, "Assemble");
       await page.getByRole("button", { name: "Expand left panel", exact: true }).click();
       await expect(page.getByText("Put it together.")).toBeVisible();
       await page.getByRole("button", { name: "Expand right panel", exact: true }).click();
@@ -71,7 +71,7 @@ for (const kind of kinds)
         .getByRole("button", { name: "Mark step reviewed", exact: true })
         .click();
       await expect(page.getByText(`1 of ${r.snapshot.derived.steps.length} steps reviewed`)).toBeVisible();
-      await page.getByRole("tab", { name: "Build", exact: true }).click();
+      await studioTab(page, "Build");
       await page.getByTestId("generate-build").click();
       await expect(
         page.getByRole("link", { name: "Download package" }),

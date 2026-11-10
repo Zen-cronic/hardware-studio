@@ -48,3 +48,20 @@ async function disclosure(page: Page, name: string) {
 export const openLoadSetup = (page: Page) => disclosure(page, 'Review loads and supports');
 export const openMeshSetup = (page: Page) => disclosure(page, 'Mesh accuracy');
 export const openStudyHistory = (page: Page) => disclosure(page, 'Study history and comparison');
+
+// The Design, Assemble and Build views and the engineering workspace sit in the studio's More panel.
+export async function openMore(page: Page) {
+  const more = page.getByRole('button', { name: 'More', exact: true });
+  if ((await more.getAttribute('aria-expanded')) !== 'true') await more.click();
+}
+
+export async function studioTab(page: Page, name: 'Design' | 'Assemble' | 'Build') {
+  const tab = page.getByRole('tab', { name, exact: true });
+  if (!(await tab.isVisible())) await openMore(page);
+  await tab.click();
+}
+
+export async function openEngineeringVersions(page: Page) {
+  await openMore(page);
+  await page.getByRole('button', { name: 'Engineering & versions', exact: true }).click();
+}

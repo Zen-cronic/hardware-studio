@@ -1,4 +1,4 @@
-import { openDimensions, closePanels } from './workspace-tools';
+import { openDimensions, closePanels, studioTab } from './workspace-tools';
 import { test, expect } from "@playwright/test";
 
 test("continuous belt and both return runs survive scaled save and package export", async ({
@@ -68,7 +68,7 @@ test("continuous belt and both return runs survive scaled save and package expor
   await page
     .getByRole("button", { name: "Expand right panel", exact: true })
     .click();
-  await page.getByRole("tab", { name: "Build", exact: true }).click();
+  await studioTab(page, "Build");
   await page.getByTestId("generate-build").click();
   await expect(
     page.getByRole("link", { name: "Download package" }),

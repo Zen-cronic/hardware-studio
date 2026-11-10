@@ -1,4 +1,4 @@
-import { openDimensions, closePanels } from './workspace-tools';
+import { openDimensions, closePanels, studioTab } from './workspace-tools';
 import { test, expect } from "@playwright/test";
 test("supported planter preserves cups, drainage and water path through edits, reload, motion and real export", async ({
   page,
@@ -55,12 +55,12 @@ test("supported planter preserves cups, drainage and water path through edits, r
   await page
     .getByRole("button", { name: "Expand right panel", exact: true })
     .click();
-  await page.getByRole("tab", { name: "Assemble", exact: true }).click();
+  await studioTab(page, "Assemble");
   await page.screenshot({
     path: ".artifacts/planter-standard/assembly.png",
     fullPage: true,
   });
-  await page.getByRole("tab", { name: "Build", exact: true }).click();
+  await studioTab(page, "Build");
   await page.getByTestId("generate-build").click();
   await expect(
     page.getByRole("link", { name: "Download package" }),
@@ -68,7 +68,7 @@ test("supported planter preserves cups, drainage and water path through edits, r
   const dl = page.waitForEvent("download");
   await page.getByRole("link", { name: "Download package" }).click();
   await (await dl).saveAs(".artifacts/planter-standard/revision-1.zip");
-  await page.getByRole("tab", { name: "Design", exact: true }).click();
+  await studioTab(page, "Design");
   await page.setViewportSize({ width: 375, height: 900 });
   { await openDimensions(page); await expect(page.getByTestId("param-pots")).toHaveValue("4"); }
   expect(

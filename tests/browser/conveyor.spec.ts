@@ -1,4 +1,4 @@
-import { openDimensions, closePanels } from './workspace-tools';
+import { openDimensions, closePanels, studioTab } from './workspace-tools';
 import { test, expect } from "@playwright/test";
 
 test("standard conveyor keeps supported rollers, sensor and gate through edit, reload, motion and real export", async ({
@@ -55,7 +55,7 @@ test("standard conveyor keeps supported rollers, sensor and gate through edit, r
   await page
     .getByRole("button", { name: "Expand right panel", exact: true })
     .click();
-  await page.getByRole("tab", { name: "Build", exact: true }).click();
+  await studioTab(page, "Build");
   await page.getByTestId("generate-build").click();
   await expect(
     page.getByRole("link", { name: "Download package" }),
@@ -67,7 +67,7 @@ test("standard conveyor keeps supported rollers, sensor and gate through edit, r
     path: ".artifacts/conveyor-standard/build.png",
     fullPage: true,
   });
-  await page.getByRole("tab", { name: "Design", exact: true }).click();
+  await studioTab(page, "Design");
   await page.setViewportSize({ width: 375, height: 900 });
   { await openDimensions(page); await expect(page.getByTestId("param-length")).toHaveValue("650"); }
   expect(

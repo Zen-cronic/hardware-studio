@@ -1,4 +1,4 @@
-import { openStudySetup } from './workspace-tools';
+import { openStudySetup, openEngineeringVersions } from './workspace-tools';
 import {test,expect} from '@playwright/test';
 import {deskArmParts} from '../../src/shared/desk-arm';
 test('maker previews a selected arm edit, compares a proposed version and accepts it',async({page},testInfo)=>{
@@ -30,7 +30,7 @@ test('real manufacturing study displays findings and small-screen controls stay 
  await page.goto(`/studio/${snapshot.design.id}#token=${access.editorToken}`);
  await page.getByLabel('Choose a part from the list',{exact:true}).click();
  await page.getByRole('button',{name:/Upper arm link/}).click();
- await page.getByRole('button',{name:'Engineering & versions',exact:true}).click();
+ await openEngineeringVersions(page);
  await expect(page.getByRole('combobox',{name:'Component',exact:true})).toHaveValue('upper-arm');
  await page.getByRole('combobox',{name:'Study',exact:true}).selectOption('manufacturing');
  await page.getByRole('button',{name:'Run study',exact:true}).click();

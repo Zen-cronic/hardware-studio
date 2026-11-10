@@ -1,4 +1,4 @@
-import { openDimensions, closePanels } from './workspace-tools';
+import { openDimensions, closePanels, studioTab } from './workspace-tools';
 import { test, expect } from "@playwright/test";
 test("retained lamp joints and light housing survive reach, angle, brightness, reload and real export", async ({
   page,
@@ -48,12 +48,12 @@ test("retained lamp joints and light housing survive reach, angle, brightness, r
   await page
     .getByRole("button", { name: "Expand right panel", exact: true })
     .click();
-  await page.getByRole("tab", { name: "Assemble", exact: true }).click();
+  await studioTab(page, "Assemble");
   await page.screenshot({
     path: ".artifacts/lamp-standard/assembly.png",
     fullPage: true,
   });
-  await page.getByRole("tab", { name: "Build", exact: true }).click();
+  await studioTab(page, "Build");
   await page.getByTestId("generate-build").click();
   await expect(
     page.getByRole("link", { name: "Download package" }),
@@ -61,7 +61,7 @@ test("retained lamp joints and light housing survive reach, angle, brightness, r
   const dl = page.waitForEvent("download");
   await page.getByRole("link", { name: "Download package" }).click();
   await (await dl).saveAs(".artifacts/lamp-standard/revision-1.zip");
-  await page.getByRole("tab", { name: "Design", exact: true }).click();
+  await studioTab(page, "Design");
   await page.setViewportSize({ width: 375, height: 900 });
   { await openDimensions(page); await expect(page.getByTestId("param-reach")).toHaveValue("450"); }
   expect(

@@ -1,4 +1,4 @@
-import { openDimensions } from './workspace-tools';
+import { openDimensions, studioTab } from './workspace-tools';
 import { test, expect } from "@playwright/test";
 test("disabled WebGL shows a readable fallback without a perpetual loading state", async ({
   browser,
@@ -51,7 +51,7 @@ test("disabled WebGL shows a readable fallback without a perpetual loading state
     ).toBeVisible();
     await expect(model).toHaveAttribute("aria-busy", "false");
     await expect(model.locator(".model-loading")).toHaveCount(0);
-    await page.getByRole("tab", { name: "Build", exact: true }).click();
+    await studioTab(page, "Build");
     await expect(page.getByTestId("generate-build")).toBeEnabled();
     await expect(
       page.getByText("Parts list", { exact: false }).first(),

@@ -36,7 +36,7 @@ test('a real uploaded STEP plate becomes an editable design only after measured 
   await measure.click();await expect(page.getByRole('heading',{name:'Measured fit passed',exact:true})).toBeVisible({timeout:40000});
   await page.screenshot({path:info.outputPath('source-and-measured-fit.png'),fullPage:true});
   await page.getByRole('button',{name:'Create editable design from this fit',exact:true}).click();
-  await expect(page.getByRole('tab',{name:'Design',exact:true})).toBeVisible();await expect(page.locator('.model-canvas')).toHaveAttribute('data-ready','true');
+  await expect(page.getByRole('tab',{name:'Design',exact:true})).toBeAttached();await expect(page.locator('.model-canvas')).toHaveAttribute('data-ready','true');
   await page.getByLabel('Choose a part from the list',{exact:true}).click();await page.getByLabel('Select a part',{exact:true}).getByRole('button').first().click();
   await expect(page.getByRole('region',{name:'Design guidance'})).toBeVisible();
   expect(errors).toEqual([]);

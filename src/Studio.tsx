@@ -127,7 +127,8 @@ export default function Studio({
     );
   const [leftPanelOpen, setLeftPanelOpen] = useState(false),
     [rightPanelOpen, setRightPanelOpen] = useState(false),
-    [room, setRoom] = useState(false);
+    [room, setRoom] = useState(false),
+    [more, setMore] = useState(false);
   // A request typed or spoken on the home page arrives here as the first request.
   useEffect(() => {
     try {
@@ -529,21 +530,108 @@ export default function Studio({
   let pointedFeature = "";
   try { pointedFeature = selection ? resolveSelectionSurface(snapshot, selection)?.feature.label || "" : ""; } catch { pointedFeature = "Surface changed"; }
   const pending = Object.keys(draft).length > 0;
-  const firstParam = product?.parameters[0];
-  const dockExample = firstParam ? `Make the ${firstParam.label.toLowerCase()} ${Math.round(Number(design.params[firstParam.key] ?? firstParam.default) + (firstParam.step ?? 10) * 2)} ${firstParam.unit}` : "Make this hole 8 mm";
+  const firstParam = design.kind === "custom" ? undefined : product?.parameters.find((p) => p.unit === "mm");
+  const isDrone = derived.parts.some((p) => p.id === "arm-front-left");
+  const dockExample = isDrone ? "Make these arms stiffer" : firstParam ? `Make the ${firstParam.label.toLowerCase()} ${Math.round(Number(design.params[firstParam.key] ?? firstParam.default) + (firstParam.step ?? 10) * 2)} mm` : "Make this hole 8 mm";
   const myHistory = [...history].reverse();
   return (
     <div className="studio-shell">
       <header className="studio-header">
         <Brand onClick={() => navigate("/")} />
-        <span className="header-divider" />
+        <button
+          className="button quiet small back-to-work"
+          onClick={() => navigate("/work")}
+        >
+          <ArrowLeft size={15} /> Your work
+        </button>
         <div className="design-title">
           <h1>{design.name}</h1>
-          <span>
-            <span className={"connection-dot " + (connected ? "online" : "")} />
+          <span className={"connection-dot " + (connected ? "online" : "")} title={connected ? "Saved together" : "Reconnecting…"} />
+          <span className="sr-only">
             {connected ? "Saved together" : "Reconnecting…"} / Revision{" "}
             {design.revision}
           </span>
+        </div>
+      <div
+        className="panel-visibility-controls"
+        data-task={tab}
+        role="group"
+        aria-label="Side panels"
+      >
+        <button
+          className="button small"
+          aria-label={
+            leftPanelOpen ? "Collapse left panel" : "Expand left panel"
+          }
+          aria-expanded={leftPanelOpen}
+          aria-controls="studio-left-panel"
+          onClick={() => { setLeftPanelOpen(!leftPanelOpen); if (!leftPanelOpen) setRightPanelOpen(false); }}
+        >
+          {leftPanelOpen ? (
+            <PanelLeftClose size={17} />
+          ) : (
+            <PanelLeftOpen size={17} />
+          )}
+          {tab === "design" ? "Describe a change" : tab === "assemble" ? "Assembly steps" : "Package overview"}
+        </button>
+        <button
+          className="button small"
+          aria-label={
+            rightPanelOpen ? "Collapse right panel" : "Expand right panel"
+          }
+          aria-expanded={rightPanelOpen}
+          aria-controls="studio-right-panel"
+          onClick={() => { setRightPanelOpen(!rightPanelOpen); if (!rightPanelOpen) setLeftPanelOpen(false); }}
+        >
+          {tab === "design" ? "Engineering details" : tab === "assemble" ? "Step details" : "Build files"}
+          {rightPanelOpen ? (
+            <PanelRightClose size={17} />
+          ) : (
+            <PanelRightOpen size={17} />
+          )}
+        </button>
+      </div>
+        <div className="studio-more">
+          <button className={"button small" + (more ? " selected" : "")} aria-label="More" aria-expanded={more} aria-controls="studio-more-panel" onClick={() => setMore(!more)}>
+            <Settings2 size={16} /><span>More</span>
+          </button>
+          <div id="studio-more-panel" className="studio-more-panel" hidden={!more}
+            onClick={(event) => { if ((event.target as HTMLElement).closest('[role="tab"], .development-entry')) setMore(false); }}
+            onKeyDown={(event) => { if (event.key === "Escape") { setMore(false); (document.querySelector('[aria-controls="studio-more-panel"]') as HTMLButtonElement | null)?.focus(); } }}>
+            <p className="studio-more-label">View</p>
+        <div className="workspace-tabs" role="tablist" aria-label="Workspace">
+          <button
+            role="tab"
+            aria-selected={tab === "design"}
+            className={tab === "design" ? "active" : ""}
+            onClick={() => { setTab("design"); setLeftPanelOpen(false); setRightPanelOpen(false); }}
+          >
+            <Settings2 size={16} /> Design
+          </button>
+          <button
+            role="tab"
+            aria-selected={tab === "assemble"}
+            className={tab === "assemble" ? "active" : ""}
+            onClick={() => {
+              setTab("assemble");
+              setLeftPanelOpen(false); setRightPanelOpen(true);
+              setExploded(true);
+              setPlaying(false);
+            }}
+          >
+            <Layers3 size={16} /> Assemble
+          </button>
+          <button
+            role="tab"
+            aria-selected={tab === "build"}
+            className={tab === "build" ? "active" : ""}
+            onClick={() => { setTab("build"); setLeftPanelOpen(false); setRightPanelOpen(true); }}
+          >
+            <PackageOpen size={16} /> Build
+          </button>
+        </div>
+        <button className="button small development-entry" aria-label="Engineering & versions" title="Engineering & versions" onClick={() => navigate("/develop/" + id + (selected ? "?part=" + encodeURIComponent(selected) : "") + "#token=" + encodeURIComponent(token))}><FlaskConical size={17}/><span className="development-entry-desktop">Engineering & versions</span><span className="development-entry-phone">Develop</span></button>
+          </div>
         </div>
         <div className="studio-header-actions">
           <div
@@ -599,85 +687,6 @@ export default function Studio({
           </div>
         </div>
       )}
-      <div className="workspace-bar">
-        <button
-          className="button quiet small"
-          onClick={() => navigate("/work")}
-        >
-          <ArrowLeft size={15} /> Your work
-        </button>
-        <div className="workspace-tabs" role="tablist" aria-label="Workspace">
-          <button
-            role="tab"
-            aria-selected={tab === "design"}
-            className={tab === "design" ? "active" : ""}
-            onClick={() => { setTab("design"); setLeftPanelOpen(false); setRightPanelOpen(false); }}
-          >
-            <Settings2 size={16} /> Design
-          </button>
-          <button
-            role="tab"
-            aria-selected={tab === "assemble"}
-            className={tab === "assemble" ? "active" : ""}
-            onClick={() => {
-              setTab("assemble");
-              setLeftPanelOpen(false); setRightPanelOpen(true);
-              setExploded(true);
-              setPlaying(false);
-            }}
-          >
-            <Layers3 size={16} /> Assemble
-          </button>
-          <button
-            role="tab"
-            aria-selected={tab === "build"}
-            className={tab === "build" ? "active" : ""}
-            onClick={() => { setTab("build"); setLeftPanelOpen(false); setRightPanelOpen(true); }}
-          >
-            <PackageOpen size={16} /> Build
-          </button>
-        </div>
-        <button className="button small development-entry" aria-label="Engineering & versions" title="Engineering & versions" onClick={() => navigate("/develop/" + id + (selected ? "?part=" + encodeURIComponent(selected) : "") + "#token=" + encodeURIComponent(token))}><FlaskConical size={17}/><span className="development-entry-desktop">Engineering & versions</span><span className="development-entry-phone">Develop</span></button>
-      <div
-        className="panel-visibility-controls"
-        data-task={tab}
-        role="group"
-        aria-label="Side panels"
-      >
-        <button
-          className="button small"
-          aria-label={
-            leftPanelOpen ? "Collapse left panel" : "Expand left panel"
-          }
-          aria-expanded={leftPanelOpen}
-          aria-controls="studio-left-panel"
-          onClick={() => { setLeftPanelOpen(!leftPanelOpen); if (!leftPanelOpen) setRightPanelOpen(false); }}
-        >
-          {leftPanelOpen ? (
-            <PanelLeftClose size={17} />
-          ) : (
-            <PanelLeftOpen size={17} />
-          )}
-          {tab === "design" ? "Describe a change" : tab === "assemble" ? "Assembly steps" : "Package overview"}
-        </button>
-        <button
-          className="button small"
-          aria-label={
-            rightPanelOpen ? "Collapse right panel" : "Expand right panel"
-          }
-          aria-expanded={rightPanelOpen}
-          aria-controls="studio-right-panel"
-          onClick={() => { setRightPanelOpen(!rightPanelOpen); if (!rightPanelOpen) setLeftPanelOpen(false); }}
-        >
-          {tab === "design" ? "Engineering details" : tab === "assemble" ? "Step details" : "Build files"}
-          {rightPanelOpen ? (
-            <PanelRightClose size={17} />
-          ) : (
-            <PanelRightOpen size={17} />
-          )}
-        </button>
-      </div>
-      </div>
       {error && (
         <div className="workspace-alert error" role="alert">
           <AlertCircle size={17} />
@@ -1030,7 +1039,7 @@ export default function Studio({
         <section className="scene-panel" aria-label="3D design workspace">
           <div className="stage-overlay" data-slot="companion-layer" aria-hidden="true" />
           <div className="scene-heading">
-            <span className="eyebrow">
+            <span className="eyebrow sr-only">
               {tab === "assemble"
                 ? "Assembly view"
                 : tab === "build"
@@ -1038,16 +1047,6 @@ export default function Studio({
                   : proposal ? "Proposed preview" : "Working model"}
             </span>
             <div className="scene-heading-actions">
-              {tab === "design" && <div className="voice-control">
-                <VoiceButton disabled={readOnly || busy || promptBusy || !!proposal || pendingCircleSelection}
-                  onText={spokenRequest} onError={setError} onSpeechStart={speechStarted}
-                  onListeningChange={active => {
-                    setVoiceOn(active);
-                    if (!active) { utteranceRef.current = null; setVoiceTarget(null); setVoiceMessage(message => /^(Listening about|Hover over a part, then|No part under the pointer)/.test(message) ? "" : message); }
-                    else { setVoiceMessage("Hover over a part, then speak your request."); setPlaying(false); }
-                  }} />
-                {(voiceOn || voiceMessage || proposal) && <p className="voice-status" role="status" data-testid="voice-status">{proposal ? "Review or dismiss this proposal before using voice." : voiceMessage}</p>}
-              </div>}
 
               {others.length > 0 && (
                 <label className="follow-control">
@@ -1122,6 +1121,19 @@ export default function Studio({
           )}
           {tab === "design" && (
             <div className="agent-dock" data-slot="agent-dock" role="region" aria-label="Assistant">
+              <div className="agent-voice">
+                <div className="voice-control">
+                <VoiceButton disabled={readOnly || busy || promptBusy || !!proposal || pendingCircleSelection}
+                  onText={spokenRequest} onError={setError} onSpeechStart={speechStarted}
+                  onListeningChange={active => {
+                    setVoiceOn(active);
+                    if (!active) { utteranceRef.current = null; setVoiceTarget(null); setVoiceMessage(message => /^(Listening about|Hover over a part, then|No part under the pointer)/.test(message) ? "" : message); }
+                    else { setVoiceMessage("Hover over a part, then speak your request."); setPlaying(false); }
+                  }} />
+                {(voiceOn || voiceMessage || proposal) && <p className="voice-status" role="status" data-testid="voice-status">{proposal ? "Review or dismiss this proposal before using voice." : voiceMessage}</p>}
+                </div>
+                <span className="agent-voice-label" aria-hidden="true">{voiceOn ? "Listening" : "Hold to talk"}<small>or hold Space</small></span>
+              </div>
               {proposal && !leftPanelOpen ? (
                 <div className="agent-dock-reply">
                   <span className="agent-dot" aria-hidden="true" />

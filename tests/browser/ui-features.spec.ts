@@ -1,4 +1,4 @@
-import { openDimensions, openPrompt } from './workspace-tools';
+import { openDimensions, openPrompt, studioTab } from './workspace-tools';
 import {
   test,
   expect,
@@ -105,7 +105,7 @@ test("assembly coach catches incorrect virtual orientation and accepts correctio
     "data-ready",
     "true",
   );
-  await page.getByRole("tab", { name: "Assemble", exact: true }).click();
+  await studioTab(page, "Assemble");
   await page.locator(".step-parts button").first().click();
   await page
     .getByRole("button", { name: "Turn part 90°", exact: true })

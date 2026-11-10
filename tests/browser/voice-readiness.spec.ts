@@ -1,4 +1,4 @@
-import { openPrompt } from './workspace-tools';
+import { openPrompt, studioTab } from './workspace-tools';
 import { test, expect, type Page, type APIRequestContext } from '@playwright/test';
 
 // SYNTHETIC UI contract tests only. No microphone, audio file, or cloud recognizer.
@@ -63,7 +63,7 @@ test('SYNTHETIC: stop ends listening and leaving the design panel aborts the rec
   await page.getByRole('button', { name: 'Stop listening', exact: true }).click();
   await expect(speak(page)).toBeVisible();
   await speak(page).click();
-  await page.getByRole('tab', { name: 'Assemble', exact: true }).click();
+  await studioTab(page, "Assemble");
   expect(await page.evaluate(() => ({ stops: (window as any).__syntheticVoice.stops, aborts: (window as any).__syntheticVoice.aborts }))).toEqual({ stops: 0, aborts: 2 });
 });
 
@@ -104,7 +104,7 @@ test('SYNTHETIC: pending start prevents a second recognizer and orphan capture',
   await open(page, request);
   await speak(page).click();
   await page.getByRole('button', { name: /Speak an instruction|Stop listening/ }).click();
-  await page.getByRole('tab', { name: 'Assemble', exact: true }).click();
+  await studioTab(page, "Assemble");
   const state = await page.evaluate(() => ({ instances: (window as any).__syntheticVoice.instances.length, aborts: (window as any).__syntheticVoice.aborts, stops: (window as any).__syntheticVoice.stops }));
   expect(state.instances).toBe(1);
   expect(state.aborts + state.stops).toBe(state.instances);
