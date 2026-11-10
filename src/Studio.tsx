@@ -134,6 +134,13 @@ export default function Studio({
   const [leftPanelOpen, setLeftPanelOpen] = useState(false),
     [rightPanelOpen, setRightPanelOpen] = useState(false),
     [more, setMore] = useState(false);
+  // The More panel closes on any press outside it.
+  useEffect(() => {
+    if (!more) return;
+    const close = (event: PointerEvent) => { if (!(event.target as HTMLElement | null)?.closest(".studio-more")) setMore(false); };
+    document.addEventListener("pointerdown", close);
+    return () => document.removeEventListener("pointerdown", close);
+  }, [more]);
   // A request typed or spoken on the home page arrives here as the first request.
   useEffect(() => {
     try {
@@ -1190,8 +1197,8 @@ export default function Studio({
                 disabled={busy || promptBusy || !!proposal || pendingCircleSelection}
                 disabledReason={promptBusy ? "Working through the design…" : "Review or dismiss this proposal, then hold to talk again."} className="in-assistant" />}
               <div className="assistant-actions">
-                {proposal && !leftPanelOpen ? (
-                  <button className="button small primary" onClick={() => { setLeftPanelOpen(true); setRightPanelOpen(false); setMobileEditor("prompt"); }}>Review the change</button>
+                {proposal ? (
+                  !leftPanelOpen && <button className="button small primary" onClick={() => { setLeftPanelOpen(true); setRightPanelOpen(false); setMobileEditor("prompt"); }}>Review the change</button>
                 ) : (
                   <>
                   {!readOnly && dockExample && (

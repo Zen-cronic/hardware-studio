@@ -71,7 +71,8 @@ test('movement continues after the entrance and stops offscreen and on pause', a
   await page.getByTestId('landing-motion-toggle').click();
   await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
   await expect(scene).toHaveAttribute('data-motion', 'paused');
-  await page.waitForTimeout(600);
+  // The page now has other 3D views; let the last requested frame land before counting.
+  await expect.poll(async () => { const a = await canvas.getAttribute('data-render-count'); await page.waitForTimeout(400); return a === await canvas.getAttribute('data-render-count'); }).toBe(true);
   const count = await canvas.getAttribute('data-render-count');
   await page.waitForTimeout(900);
   expect(await canvas.getAttribute('data-render-count')).toBe(count);

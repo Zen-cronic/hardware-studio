@@ -88,11 +88,9 @@
 :root .pointing-chip {background:var(--surface);color:var(--text);border:1px solid var(--primary);}
 :root .thinking {color:var(--muted);}
 
-/* Room sheet: fixed position so the phone code always sits in the same place */
-:root .room-sheet {position:fixed;z-index:60;top:76px;right:16px;width:360px;max-width:calc(100vw - 32px);padding:16px;background:var(--panel);border:1px solid var(--line);border-radius:16px;color:var(--text);}
-:root .room-sheet-head {display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;font-family:var(--font-display);font-size:var(--s-lg);}
-:root .room-slot {min-height:200px;display:grid;place-items:center;text-align:center;border-radius:12px;background:var(--surface);padding:16px;}
-:root .room-slot p {margin:0;color:var(--muted);}
+/* Room sheet (RoomSheet): the dialog keeps one fixed, centred position so the phone code never moves */
+:root .modal.room-sheet {background:var(--panel);border:1px solid var(--line);border-radius:16px;color:var(--text);}
+:root .room-qr {border-color:var(--primary);}
 
 :root .prompt-form textarea {border:0;background:transparent;}
 :root .prompt-form textarea:hover {border:0;}
@@ -118,5 +116,8 @@
   :root .assistant-dock .agent-mic {width:48px;height:48px;}
   :root .studio-more-panel {position:fixed;top:68px;right:8px;left:8px;width:auto;}
   :root .studio-viewer-toolbar {left:50%;right:auto;top:auto;bottom:14px;transform:translateX(-50%);}
-  :root .room-sheet {top:auto;bottom:16px;right:16px;left:16px;width:auto;}
 }
+:root .modal-backdrop {background:color-mix(in srgb,var(--bg) 78%,transparent);}
+:root .modal {background:var(--panel);color:var(--text);border:1px solid var(--line);}
+:root .room-sheet .room-open-link {display:none;}
+@media (max-width:720px) {:root .room-sheet .room-open-link {display:inline-flex;}}
