@@ -1195,7 +1195,7 @@ export default function Studio({
           )}
           {tab === "design" && (
             <div className={"assistant-dock" + (proposal ? " has-proposal" : "")} data-slot="agent-dock" role="region" aria-label="Assistant">
-              {readOnly ? <p className="assistant-readonly">Make your own copy to ask for changes.</p> : <AgentDock voice={voice} reply={proposal && !leftPanelOpen ? replyLines(proposal).join(" ") : undefined}
+              {readOnly ? <p className="assistant-readonly">Make your own copy to ask for changes.</p> : <AgentDock voice={voice} reply={proposal ? replyLines(proposal).join(" ") : undefined}
                 disabled={busy || promptBusy || !!proposal || pendingCircleSelection}
                 disabledReason={promptBusy ? "Working through the design…" : "Review or dismiss this proposal, then hold to talk again."} className="in-assistant" />}
               <div className="assistant-actions">
