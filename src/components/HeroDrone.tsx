@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Component, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { ContactShadows } from "@react-three/drei";
 import * as THREE from "three";
@@ -143,6 +143,19 @@ function Drone({ parts, still, exploded, highlight, dimOthers, idle, onHover, on
   </group>;
 }
 
+// Without WebGL, or if the 3D view fails, show the still render of the same scene instead.
+function webglAvailable() {
+  try { const c = document.createElement("canvas"); return !!(c.getContext("webgl2") || c.getContext("webgl")); } catch { return false; }
+}
+class StageBoundary extends Component<{ fallback: ReactNode; children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  render() { return this.state.failed ? this.props.fallback : this.props.children; }
+}
+function StillFallback({ className }: { className: string }) {
+  return <div className={"hero-drone is-image " + className}><img src="/previews/drone.png" alt="Camera drone, 3D model" width="650" height="445"/></div>;
+}
+
 export function DroneStage({ parts, still, exploded = false, highlight = [], dimOthers = false, idle = true, camera = [215, 150, 255], target = [0, -14, 0], floor = false, hoverLabels = false, className = "" }: {
   parts: Part[]; still: boolean; exploded?: boolean; highlight?: string[]; dimOthers?: boolean; idle?: boolean; camera?: Vec3; target?: Vec3; floor?: boolean; hoverLabels?: boolean; className?: string;
 }) {
@@ -155,7 +168,9 @@ export function DroneStage({ parts, still, exploded = false, highlight = [], dim
     io.observe(host.current); return () => io.disconnect();
   }, []);
   const live = !still && visible;
-  return <div ref={host} className={"hero-drone " + className} data-ready={ready} data-still={still}>
+  const [canRender] = useState(webglAvailable);
+  if (!canRender) return <StillFallback className={className}/>;
+  return <StageBoundary fallback={<StillFallback className={className}/>}><div ref={host} className={"hero-drone " + className} data-ready={ready} data-still={still}>
     <Canvas shadows dpr={[1, 1.75]} gl={{ antialias: true, alpha: true, preserveDrawingBuffer: true }}
       camera={{ position: camera, fov: 30, near: 10, far: 4000 }}
       frameloop={live ? "always" : "demand"}
@@ -173,7 +188,7 @@ export function DroneStage({ parts, still, exploded = false, highlight = [], dim
       <ContactShadows position={[0, -34, 0]} scale={520} far={120} blur={2.6} opacity={0.6} resolution={512} color="#000000" frames={live ? Infinity : 1}/>
     </Canvas>
     {hover && <span className="hero-drone-label" style={{ left: hover.x, top: hover.y }} aria-hidden="true"><i/>Pointing at: {hover.name}</span>}
-  </div>;
+  </div></StageBoundary>;
 }
 
 export default function HeroDrone({ parts, still }: { parts: Part[]; still: boolean }) {

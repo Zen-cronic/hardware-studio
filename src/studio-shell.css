@@ -107,6 +107,7 @@
 }
 @media (max-width:820px) {
   :root .studio-header {height:60px;min-height:60px;padding:0 8px;gap:6px;}
+  :root .studio-header .button,:root .studio-header .brand {min-height:44px;min-width:44px;}
   :root .studio-header .action-share span,:root .studio-more>.button span {display:none;}
   :root .studio-header .files-entry,:root .studio-header .panel-visibility-controls {display:none;}
   :root .studio-header .design-title h1 {font-size:var(--s-base);}

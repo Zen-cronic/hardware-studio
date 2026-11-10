@@ -117,6 +117,8 @@ test('reduced motion keeps a static scene while keyboard controls preserve both 
 });
 
 test('the build sheet follows the chosen dimensions and all six previews open real designs', async ({ page }) => {
+  // Six round trips through a home page that now carries three 3D views.
+  test.setTimeout(180000);
   await page.emulateMedia({reducedMotion:'reduce'});
   const writes:string[]=[];
   page.on('request',r=>{if(!['GET','HEAD'].includes(r.method()))writes.push(r.method()+' '+new URL(r.url()).pathname)});
