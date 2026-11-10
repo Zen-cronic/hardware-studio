@@ -1,9 +1,8 @@
 :root {
   --radius: 9px;
-  --font-display: "Lato", sans-serif;
   --font-body: "Source Sans 3", sans-serif;
 }
-:root { --line: color-mix(in srgb,var(--border) 40%,transparent); --subtle:color-mix(in srgb,var(--surface) 55%,var(--panel)); --s-hero:4rem; --s-caption:.6875rem; }
+:root { --s-hero:4rem; --s-caption:.6875rem; }
 :root body { background:var(--bg); }
 :root h1,:root h2,:root h3 { font-family:var(--font-display); }
 :root .button,:root input,:root textarea,:root select,:root .prompt-form,:root .filter-tabs button { border-radius:var(--radius); }

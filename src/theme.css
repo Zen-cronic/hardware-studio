@@ -1,0 +1,88 @@
+/* Night blueprint identity: dark shell, Archivo headings, light-blue main actions.
+   Loaded after styles.css, workbench.css and interface.css so it sets the final look. */
+:root body {background:var(--bg);color:var(--text);}
+:root h1,:root h2,:root h3,:root h4 {font-family:var(--font-display);font-weight:760;letter-spacing:-.02em;color:var(--text);}
+:root h1 {letter-spacing:-.035em;}
+:root p {color:var(--muted);}
+:root ::selection {background:var(--action);color:var(--on-action);}
+:root .eyebrow {color:var(--primary);font-family:var(--font-body);font-weight:600;letter-spacing:.02em;text-transform:none;}
+
+/* Fields */
+:root input,:root textarea,:root select,:root .prompt-form {background:var(--field);color:var(--text);border:1px solid var(--border);}
+:root input::placeholder,:root textarea::placeholder {color:var(--muted);opacity:1;}
+:root input:hover,:root textarea:hover,:root select:hover {border-color:var(--primary);}
+:root select option {background:var(--panel);color:var(--text);}
+:root input:focus-visible,:root textarea:focus-visible,:root select:focus-visible,:root button:focus-visible,:root a:focus-visible,:root summary:focus-visible,:root [tabindex]:focus-visible {outline:2px solid var(--focus);outline-offset:3px;}
+
+/* Buttons: neutral, primary (light blue), selected (action blue with a light edge) */
+:root .button {background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:10px;transition:background .16s var(--ease),border-color .16s var(--ease),color .16s var(--ease);}
+:root .button:hover {background:var(--surface-hover);border-color:var(--border);color:var(--text);}
+:root .button.primary,:root .landing-page .button.primary,:root .hero-copy > .button.primary,:root .studio-viewer-toolbar > .button.primary,:root .studio-viewer-toolbar > .button.primary:first-child {background:var(--primary);color:var(--on-primary);border:1px solid var(--primary);}
+:root .button.primary:hover,:root .landing-page .button.primary:hover,:root .hero-copy > .button.primary:hover {background:var(--primary-hover);color:var(--on-primary);border-color:var(--primary-hover);}
+:root .button.quiet {background:transparent;border-color:transparent;color:var(--text);}
+:root .button.quiet:hover {background:var(--surface);}
+:root .button.selected,:root .button[aria-pressed=true],:root .filter-tabs button.selected,:root .button.primary[aria-pressed=true] {background:var(--action);color:var(--on-action);border-color:var(--primary);}
+:root .button:disabled,:root .button[disabled] {opacity:.55;}
+:root .button.action-secondary,:root .landing-actions>[data-testid="landing-browse"] {background:var(--surface);color:var(--text);border-color:var(--border);}
+:root .button.action-secondary:hover,:root .landing-actions>[data-testid="landing-browse"]:hover {background:var(--surface-hover);color:var(--text);border-color:var(--primary);}
+:root .button.action-share {background:var(--surface);color:var(--text);border-color:var(--border);}
+:root .button.action-share:hover {background:var(--surface-hover);color:var(--text);border-color:var(--primary);}
+:root .text-edit,:root .text-build {color:var(--primary);}
+:root .surface-build {background:var(--panel);color:var(--text);border-color:var(--line);}
+
+/* Site header */
+:root .site-header,:root .site-header.landing-header {background:var(--bg);color:var(--text);border:0;border-bottom:1px solid var(--line);height:72px;padding:0 clamp(16px,3vw,40px);}
+:root .site-header.landing-header {position:absolute;left:0;right:0;top:0;z-index:20;background:transparent;border-bottom-color:transparent;}
+:root .brand {display:inline-flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:760;font-size:19px;letter-spacing:-.01em;color:var(--text);}
+:root .brand-mark {width:24px;height:24px;border-radius:50%;border:3px solid var(--primary);background:transparent;color:transparent;display:inline-block;}
+:root .brand-mark svg {display:none;}
+:root .site-header nav button,:root .landing-header nav button {color:var(--muted);background:transparent;border:1px solid transparent;font-family:var(--font-body);font-weight:600;font-size:15px;}
+:root .site-header nav button:hover {color:var(--text);background:var(--surface);}
+:root .site-header nav button.active {background:var(--surface);color:var(--text);border-color:var(--line);}
+:root .site-header>.button,:root .site-header.landing-header>.button {background:var(--primary);color:var(--on-primary);border-color:var(--primary);}
+:root .site-header>.button:hover,:root .site-header.landing-header>.button:hover {background:var(--primary-hover);color:var(--on-primary);}
+:root .site-footer {background:var(--bg);color:var(--muted);border-top:1px solid var(--line);}
+:root .site-footer span {color:var(--muted);}
+
+/* Cards and panels */
+:root .product-card,:root .work-row,:root .new-form,:root .listing-stage,:root .hero-stage,:root .included,:root .listing-bottom li,:root .judge-steps>div,:root .empty {background:var(--panel);border:1px solid var(--line);color:var(--text);}
+:root .product-card:hover {border-color:var(--border);}
+:root .product-preview,:root .step-preview,:root .new-stage {background:var(--surface);border-radius:12px;}
+:root .preview-action {background:var(--primary);color:var(--on-primary);}
+:root .collection,:root .collection-toolbar {background:transparent;border-color:var(--line);}
+:root .filter-tabs button {color:var(--muted);}
+:root .filter-tabs button:hover {color:var(--text);}
+:root .error,:root [role=alert].error {color:var(--danger);}
+:root .mono,:root .count {color:var(--muted);}
+
+/* 3D stages */
+:root .scene-panel {background:var(--bg);}
+:root .left-panel,:root .right-panel {background:var(--panel);color:var(--text);}
+:root .studio-header {background:var(--bg);color:var(--text);border-bottom:1px solid var(--line);}
+:root .workspace-bar {background:var(--panel);border-bottom:1px solid var(--line);}
+:root .workspace-tabs button {color:var(--muted);background:transparent;}
+:root .workspace-tabs button:hover {color:var(--text);background:var(--surface);}
+:root .workspace-tabs button.active {background:var(--action);color:var(--on-action);border-color:var(--primary);}
+:root .workspace-bar>.button {color:var(--text);border-color:var(--line);}
+:root .studio-main {background:var(--bg);}
+:root .studio-viewer-toolbar {background:var(--panel);border-color:var(--line);}
+:root .dimension-tag,:root .scene-hint {background:var(--panel);color:var(--text);}
+:root .development-header {background:var(--panel);}
+:root .study-field input,:root .study-field select {background:var(--field);}
+:root .study-result {background:var(--surface);}
+:root details>summary {color:var(--text);}
+:root .recording {color:var(--danger)!important;background:color-mix(in srgb,var(--danger) 14%,var(--panel))!important;}
+:root .step-number.complete {background:var(--success);color:var(--bg);border-color:var(--success);}
+:root .mobile-editor-switch button.active {background:var(--action);color:var(--on-action);border-color:var(--primary);}
+
+/* The assistant's colour: only where the assistant points or shows what changed */
+:root .assistant-mark {color:var(--warm);}
+:root .assistant-fill {background:var(--warm);color:var(--on-warm);}
+
+/* Stale results: a check that predates the current design blocks Accept */
+:root .is-outdated {border-color:var(--warning)!important;}
+:root .outdated-note {display:flex;gap:8px;align-items:flex-start;color:var(--warning);font-weight:600;font-size:var(--s-sm);}
+
+@media (prefers-reduced-motion: reduce) {
+  :root * {transition-duration:0s!important;animation-duration:0s!important;}
+}

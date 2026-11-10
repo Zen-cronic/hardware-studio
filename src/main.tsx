@@ -8,6 +8,8 @@ import "@fontsource/source-sans-3/latin-600.css";
 import "./styles.css";
 import "./workbench.css";
 import "./interface.css";
+import "./theme.css";
+import "./studio-shell.css";
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <App />

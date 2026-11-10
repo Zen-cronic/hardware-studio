@@ -40,7 +40,8 @@ Additional engineering and rendering dependencies:
 
 ## Fonts and assets
 
-- **Lato**, bold 700: vendored WOFF2 from [Fontsource](https://fontsource.org/fonts/lato), SIL Open Font License 1.1. [Retained notice](public/fonts/licenses/lato-OFL.txt).
+- **Archivo**, variable weight and width: vendored WOFF2 from [Fontsource](https://fontsource.org/fonts/archivo) (`@fontsource-variable/archivo` 5.3.0), SIL Open Font License 1.1. [Retained notice](public/fonts/licenses/archivo-OFL.txt).
+- **Decorative part images** in `public/decor/` (propeller, gear, bolt, motor, bearing, spring, nut and washer, standoff) were generated for this project with an image model and cut out locally. They show generic parts with no brands or text.
 - **Source Sans 3**, regular 400 and semibold 600: installed through [Fontsource](https://fontsource.org/fonts/source-sans-3), SIL Open Font License 1.1. The installed package's notice is included in the browser distribution.
 - **IBM Plex Mono**, regular 400: installed through [Fontsource](https://fontsource.org/fonts/ibm-plex-mono), SIL Open Font License 1.1. The installed package's notice is included in the browser distribution. Barlow remains installed and inventoried but is not imported by the current interface.
 
