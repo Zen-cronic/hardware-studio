@@ -76,7 +76,8 @@ export function finishFor(part: { color: string; material: string; process: stri
   const m = part.material || "";
   if (isCarbonFibre(m)) return { color: "#ffffff", metalness: 0.1, roughness: 0.62, clearcoat: 0.25, clearcoatRoughness: 0.45, twill: true };
   if (/propeller/i.test(m)) return { color: "#2B3542", metalness: 0.05, roughness: 0.32, clearcoat: 0.6, clearcoatRoughness: 0.2, opacity: 0.9 };
-  if (/brushless motor/i.test(m)) return { color: "#1B1F25", metalness: 0.78, roughness: 0.34, clearcoat: 0.3, clearcoatRoughness: 0.3 };
+  // Dark anodised bell: rough enough that the top face never mirrors the studio light as a white disc.
+  if (/brushless motor/i.test(m)) return { color: "#1B1F25", metalness: 0.7, roughness: 0.46, clearcoat: 0.12, clearcoatRoughness: 0.5 };
   if (/\btpu\b/i.test(m)) return { color: "#1A1D22", metalness: 0, roughness: 0.72 };
   if (/lipo|battery/i.test(m)) return { color: part.color, metalness: 0.05, roughness: 0.5, clearcoat: 0.25, clearcoatRoughness: 0.4 };
   if (/optical glass|\blens\b/i.test(m)) return { color: part.color, metalness: 0.2, roughness: 0.04, clearcoat: 1, clearcoatRoughness: 0.02 };
