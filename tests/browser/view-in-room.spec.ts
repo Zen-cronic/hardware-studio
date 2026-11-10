@@ -63,5 +63,21 @@ test("the view page renders model-viewer at real size, and the studio sheet offe
   expect(size[1]).toBeGreaterThan(0.06); expect(size[1]).toBeLessThan(0.14);
   expect(size[2]).toBeGreaterThan(0.2); expect(size[2]).toBeLessThan(0.4);
   if (evidence) await page.screenshot({ path: `${evidence}/view-in-room-page.png` });
+
+  // After an applied change the model is from an earlier version: the phone page says so instead of showing it,
+  // and the studio sheet offers to update it.
+  const current = await (await request.get(`/api/designs/${id}`, { headers: { authorization: `Bearer ${editorToken}` } })).json();
+  const customParts = current.design.customParts.map((p: any) => p.id === "arm-front-left" ? { ...p, size: [p.size[0], 6, p.size[2]] } : p);
+  expect((await request.post(`/api/designs/${id}/commands`, { headers: { authorization: `Bearer ${editorToken}` },
+    data: { id: crypto.randomUUID(), actor: "Maker", baseRevision: current.design.revision, changes: {}, readSet: current.design.params, customParts, summary: "thicker arm" } })).status()).toBe(200);
+  await page.goto(link);
+  await expect(page.getByRole("alert")).toContainText("This 3D model is from an earlier version of the design.");
+  await expect(page.locator("model-viewer")).toHaveCount(0);
+  await page.goto(`/studio/${id}#token=${encodeURIComponent(editorToken)}`);
+  await expect(page.locator(".model-canvas")).toHaveAttribute("data-ready", "true");
+  await page.getByTestId("see-in-room").click();
+  await expect(sheet).toContainText("This 3D model is from an earlier version (revision 0).");
+  await expect(sheet.getByRole("button", { name: "Update the 3D model", exact: true })).toBeVisible();
+  await expect(sheet.locator("model-viewer")).toHaveCount(0);
   expect(errors).toEqual([]);
 });

@@ -34,8 +34,9 @@ export default function RoomSheet({ designId, token, readOnly, onClose }: {
       .then(url => { if (!stop) setQr(url); }).catch(() => { if (!stop) setQr(""); });
     return () => { stop = true; };
   }, [link]);
-  const alive = useRef(true);
-  useEffect(() => () => { alive.current = false; }, []);
+  // Effect-scoped, so StrictMode's second effect run leaves the sheet live.
+  const alive = useRef(false);
+  useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   async function build() {
     setBuilding(true); setError("");
     try {
@@ -61,9 +62,11 @@ export default function RoomSheet({ designId, token, readOnly, onClose }: {
             {state === "ready" ? <RoomModel src={modelUrl(designId, token)} ar={false} label="Real-size preview of this design" />
               : state === "loading" ? <div className="room-model is-loading" role="status"><Loader2 className="spin" size={22} /> Checking the model…</div>
               : <div className="room-model is-empty" role="status">
-                  <p>{state === "missing" ? "The 3D model is made with the build files." : "The model could not be loaded."}</p>
-                  {state === "missing" && !readOnly && <button className="button primary" disabled={building} onClick={() => void build()}>
-                    {building ? <><Loader2 className="spin" size={16} /> Preparing the model…</> : "Prepare the 3D model"}</button>}
+                  <p>{state === "missing" ? "The 3D model is made with the build files."
+                    : state === "outdated" ? `This 3D model is from an earlier version${revision !== null ? ` (revision ${revision})` : ""}.`
+                    : "The model could not be loaded."}</p>
+                  {(state === "missing" || state === "outdated") && !readOnly && <button className="button primary" disabled={building} onClick={() => void build()}>
+                    {building ? <><Loader2 className="spin" size={16} /> Preparing the model…</> : state === "outdated" ? "Update the 3D model" : "Prepare the 3D model"}</button>}
                   {error && <p className="error" role="alert">{error}</p>}
                 </div>}
           </div>

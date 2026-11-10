@@ -19,8 +19,9 @@ declare module "react" {
 export const modelUrl = (id: string, token: string) => `/api/designs/${encodeURIComponent(id)}/model.glb?token=${encodeURIComponent(token)}`;
 export const viewPath = (id: string, token: string) => `/view/${encodeURIComponent(id)}#token=${encodeURIComponent(token)}`;
 
-type State = "loading" | "ready" | "missing" | "denied" | "error";
-/** Checks the model exists before handing its URL to the viewer, so the page can explain a gap. */
+/** "outdated": a model exists but was built from an earlier revision than the design's current one. */
+type State = "loading" | "ready" | "outdated" | "missing" | "denied" | "error";
+/** Checks the model exists, and is from the current revision, before handing its URL to the viewer. */
 export function useModelState(id: string, token: string, refresh = 0) {
   const [state, setState] = useState<State>("loading");
   const [revision, setRevision] = useState<string | null>(null);
@@ -30,7 +31,8 @@ export function useModelState(id: string, token: string, refresh = 0) {
     fetch(modelUrl(id, token), { method: "HEAD", cache: "no-store" }).then(r => {
       if (stop) return;
       setRevision(r.headers.get("X-Model-Revision"));
-      setState(r.ok ? "ready" : r.status === 409 ? "missing" : r.status === 403 || r.status === 404 ? "denied" : "error");
+      setState(r.ok ? (r.headers.get("X-Model-Current") === "false" ? "outdated" : "ready")
+        : r.status === 409 ? "missing" : r.status === 403 || r.status === 404 ? "denied" : "error");
     }).catch(() => { if (!stop) setState("error"); });
     return () => { stop = true; };
   }, [id, token, refresh]);
@@ -75,6 +77,7 @@ export default function ViewInRoom({ id }: { id: string }) {
       </> : state === "loading" ? <div className="room-status" role="status"><Loader2 className="spin" size={24} /> Preparing the model…</div>
         : <div className="room-status" role="alert"><AlertCircle size={24} />
           <p>{state === "missing" ? "This design has no 3D model yet. Open it on a computer, choose Build, then Generate build package, and scan the code again."
+            : state === "outdated" ? "This 3D model is from an earlier version of the design. Open the design on a computer, choose See it in your room, then Update the 3D model, and scan the code again."
             : state === "denied" ? "This link is not valid. Ask for a new view link." : "The model could not be loaded. Check your connection and try again."}</p>
         </div>}
     </main>
