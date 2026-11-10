@@ -3,6 +3,7 @@ const base = {
   "background": "#0A0F18",
   "panel": "#111A28",
   "surface": "#182436",
+  "surfaceHover": "#213049",
   "text": "#EEF4FF",
   "muted": "#9DB0CC",
   "border": "#5A77A0",

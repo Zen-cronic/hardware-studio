@@ -193,7 +193,7 @@ export interface AgentDockProps {
 export function AgentDock({ voice, reply, disabled = false, disabledReason, className = "" }: AgentDockProps) {
   const listening = voice.phase !== "idle";
   const [touch, setTouch] = useState(false);
-  useEffect(() => { try { setTouch(matchMedia("(pointer: coarse)").matches); } catch { /* No media queries. */ } }, []);
+  useEffect(() => { try { setTouch(matchMedia("(pointer: coarse), (max-width: 820px)").matches); } catch { /* No media queries. */ } }, []);
   const status = !voice.supported ? "Voice needs a browser with speech recognition. You can type instead."
     : listening ? (voice.transcript ? `“${voice.transcript}”` : "Listening… release to send.")
     : reply ? reply

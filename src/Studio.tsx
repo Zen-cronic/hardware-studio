@@ -722,6 +722,7 @@ export default function Studio({
               {actor.slice(0, 1).toUpperCase()}
             </span>
           </div>
+          <div className="header-cluster" role="group" aria-label="Share and view">
           <button
             className={"button icon-only " + (notes ? "selected" : "")}
             aria-label="Open shared notes"
@@ -736,13 +737,14 @@ export default function Studio({
             <Smartphone size={16} />
             <span>See it in your room</span>
           </button>
-          <button className="button small primary files-entry" aria-label="Get build files" onClick={() => { setTab("build"); setLeftPanelOpen(false); setRightPanelOpen(true); setMobileEditor("canvas"); }}>
-            <FileDown size={16} />
-            <span>Get build files</span>
-          </button>
           <button className="button small action-share" onClick={() => setShare(true)}>
             <Share2 size={16} />
             <span>Share</span>
+          </button>
+          </div>
+          <button className="button small files-entry" aria-label="Get build files" onClick={() => { setTab("build"); setLeftPanelOpen(false); setRightPanelOpen(true); setMobileEditor("canvas"); }}>
+            <FileDown size={16} />
+            <span>Get build files</span>
           </button>
         </div>
       </header>
@@ -1150,7 +1152,7 @@ export default function Studio({
             hoverPicker={hoverPicker}
             onPendingSelectionChange={setPendingCircleSelection}
             voiceTarget={voiceTarget}
-            pointedTarget={proposal && !(clarifying && voiceTarget?.surface) ? (proposalBinding?.surface ? proposalBinding : null) : voiceTarget?.surface ? voiceTarget : requestTarget?.surface ? requestTarget : null}
+            pointedTarget={proposal && !(clarifying && voiceTarget?.surface) ? (proposalBinding?.surface && (proposal.target?.partIds.length ?? 1) <= 1 ? proposalBinding : null) : voiceTarget?.surface ? voiceTarget : requestTarget?.surface ? requestTarget : null}
             onSelect={proposal ? undefined : partId => selectParts(partId ? createSelection(snapshot, [partId], "click") : null)}
             selectionContext={{designId:design.id,revision:design.revision}}
             selectedPartIds={proposal ? undefined : selection?.partIds}
@@ -1192,8 +1194,8 @@ export default function Studio({
             </div>
           )}
           {tab === "design" && (
-            <div className="assistant-dock" data-slot="agent-dock" role="region" aria-label="Assistant">
-              {readOnly ? <p className="assistant-readonly">Make your own copy to ask for changes.</p> : <AgentDock voice={voice} reply={proposal ? replyLines(proposal).join(" ") : undefined}
+            <div className={"assistant-dock" + (proposal ? " has-proposal" : "")} data-slot="agent-dock" role="region" aria-label="Assistant">
+              {readOnly ? <p className="assistant-readonly">Make your own copy to ask for changes.</p> : <AgentDock voice={voice} reply={proposal && !leftPanelOpen ? replyLines(proposal).join(" ") : undefined}
                 disabled={busy || promptBusy || !!proposal || pendingCircleSelection}
                 disabledReason={promptBusy ? "Working through the design…" : "Review or dismiss this proposal, then hold to talk again."} className="in-assistant" />}
               <div className="assistant-actions">
@@ -1210,7 +1212,7 @@ export default function Studio({
                   </>
                 )}
                 <div className="voice-control">
-                <VoiceButton label="Click to talk" disabled={readOnly || busy || promptBusy || !!proposal || pendingCircleSelection}
+                <VoiceButton label="Hands-free" disabled={readOnly || busy || promptBusy || !!proposal || pendingCircleSelection}
                   onText={text => { voice.expectReply(); spokenRequest(text); }} onError={setError} onSpeechStart={speechStarted}
                   onListeningChange={voiceListening} />
                 {(voiceOn || voiceMessage || proposal) && <p className="voice-status" role="status" data-testid="voice-status">{proposal && !clarifying ? "Review or dismiss this proposal before using voice." : clarifying && !voiceMessage ? "Hold Space or the mic and answer the question aloud." : voiceMessage}</p>}
@@ -1227,7 +1229,7 @@ export default function Studio({
               aria-label={playing ? "Pause mechanism" : "Run mechanism"}
             >
               {playing ? <Pause size={16} /> : <Play size={16} />}
-              <span>{playing ? "Pause" : hasMotion ? "Try it" : design.kind === "lamp" ? "Static pose" : "No motion set"}</span>
+              <span className={!playing && !hasMotion && design.kind !== "lamp" ? "sr-only" : undefined}>{playing ? "Pause" : hasMotion ? "Try it" : design.kind === "lamp" ? "Static pose" : "No motion set"}</span>
             </button>
             <button
               className={"button icon-only " + (exploded ? "selected" : "")}
@@ -1284,14 +1286,14 @@ export default function Studio({
               className={mobileEditor === "dimensions" ? "active" : ""}
               onClick={() => setMobileEditor("dimensions")}
             >
-              <Settings2 size={16} /> Dimensions
+              <Settings2 size={16} /> <span aria-hidden="true">Size</span><span className="sr-only">Dimensions</span>
             </button>
             <button
               data-panel="left"
               className={mobileEditor === "prompt" ? "active" : ""}
               onClick={() => { setMobileEditor("prompt"); setEditorMode("prompt"); }}
             >
-              <MessageSquare size={16} /> Describe a change
+              <MessageSquare size={16} /> <span aria-hidden="true">Change</span><span className="sr-only">Describe a change</span>
             </button>
           </div>
         )}

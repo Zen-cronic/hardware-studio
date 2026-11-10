@@ -102,6 +102,20 @@ const ProposalCheck = forwardRef<ProposalCheckHandle, {
       {busy && step && <p className="subtle" role="status">{step}</p>}
       {!busy && !result && <p className="subtle">Tests {partName} now and as proposed, under the same {preset.load}.</p>}
       {result && <section className="check-result" aria-label="Check result" data-testid="check-result" data-verdict={result.verdict?.state || "unknown"}>
+        {(() => {
+          // One big number first, the same treatment as the home page card.
+          const b = (result.before.result as { maxDisplacementMm?: number } | undefined)?.maxDisplacementMm;
+          const a = (result.after.result as { maxDisplacementMm?: number } | undefined)?.maxDisplacementMm;
+          if (typeof b !== "number" || typeof a !== "number" || b <= 0) return null;
+          const pct = Math.round((1 - a / b) * 100);
+          return <div className="check-lead">
+            <p className="check-big"><strong>{Math.abs(pct)}%</strong> {pct >= 0 ? "less bending" : "more bending"}</p>
+            <div className="check-bars">
+              <div><span>Before</span><i style={{ width: "100%" }} /><b>{b.toFixed(2)} mm</b></div>
+              <div><span>After</span><i className="is-after" style={{ width: `${Math.max(4, Math.min(100, (a / b) * 100))}%` }} /><b>{a.toFixed(2)} mm</b></div>
+            </div>
+          </div>;
+        })()}
         <p className="check-sentence">{result.sentence}</p>
         {result.verdict && <p className="check-verdict"><strong>{result.verdict.title}</strong></p>}
         <details><summary>How we checked</summary>

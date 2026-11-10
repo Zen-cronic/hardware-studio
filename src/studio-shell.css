@@ -122,3 +122,40 @@
 :root .modal {background:var(--panel);color:var(--text);border:1px solid var(--line);}
 :root .room-sheet .room-open-link {display:none;}
 @media (max-width:720px) {:root .room-sheet .room-open-link {display:inline-flex;}}
+
+/* Revision: one filled action per state, a tidy share cluster, one voice orb */
+:root .header-cluster {display:flex;align-items:center;gap:2px;padding:2px;border:1px solid var(--line);border-radius:12px;}
+:root .header-cluster .button {background:transparent;border-color:transparent;min-height:36px;}
+:root .header-cluster .button:hover,:root .header-cluster .button.selected {background:var(--surface);border-color:var(--line);}
+:root .studio-header .files-entry {background:var(--surface);color:var(--text);border-color:var(--border);}
+:root .studio-header .files-entry:hover {background:var(--surface-hover);}
+:root .assistant-actions .voice-control>.button {width:40px;height:40px;min-height:40px;padding:0;border-radius:50%;justify-content:center;}
+:root .assistant-actions .voice-control>.button>span:empty {display:none;}
+:root .assistant-dock.has-proposal .voice-status {position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);border:0;}
+:root .assistant-dock.has-proposal .agent-dock-status {-webkit-line-clamp:1;color:var(--muted);}
+:root .assistant-dock.has-proposal .agent-mic {width:44px;height:44px;}
+
+/* The side panels run the full height of the workspace */
+@media (min-width:821px) {
+  :root .studio-main {align-items:stretch;}
+  :root .studio-main>.left-panel,:root .studio-main>.right-panel {height:100%;min-height:100%;overflow-y:auto;}
+}
+@media (max-width:820px) {
+  :root .studio-header .brand {display:none;}
+  :root .studio-header .design-title h1 {font-size:var(--s-base);max-width:none;}
+  :root .header-cluster {border:0;padding:0;}
+  :root .mobile-editor-switch button {white-space:nowrap;font-size:var(--s-sm);gap:6px;}
+  :root .assistant-dock .agent-dock-status {-webkit-line-clamp:unset;display:block;}
+}
+:root .companion-circle.is-agent[data-visible="false"] {opacity:0!important;}
+
+/* One visible mic: the hands-free fallback is a quiet text control */
+:root .assistant-actions .voice-control>.button,:root .assistant-dock .voice-control>.button {width:auto;height:36px;min-height:36px;padding:0 10px;border-radius:10px;background:transparent;border:1px solid transparent;color:var(--muted);font-size:var(--s-sm);font-weight:500;}
+:root .assistant-actions .voice-control>.button:hover:not(:disabled) {color:var(--text);border-color:var(--line);}
+:root .assistant-actions .voice-control>.button>svg {display:none;}
+:root .assistant-actions .voice-control>.button.recording {color:var(--text);border-color:var(--primary);}
+@media (max-width:820px) {
+  :root .assistant-actions .voice-control>.button {padding:0 6px;}
+  /* The assistant bar sits under the model, never over it */
+  :root .studio-main>.scene-panel>.assistant-dock {position:relative;left:auto;right:auto;bottom:auto;transform:none;width:100%;margin:4px 0 0;flex:none;}
+}

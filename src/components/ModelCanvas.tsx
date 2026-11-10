@@ -163,6 +163,7 @@ function surfaceFinish(part: Part): { color: THREE.Color; metalness: number; rou
   if (/lipo|battery/i.test(material)) return { color: new THREE.Color("#24282E"), metalness: 0.1, roughness: 0.58 };
   const dims = [...part.size].sort((a, b) => a - b), plate = dims[2] > 40 && dims[0] / dims[2] < 0.12;
   if (plate && part.process !== "buy") return { color: new THREE.Color("#353C46"), metalness: 0.35, roughness: 0.42 };
+  if (/alumin/i.test(material) && part.process === "buy") return { color: new THREE.Color("#3E5878"), metalness: 0.75, roughness: 0.35 };
   if (/alumin/i.test(material)) return { color: new THREE.Color("#8C98A6"), metalness: 0.82, roughness: 0.36 };
   if (/steel|metal|brass/i.test(material)) return { color: new THREE.Color("#7E8893"), metalness: 0.9, roughness: 0.28 };
   if (/carbon fib/i.test(material)) return { color: new THREE.Color("#2A3038"), metalness: 0.3, roughness: 0.38 };
@@ -188,12 +189,15 @@ function PartMesh({
   onPick,
   surface,
   outlined = false,
+  highlightPartIds,
 }: Props & { outlined?: boolean; part: Part; animation: React.MutableRefObject<AssemblyFrame>; focused?: boolean; marker?: number; labelPortal: React.RefObject<HTMLElement>;
   onPick?: (target: SurfaceTarget) => void;
   surface?: { target: SurfaceTarget; feature: SurfaceFeature; mode: "hover" | "pinned"; label: string }[] }) {
   const ref = useRef<THREE.Mesh>(null);
   const rot = part.rotation || [0, 0, 0];
   const isSelected = selectedPartIds !== undefined ? selectedPartIds.includes(part.id) : selected === part.id;
+  // Every part a change applies to gets the same soft tint and outline as a selection.
+  const tinted = isSelected || !!highlightPartIds?.includes(part.id);
   const metal = /steel|alumin|metal/i.test(part.material),
     reference = part.role === "reference",
     ghost =
@@ -213,10 +217,10 @@ function PartMesh({
   const blade = useMemo(() => propeller ? bladeGeometry(part.size[0], part.size[2]) : null, [propeller, part.size[0], part.size[2]]);
   useEffect(() => () => blade?.dispose(), [blade]);
   const materialColor = useMemo(() => {
-    const c = carbon ? new THREE.Color("#ffffff") : finish.color.clone();
-    if (isSelected) c.lerp(new THREE.Color(colors.primary), 0.45);
+    const c = carbon ? new THREE.Color("#b9c2cf") : finish.color.clone();
+    if (tinted) c.lerp(new THREE.Color(colors.primary), 0.22);
     return c;
-  }, [finish, isSelected, carbon]);
+  }, [finish, tinted, carbon]);
   useFrame(() => {
     const m = ref.current;
     if (!m) return;
@@ -276,35 +280,36 @@ function PartMesh({
         color={materialColor}
         map={twill}
         roughnessMap={twill}
-        clearcoat={carbon ? 0.45 : 0}
-        clearcoatRoughness={0.2}
-        metalness={finish.metalness}
-        roughness={carbon ? 0.5 : finish.roughness}
+        clearcoat={carbon ? 0.12 : 0}
+        clearcoatRoughness={0.55}
+        metalness={carbon ? 0.05 : finish.metalness}
+        roughness={carbon ? 0.68 : finish.roughness}
+        envMapIntensity={carbon ? 0.3 : 1}
         emissive={
-          isSelected
+          tinted
             ? colors.primary
             : part.id === "led"
               ? part.color
               : colors.text
         }
         emissiveIntensity={
-          isSelected ? 0.3 : part.id === "led" ? 0.25 : 0
+          tinted ? 0.08 : part.id === "led" ? 0.25 : 0
         }
         transparent={
-          ghost || referencePreview || /water|glass/i.test(part.material)
+          ghost || referencePreview || reference || /water|glass/i.test(part.material)
         }
-        depthWrite={!ghost && !referencePreview}
+        depthWrite={!ghost && !referencePreview && !reference}
         opacity={
           ghost
             ? 0.18
-            : referencePreview
-              ? (selected || selectedPartIds?.length ? 0.08 : 0.14)
+            : referencePreview || reference
+              ? 0.04
               : /water|glass/i.test(part.material)
                 ? 0.58
                 : 1
         }
       />
-      {(!reference || referencePreview || isSelected) && (
+      {(
         <Edges
           threshold={24}
           lineWidth={focused || outlined ? 3 : isSelected ? 2 : 1}
@@ -313,8 +318,8 @@ function PartMesh({
               ? colors.primary
               : focused || outlined
                 ? colors.primary
-              : referencePreview
-                ? part.color
+              : reference
+                ? colors.muted
                 : colors.text
           }
           transparent
@@ -323,12 +328,17 @@ function PartMesh({
               ? 1
               : ghost
                 ? 0.07
-                : referencePreview
-                  ? (selected || selectedPartIds?.length ? 0.16 : 0.24)
+                : reference
+                  ? 0.55
                   : 0.38
           }
         />
       )}
+      {/brushless motor/i.test(part.material || "") && part.shape === "cylinder" && !ghost && <mesh position={[0, -part.size[1] / 2 + 3, 0]}><cylinderGeometry args={[part.size[0] / 2 + 0.2, part.size[0] / 2 + 0.2, 4, 48]} /><meshStandardMaterial color="#b8733f" metalness={0.95} roughness={0.3} /></mesh>}
+      {/lipo|battery/i.test(part.material || "") && part.shape === "box" && !ghost && <>
+        <mesh position={[part.size[0] * 0.28, 0, 0]}><boxGeometry args={[4, part.size[1] + 0.4, part.size[2] + 0.4]} /><meshStandardMaterial color={colors.primary} roughness={0.4} /></mesh>
+        <mesh><boxGeometry args={[14, part.size[1] + 1.6, part.size[2] + 1.6]} /><meshStandardMaterial color="#0c0e11" roughness={0.8} /></mesh>
+      </>}
       {(marker || (focused && !surface?.some(s => s.mode === "pinned"))) && <Html portal={labelPortal} position={[0, 0, 0]} center zIndexRange={[2, 0]} style={{ pointerEvents: "none" }}>
         <span className={"part-marker" + (isSelected ? " is-checked" : "") + (focused ? " is-focused" : "")} data-part-marker={part.id} data-checked={isSelected}>
           {marker && <span>{marker}</span>}{marker && isSelected && <span aria-hidden="true">✓</span>}{focused && <span>{part.name}</span>}
@@ -372,7 +382,7 @@ function StudioLight() {
     const room = new RoomEnvironment();
     const map = pmrem.fromScene(room, 0.04);
     scene.environment = map.texture;
-    scene.environmentIntensity = 0.58;
+    scene.environmentIntensity = 0.5;
     room.dispose();
     pmrem.dispose();
     invalidate();
@@ -661,8 +671,21 @@ function ProjectionBridge({ parts, projector }: { parts: Part[]; projector: NonN
       const anchor = part && featureId ? partFeatures(part).find(entry => entry.feature.id === featureId)?.target.point : undefined;
       const hit = projectParts(scene, camera, size.width, size.height, partIds, anchor ? new THREE.Vector3(...anchor) : undefined);
       if (!hit) return null;
+      // A marker whose part is hidden behind another solid part is not shown.
+      let occluded = false;
+      if (hit.visible) {
+        const ray = new THREE.Raycaster();
+        ray.setFromCamera(new THREE.Vector2((hit.x / size.width) * 2 - 1, -(hit.y / size.height) * 2 + 1), camera);
+        const first = ray.intersectObjects(scene.children, true).find(entry => {
+          const id = entry.object.userData?.partId;
+          if (typeof id !== "string") return false;
+          const material = (entry.object as THREE.Mesh).material as THREE.Material | undefined;
+          return !(material && material.transparent && material.opacity < 0.5);
+        });
+        occluded = !!first && !partIds.includes(first.object.userData.partId);
+      }
       const { left, top } = gl.domElement.getBoundingClientRect();
-      return { ...hit, x: hit.x + left, y: hit.y + top, rect: { left: hit.rect.left + left, right: hit.rect.right + left, top: hit.rect.top + top, bottom: hit.rect.bottom + top } };
+      return { ...hit, visible: hit.visible && !occluded, x: hit.x + left, y: hit.y + top, rect: { left: hit.rect.left + left, right: hit.rect.right + left, top: hit.rect.top + top, bottom: hit.rect.bottom + top } };
     };
     return () => { projector.current = null; };
   }, [gl, scene, camera, size.width, size.height, projector]);
@@ -811,7 +834,7 @@ export default function ModelCanvas(props: Props) {
             far: 20000,
             position: [extent * 1.25, extent, extent * 1.25],
           }}
-          gl={{ antialias: true, preserveDrawingBuffer: true }}
+          gl={{ antialias: true, preserveDrawingBuffer: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 0.92 }}
           frameloop={playing && !reduced ? "always" : "demand"}
         >
           <AssemblyAnimation parts={props.parts} exploded={!!props.exploded} playing={playing && !circleMode}
@@ -869,7 +892,7 @@ export default function ModelCanvas(props: Props) {
                 position={[center[0], box.min.y - 1, center[2]]}
                 scale={extent * 4}
                 far={extent * 0.22}
-                opacity={0.24}
+                opacity={0.45}
                 blur={1.6}
                 resolution={512}
                 frames={1}
