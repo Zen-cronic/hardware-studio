@@ -70,7 +70,8 @@ test("the view page renders model-viewer at real size, and the studio sheet offe
   const customParts = current.design.customParts.map((p: any) => p.id === "arm-front-left" ? { ...p, size: [p.size[0], 6, p.size[2]] } : p);
   expect((await request.post(`/api/designs/${id}/commands`, { headers: { authorization: `Bearer ${editorToken}` },
     data: { id: crypto.randomUUID(), actor: "Maker", baseRevision: current.design.revision, changes: {}, readSet: current.design.params, customParts, summary: "thicker arm" } })).status()).toBe(200);
-  await page.goto(link);
+  // Already on the view link: reload, since a same-URL navigation keeps the page.
+  await page.reload();
   await expect(page.getByRole("alert")).toContainText("This 3D model is from an earlier version of the design.");
   await expect(page.locator("model-viewer")).toHaveCount(0);
   await page.goto(`/studio/${id}#token=${encodeURIComponent(editorToken)}`);
