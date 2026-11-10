@@ -6,6 +6,7 @@ import { Store, HttpError } from "./store";
 import { applySemanticEdit, assertCurrentSelection, getSelectionControls, resolveSelectionSurface, type SelectionRef, type SemanticEdit } from "../src/shared/selection";
 import { localSurfaceEdit, surfaceConflict, targetContext, type ResolvedSurfaceTarget } from "../src/shared/surface";
 import { askWhichHole, localGroupEdit } from "../src/shared/group-edit";
+import { normalizeSpokenNumbers } from "../src/shared/spoken-numbers";
 import { DesignError } from "../src/shared/engine";
 import { selectedAiKey, selectedAiModel, providerRequest, providerHeaders, providerJson, validateInputCount, providerUsage, providerText, FRONTIER_PRICING } from "./ai-provider";
 function localProposal(
@@ -141,6 +142,8 @@ export async function propose(
     throw new HttpError(422, "Provide a short design request and your name.");
   if (body.selection) assertCurrentSelection(snapshot, body.selection);
   const pointed = body.selection ? resolveSelectionSurface(snapshot, body.selection) : null;
+  // Local rules read digits and short units; speech may arrive as "six millimetres".
+  const spoken = normalizeSpokenNumbers(body.prompt);
   const target = proposalTarget(snapshot, body.selection, pointed);
   const images = body.images || (body.image ? [body.image] : []);
   if (
@@ -160,20 +163,20 @@ export async function propose(
   if (pointed) {
     // Deictic words bind to the pointed feature. A request naming another
     // feature is never guessed; it costs nothing and asks first.
-    const conflict = surfaceConflict(body.prompt, pointed);
+    const conflict = surfaceConflict(spoken, pointed);
     if (conflict) return clarification(snapshot, body, conflict, "Which feature should this change?", "local", target);
     const part = snapshot.derived.parts.find(p => p.id === pointed.partId)!;
     // "These arms 6 mm thick", "make these arms stiffer": the pointed part and its matching siblings, decided locally.
-    const group = !images.length ? localGroupEdit(snapshot, body.prompt, pointed) : null;
+    const group = !images.length ? localGroupEdit(snapshot, spoken, pointed) : null;
     if (group) {
       validateDesign({ ...snapshot.design, customParts: group.customParts });
       return { source: "local", questions: [], explanation: group.explanation, target: { partIds: group.partIds, label: group.label },
         command: { ...emptyCommand(snapshot, body.actor, body.prompt), customParts: group.customParts } };
     }
     // "The hole" on a part with several holes, while pointing elsewhere on it: ask which, before any assistant call.
-    const which = !images.length ? askWhichHole(part, body.prompt, pointed) : null;
+    const which = !images.length ? askWhichHole(part, spoken, pointed) : null;
     if (which) return clarification(snapshot, body, which.explanation, which.question, "local", target);
-    const local = !images.length && snapshot.design.kind === "custom" ? localSurfaceEdit(body.prompt, pointed, part) : null;
+    const local = !images.length && snapshot.design.kind === "custom" ? localSurfaceEdit(spoken, pointed, part) : null;
     if (local) return boundProposal(snapshot, body.selection!, local, body, "local", target!);
   }
   if (!apiKey) {
@@ -192,7 +195,7 @@ export async function propose(
       explanation: "This targeted request needs an AI connection; use the part controls to change a measured dimension.",
       questions: ["Which dimension would you like to change in the part controls?"],
     };
-    return localProposal(snapshot, body.prompt, body.actor);
+    return localProposal(snapshot, spoken, body.actor);
   }
   selectedAiModel();
   const requestId = randomUUID();
