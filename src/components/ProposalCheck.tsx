@@ -92,13 +92,15 @@ const ProposalCheck = forwardRef<ProposalCheckHandle, {
     if (!preset) return;
     const mine = ++run.current, live = () => mounted.current && run.current === mine;
     setBusy(true); setResult(null);
+    let created = "";
+    const discard = () => { if (created) { unapplied.current.delete(created); void discardCheckedVersion(created, token); created = ""; } };
     try {
       const design = snapshot.design, proposalId = proposal.command.id;
       setStep("Preparing the proposed version…");
       const checkedVersion = await prepareCheckedVersion(snapshot, proposal, token, actor, versionId => {
-        unapplied.current.add(versionId);
+        created = versionId; unapplied.current.add(versionId);
         // A check abandoned before its version existed discards it at once.
-        if (!mounted.current) { unapplied.current.delete(versionId); void discardCheckedVersion(versionId, token); }
+        if (!live()) discard();
       });
       if (!live()) return;
       const { versionId, proposedDesignId: proposedId, proposedToken, applied } = checkedVersion;
@@ -125,7 +127,11 @@ const ProposalCheck = forwardRef<ProposalCheckHandle, {
         versionId, preset, partName, sentence, settled, verdict: proof.verdict, before, after };
       setResult(checked); setStep("");
       onSay?.([sentence]);
-    } catch (e) { if (live()) { onError((e as Error).message); setStep(""); } }
+    } catch (e) {
+      // A check that failed leaves no version behind.
+      discard();
+      if (live()) { onError((e as Error).message); setStep(""); }
+    }
     finally { if (live()) setBusy(false); }
   }
   const m = (job: Study, key: string, unit: string) => typeof job.result?.[key] === "number" ? `${job.result[key].toPrecision(3)} ${unit}` : "—";
