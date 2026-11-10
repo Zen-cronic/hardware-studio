@@ -44,7 +44,6 @@ export default function LandingStory({ navigate, still }: { navigate: Navigate; 
   return <section id="lp-story" ref={section} className={"lp-story" + (scrubbed ? " is-scrubbed" : "")} aria-labelledby="lp-story-title">
     <div className="lp-story-sticky">
       <div className="lp-story-copy">
-        <p className="eyebrow">How it works</p>
         <h2 id="lp-story-title">You point and talk. It does the modelling.</h2>
         <ol className="lp-steps">
           {STEPS.map((s, i) => <li key={s.title} className={i === step ? "is-active" : i < step ? "is-done" : ""}>
@@ -57,7 +56,7 @@ export default function LandingStory({ navigate, still }: { navigate: Navigate; 
         <button className="button primary" onClick={() => navigate("/new")}>Try it on the drone <ChevronRight size={18}/></button>
       </div>
       <div className="lp-story-stage" data-step={step}>
-        <div className="lp-story-model" aria-hidden="true"><DroneStage parts={step >= 3 ? changed : parts} still={!scrubbed} idle={false} exploded={step === 2} highlight={step === 0 ? [focus] : step <= 2 ? [...heroProduct.changedPartIds] : []} dimOthers={step === 1} camera={[470, 340, 550]} target={[0, -12, 0]}/></div>
+        <div className="lp-story-model" aria-hidden="true"><DroneStage parts={step >= 3 ? changed : parts} still={!scrubbed} idle={false} exploded={step === 2} highlight={step === 0 ? [focus] : step <= 2 ? [...heroProduct.changedPartIds] : []} camera={[360, 250, 425]} target={[0, -14, 0]}/></div>
         <div className={"lp-story-line" + (step === 1 || step === 2 ? " is-assistant" : "")} aria-live="polite">
           <span className="lp-line-dot" aria-hidden="true"/>{STEPS[step].line}
         </div>

@@ -49,15 +49,15 @@ export default function LandingBuildStory({parts,navigate,onSize}:{parts:Part[];
       <div className="landing-example-list">
         <button className="lp-example-extra" onClick={()=>navigate('/new')} aria-label="Start with the camera drone">
           <img className="lp-example-render" src="/previews/drone.png" alt="" loading="lazy" width="650" height="450"/>
-          <span className="lp-example-name">Camera drone</span><span className="lp-example-status is-ready">Ready to try</span>
+          <span className="lp-example-name">Camera drone</span>
         </button>
         <button className="lp-example-extra" onClick={()=>navigate('/new')} aria-label="Start with the articulated camera arm">
           <img className="lp-example-render" src="/previews/arm.png" alt="" loading="lazy" width="1100" height="806"/>
-          <span className="lp-example-name">Articulated camera arm</span><span className="lp-example-status is-ready">Ready to try</span>
+          <span className="lp-example-name">Articulated camera arm</span>
         </button>
         {products.map(product=><button className="landing-example" key={product.kind} onClick={()=>navigate('/designs/'+product.kind)} aria-label={`Explore ${product.name}`}>
         <img src={`/previews/${product.kind}.png`} alt="" loading="lazy" width="1100" height={product.kind==='turntable'?1150:760}/>
-        <span>{product.name}</span><span className="lp-example-status is-ready">Ready to try</span>
+        <span>{product.name}</span>
       </button>)}
 
       </div>
