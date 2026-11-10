@@ -8,6 +8,10 @@ export interface CheckRecord {
   status: string;
   revision: number;
   stale?: boolean;
+  /** The recorded study inputs; a study of no single part is identified by them. */
+  setup?: unknown;
+  /** The same identity, precomputed where the inputs are not sent (study outcomes). */
+  inputKey?: string;
 }
 export interface CheckFreshness {
   /** Accepting now would rely on checks that do not describe this revision. */
@@ -21,11 +25,31 @@ export interface CheckFreshness {
 
 const plural = (n: number, one: string, many: string) => n === 1 ? one : many;
 
-/** Studies are newest first, as the study list returns them; the first per component and kind counts. */
-export function checkFreshness(studies: CheckRecord[], revision: number): CheckFreshness {
+const canonical = (value: unknown): string => {
+  if (value === null || typeof value !== "object") return JSON.stringify(value) ?? "null";
+  if (Array.isArray(value)) return "[" + value.map(canonical).join(",") + "]";
+  return "{" + Object.entries(value as Record<string, unknown>).filter(([, v]) => v !== undefined)
+    .sort(([a], [b]) => a.localeCompare(b)).map(([k, v]) => JSON.stringify(k) + ":" + canonical(v)).join(",") + "}";
+};
+/** The inputs that identify a study of no single part (a rigid-body mechanism, an imported body). */
+export const studyInputKey = (setup: unknown) => canonical(setup ?? {});
+
+/** What a check is about: one part and kind, or for a study of no single part, its kind and inputs. */
+export function checkKey(study: CheckRecord): string {
+  if (study.partId) return `${study.type}:part:${study.partId}`;
+  return `${study.type}:inputs:${study.inputKey ?? (study.setup !== undefined ? studyInputKey(study.setup) : study.id)}`;
+}
+
+/**
+ * Studies are newest first, as the study list returns them; the first per component and kind counts.
+ * With `partIds` (the parts at this revision), checks of a part the version removed no longer apply.
+ */
+export function checkFreshness(studies: CheckRecord[], revision: number, partIds?: readonly string[]): CheckFreshness {
+  const present = partIds ? new Set(partIds) : null;
   const latest = new Map<string, CheckRecord>();
   for (const study of studies) {
-    const key = `${study.type}:${study.partId ?? study.id}`;
+    if (present && study.partId && !present.has(study.partId)) continue;
+    const key = checkKey(study);
     if (!latest.has(key)) latest.set(key, study);
   }
   const running: CheckRecord[] = [], stale: CheckRecord[] = [];
@@ -58,6 +82,11 @@ export function rerunRequest(job: { type: string; partId?: string; setup?: any }
     if (!partId) return null;
     return { type: "manufacturing", revision, partId, profile: setup.profile || (process === "print" ? "fdm" : "cnc"), ...(setup.processProfile ? { processProfile: setup.processProfile } : {}) };
   }
-  if (job.type === "mechanism" && setup.mechanism) return { type: "mechanism", revision, mechanism: setup.mechanism };
+  if (job.type === "mechanism" && setup.mechanism) {
+    // A part-bound mechanism study (desk-arm load and reach) needs its part, material and profile again.
+    const partId = setup.partId || job.partId;
+    return { type: "mechanism", revision, mechanism: setup.mechanism, ...(partId ? { partId } : {}),
+      ...(setup.material ? { material: setup.material } : {}), ...(setup.profile ? { profile: setup.profile } : {}) };
+  }
   return null;
 }

@@ -151,7 +151,8 @@ export class VersionService {
       canAccept: authority.owner && version.status === "open", ...(access ? { access } : {}),
     };
   }
-  accept(id: string, token: string, body: AcceptVersionInput): AcceptedVersion {
+  /** `gate` runs inside the acceptance, after the owner, request and version checks, and may refuse it. */
+  accept(id: string, token: string, body: AcceptVersionInput, gate?: (version: ProposedVersion, proposed: Snapshot) => void): AcceptedVersion {
     this.owner(id, token);
     shortText(body?.operationId, "action identifier", 100);
     shortText(body?.actor, "name");
@@ -169,6 +170,7 @@ export class VersionService {
       const main = this.store.get(version.parentDesignId), proposed = this.store.get(version.proposedDesignId);
       if (main.design.revision !== body.expectedMainRevision || proposed.design.revision !== body.expectedProposedRevision || snapshotHash(proposed) !== body.reviewedSnapshotHash)
         throw new HttpError(409, "A version changed after your review. Compare the latest versions before accepting.", "VERSION_CONFLICT");
+      gate?.(version, proposed);
       if (main.design.kind !== proposed.design.kind || main.design.mechanismVersion !== proposed.design.mechanismVersion)
         throw new HttpError(422, "This version needs an explicit design conversion before acceptance.", "CONVERSION_REQUIRED");
       validateDesign(proposed.design);
@@ -340,14 +342,13 @@ export function registerVersionRoutes(app: FastifyInstance, options: VersionRout
     const body = r.body as AcceptVersionInput & { acceptStaleChecks?: boolean };
     // Checks shown for an earlier revision, or still running, do not describe what is accepted.
     // acceptStaleChecks: true is the explicit override for scripted callers that accept anyway.
-    if (options.studies && body?.acceptStaleChecks !== true) {
-      const view = versions.view(idOf(r), versionTokenOf(r));
-      if (view.version.status === "open") {
-        const freshness = checkFreshness(options.studies(view.version.proposedDesignId), view.proposed.design.revision);
-        if (freshness.blocked) throw new HttpError(409, freshness.reason, "CHECKS_STALE");
-      }
-    }
-    return versions.accept(idOf(r), versionTokenOf(r), body);
+    // The gate runs after the owner and request checks, inside the same transaction as the acceptance.
+    const studies = options.studies;
+    const gate = studies && body?.acceptStaleChecks !== true ? (version: ProposedVersion, proposed: Snapshot) => {
+      const freshness = checkFreshness(studies(version.proposedDesignId), proposed.design.revision, proposed.derived.parts.map(p => p.id));
+      if (freshness.blocked) throw new HttpError(409, freshness.reason, "CHECKS_STALE");
+    } : undefined;
+    return versions.accept(idOf(r), versionTokenOf(r), body, gate);
   });
   app.post("/api/proposed-versions/:id/reject", async (r) => versions.reject(idOf(r), versionTokenOf(r)));
   app.post("/api/proposed-versions/:id/agent-credentials", async (r, reply) => reply.code(201).send(versions.issueAgent(idOf(r), versionTokenOf(r), r.body as any)));

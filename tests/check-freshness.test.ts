@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { createApp } from "../server/app";
-import { checkFreshness, rerunRequest } from "../src/shared/check-freshness";
+import { checkFreshness, rerunRequest, studyInputKey } from "../src/shared/check-freshness";
 import { seedAgentOutcomes } from "./helpers/agent-outcome-fixture";
 import { seedProof } from "./helpers/proof-fixture";
 
@@ -37,7 +37,45 @@ describe("check freshness for acceptance", () => {
   });
 });
 
+describe("checks that are not about one part", () => {
+  const rigid = { mechanism: { kind: "rigid_body", durationSeconds: 1, bodies: [{ partId: "lower-arm", massKg: 0.1 }] } };
+  it("identifies a study of no single part by its inputs, so a re-run with the same inputs replaces it", () => {
+    const old = { id: "a", type: "mechanism", status: "ready", revision: 1, setup: rigid };
+    expect(checkFreshness([old], 2).blocked).toBe(true);
+    const rerun = { id: "b", type: "mechanism", status: "ready", revision: 2, setup: structuredClone(rigid) };
+    expect(checkFreshness([rerun, old], 2)).toMatchObject({ blocked: false, stale: [] });
+    // Study outcomes carry the same identity without the inputs.
+    expect(checkFreshness([{ ...rerun, setup: undefined, inputKey: studyInputKey(rigid) }, old], 2).blocked).toBe(false);
+  });
+
+  it("does not hold Accept for a part the version removed", () => {
+    const removed = { id: "a", type: "manufacturing", partId: "camera-platform", status: "ready", revision: 1 };
+    expect(checkFreshness([removed], 2).blocked).toBe(true);
+    expect(checkFreshness([removed], 2, ["upper-arm", "lower-arm"]).blocked).toBe(false);
+  });
+
+  it("re-runs a part-bound mechanism study with its part, material and profile", () => {
+    const setup = { partId: "upper-arm", material: { name: "Al" }, profile: "cnc", mechanism: { kind: "arm", payloadKg: 0.5, reachMm: 250 } };
+    expect(rerunRequest({ type: "mechanism", partId: "upper-arm", setup }, 3)).toEqual({ type: "mechanism", revision: 3, ...setup });
+    expect(rerunRequest({ type: "mechanism", setup: rigid }, 3)).toEqual({ type: "mechanism", revision: 3, ...rigid });
+  });
+});
+
 describe("accept route", () => {
+  it("checks the owner and the request before the checks gate", async () => {
+    const dataDir = mkdtempSync(join(tmpdir(), "check-freshness-"));
+    const { app, store } = await createApp({ dataDir, aiKey: "" });
+    try {
+      const f = seedAgentOutcomes(store);
+      const url = `/api/proposed-versions/${f.view.version.id}/accept`;
+      const viewer = await app.inject({ method: "POST", url, headers: { authorization: "Bearer " + f.owner.access.viewerToken },
+        payload: { operationId: "x", actor: "Maker", expectedMainRevision: 0, expectedProposedRevision: 2, reviewedSnapshotHash: "0".repeat(64) } });
+      expect(viewer.statusCode).toBe(403);
+      const empty = await app.inject({ method: "POST", url, headers: { authorization: "Bearer " + f.owner.access.editorToken }, payload: {} });
+      expect(empty.statusCode).toBe(422);
+    } finally { await app.close(); rmSync(dataDir, { recursive: true, force: true }); }
+  });
+
   it("refuses a version whose shown checks predate it unless the caller overrides, and accepts current checks", async () => {
     const dataDir = mkdtempSync(join(tmpdir(), "check-freshness-"));
     const { app, store } = await createApp({ dataDir, aiKey: "" });

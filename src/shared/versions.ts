@@ -111,6 +111,8 @@ export interface RecordedStudyOutcome {
   id: string;
   revision: number;
   partId?: string;
+  /** For a study of no single part: its recorded inputs, which identify it across re-runs. */
+  inputKey?: string;
   type: "strength" | "manufacturing" | "mechanism";
   status: "queued" | "running" | "ready" | "failed" | "cancelled";
   stale: boolean;

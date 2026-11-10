@@ -1,6 +1,7 @@
 import type { Command, Part, Snapshot } from "../src/shared/types";
 import type { AgentCredential, AgentEvent, AgentRole, RecordedAgentOperation, RecordedPartChange, VersionDiff, VersionOutcomes } from "../src/shared/versions";
 import type { EngineeringJob } from "./engineering-jobs";
+import { studyInputKey } from "../src/shared/check-freshness";
 
 // Stable equality for stored optional fields, including nested counterbores.
 function canonical(value: unknown): string {
@@ -61,7 +62,7 @@ export function projectAgentOutcomes(input: {
         if (typeof result?.profile?.[key] === "number" && Number.isFinite(result.profile[key])) profile[key] = result.profile[key];
       if (Array.isArray(result?.profile?.buildEnvelopeMm) && result.profile.buildEnvelopeMm.length === 3 && result.profile.buildEnvelopeMm.every((value: unknown) => typeof value === "number" && Number.isFinite(value))) profile.buildEnvelopeMm = result.profile.buildEnvelopeMm;
       const strings = (value: unknown): string[] | undefined => Array.isArray(value) && value.every(item => typeof item === "string") ? value : undefined;
-      return { id: job.id, revision: job.revision, ...(job.partId ? { partId: job.partId } : {}), ...(partName ? { partName } : {}),
+      return { id: job.id, revision: job.revision, ...(job.partId ? { partId: job.partId } : { inputKey: studyInputKey(job.setup) }), ...(partName ? { partName } : {}),
         type: job.type, status: job.status, stale, ...(staleReason ? { staleReason } : {}),
         ...(typeof result?.status === "string" ? { resultStatus: result.status } : {}),
         ...(Array.isArray(result?.findings) ? { findingCount: result.findings.length } : {}),
