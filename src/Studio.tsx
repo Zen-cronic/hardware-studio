@@ -817,7 +817,7 @@ export default function Studio({
           (tab === "design" ? " is-design mobile-" + mobileEditor : "")
         }
       >
-        <aside className={"left-panel" + (selection && editorMode === "selection" ? " show-selection" : "")} id="studio-left-panel" onKeyDown={(event) => { if (event.key === "Escape" && !(event.target as HTMLElement).closest('[role="dialog"]')) { setLeftPanelOpen(false); setMobileEditor("canvas"); requestAnimationFrame(() => { const selectors = window.innerWidth <= 820 && tab === "design" ? '.mobile-editor-switch [data-panel="left"]' : '[aria-controls="studio-left-panel"]'; document.querySelector<HTMLButtonElement>(selectors)?.focus(); }); } }}>
+        <aside className={"left-panel" + (selection && editorMode === "selection" ? " show-selection" : "")} id="studio-left-panel" onKeyDown={(event) => { if (event.key === "Escape" && !(event.target as HTMLElement).closest('[role="dialog"]')) { setLeftPanelOpen(false); setMobileEditor("canvas"); requestAnimationFrame(() => { const selectors = window.innerWidth <= 820 ? (tab === "design" ? '.mobile-editor-switch [data-panel="left"]' : '.mobile-panel-switch [aria-controls="studio-left-panel"]') : '[aria-controls="studio-left-panel"]'; document.querySelector<HTMLButtonElement>(selectors)?.focus(); }); } }}>
           {tab === "design" ? (
             <>
               {selection && !pendingCircleSelection && !proposal && <div className="inspector-tabs" role="group" aria-label="Selected part tools"><button className={"button small " + (editorMode === "selection" ? "primary action-secondary" : "")} onClick={() => setEditorMode("selection")}>Part controls</button><button className={"button small " + (editorMode === "prompt" ? "primary action-secondary" : "")} onClick={() => setEditorMode("prompt")}>Write a request</button></div>}
@@ -899,7 +899,8 @@ export default function Studio({
                     {(proposal.target?.label || proposalBinding) && <p className="proposal-target" data-testid="proposal-target">
                       {Object.keys(proposal.command.changes || {}).length || proposal.command.customParts ? "Applied to" : "Pointing at"}: <strong>{proposal.target?.label || targetLabel(snapshot, proposalBinding)}</strong>
                     </p>}
-                    <p>{proposal.explanation}</p>
+                    {/* A local size change is shown by its before and after row; the sentence is what gets spoken. */}
+                    {!(proposal.source === "local" && Object.keys(proposal.command.changes || {}).length) && <p className="proposal-summary">{proposal.explanation}</p>}
                     {proposal.questions?.map((q) => (
                       <p className="measurement-question" key={q}>
                         <Ruler size={16} />
@@ -929,12 +930,6 @@ export default function Studio({
                         ),
                       )}
                     </dl>
-                    {proposal.command.customParts && (
-                      <p>
-                        {proposal.command.customParts.length} parts in the
-                        proposed design.
-                      </p>
-                    )}
                     {!clarifying && !readOnly && <ProposalCheck ref={checkRef} snapshot={snapshot} proposal={proposal} token={token} actor={actor}
                       partId={proposalBinding?.partIds.find(id => proposal.target?.partIds.includes(id))} disabled={busy} onSay={voice.say} onError={setError} />}
                     <button
@@ -1209,7 +1204,7 @@ export default function Studio({
           )}
           {tab === "design" && (
             <div className={"assistant-dock" + (proposal ? " has-proposal" : "")} data-slot="agent-dock" role="region" aria-label="Assistant">
-              {readOnly ? <p className="assistant-readonly">Make your own copy to ask for changes.</p> : <AgentDock voice={voice} reply={proposal ? replyLines(proposal).join(" ") : undefined}
+              {readOnly ? <p className="assistant-readonly">Make your own copy to ask for changes.</p> : <AgentDock voice={voice} reply={proposal ? (clarifying ? replyLines(proposal).join(" ") : "Change ready to review.") : undefined}
                 disabled={busy || promptBusy || !!proposal || pendingCircleSelection}
                 disabledReason={promptBusy ? "Working through the design…" : "Review or dismiss this proposal, then hold to talk again."} className="in-assistant" />}
               <div className="assistant-actions">
@@ -1300,7 +1295,7 @@ export default function Studio({
               className={mobileEditor === "dimensions" ? "active" : ""}
               onClick={() => setMobileEditor("dimensions")}
             >
-              <Settings2 size={16} /> <span aria-hidden="true">Size</span><span className="sr-only">Dimensions</span>
+              <Settings2 size={16} /> Dimensions
             </button>
             <button
               data-panel="left"
@@ -1311,7 +1306,15 @@ export default function Studio({
             </button>
           </div>
         )}
-        <aside className="right-panel" id="studio-right-panel" onKeyDown={(event) => { if (event.key === "Escape" && !(event.target as HTMLElement).closest('[role="dialog"]')) { setRightPanelOpen(false); setMobileEditor("canvas"); requestAnimationFrame(() => { const selectors = window.innerWidth <= 820 && tab === "design" ? '.mobile-editor-switch [data-panel="right"]' : '[aria-controls="studio-right-panel"]'; document.querySelector<HTMLButtonElement>(selectors)?.focus(); }); } }}>
+        {tab !== "design" && (
+          // Phones hide the header panel toggles, so the step list and package panels open from here.
+          <div className="mobile-editor-switch mobile-panel-switch" role="group" aria-label="Panels">
+            <button className={!leftPanelOpen && !rightPanelOpen ? "active" : ""} onClick={() => { setLeftPanelOpen(false); setRightPanelOpen(false); }}><Box size={16} /> Model</button>
+            <button className={leftPanelOpen ? "active" : ""} aria-expanded={leftPanelOpen} aria-controls="studio-left-panel" onClick={() => { setLeftPanelOpen(true); setRightPanelOpen(false); }}>{tab === "assemble" ? "Steps" : "Overview"}</button>
+            <button className={rightPanelOpen ? "active" : ""} aria-expanded={rightPanelOpen} aria-controls="studio-right-panel" onClick={() => { setRightPanelOpen(true); setLeftPanelOpen(false); }}>{tab === "assemble" ? "Step details" : "Build files"}</button>
+          </div>
+        )}
+        <aside className="right-panel" id="studio-right-panel" onKeyDown={(event) => { if (event.key === "Escape" && !(event.target as HTMLElement).closest('[role="dialog"]')) { setRightPanelOpen(false); setMobileEditor("canvas"); requestAnimationFrame(() => { const selectors = window.innerWidth <= 820 ? (tab === "design" ? '.mobile-editor-switch [data-panel="right"]' : '.mobile-panel-switch [aria-controls="studio-right-panel"]') : '[aria-controls="studio-right-panel"]'; document.querySelector<HTMLButtonElement>(selectors)?.focus(); }); } }}>
           {tab === "design" ? (
             <>
               <div className="panel-heading">
@@ -1323,7 +1326,7 @@ export default function Studio({
                   <label className="parameter" key={spec.key}>
                     <span>
                       {spec.label}
-                      <small>{spec.unit}</small>
+                      {spec.unit !== "×" && <small>{spec.unit}</small>}
                     </span>
                     <div className="parameter-input">
                       <input
