@@ -34,8 +34,8 @@
 :root .site-header,:root .site-header.landing-header {background:var(--bg);color:var(--text);border:0;border-bottom:1px solid var(--line);height:72px;padding:0 clamp(16px,3vw,40px);}
 :root .site-header.landing-header {position:absolute;left:0;right:0;top:0;z-index:20;background:transparent;border-bottom-color:transparent;}
 :root .brand {display:inline-flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:760;font-size:19px;letter-spacing:-.01em;color:var(--text);}
-:root .brand-mark {width:24px;height:24px;border-radius:50%;border:3px solid var(--primary);background:transparent;color:transparent;display:inline-block;}
-:root .brand-mark svg {display:none;}
+:root .brand-mark {width:26px;height:26px;display:inline-grid;place-items:center;color:var(--primary);background:transparent;border:0;}
+:root .brand-mark svg {display:block;}
 :root .site-header nav button,:root .landing-header nav button {color:var(--muted);background:transparent;border:1px solid transparent;font-family:var(--font-body);font-weight:600;font-size:15px;}
 :root .site-header nav button:hover {color:var(--text);background:var(--surface);}
 :root .site-header nav button.active {background:var(--surface);color:var(--text);border-color:var(--line);}
@@ -87,3 +87,7 @@
   :root * {transition-duration:0s!important;animation-duration:0s!important;}
 }
 :root .surface-label {border-color:var(--primary);}
+:root select {appearance:none;-webkit-appearance:none;padding-right:34px;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 18px) 55%,calc(100% - 13px) 55%;background-size:5px 5px;background-repeat:no-repeat;}
+:root .development .button.primary:not(:disabled) {background:var(--primary);color:var(--on-primary);border-color:var(--primary);}
+:root select {background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%)!important;background-position:calc(100% - 18px) 55%,calc(100% - 13px) 55%!important;background-size:5px 5px!important;background-repeat:no-repeat!important;}
+:root .development .button.primary:disabled {background:var(--surface);color:var(--muted);border:1px solid var(--border);opacity:1;}

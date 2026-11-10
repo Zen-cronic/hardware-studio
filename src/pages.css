@@ -58,3 +58,43 @@
 :root .stale-checks,:root .is-outdated {border:1px solid var(--warning)!important;background:color-mix(in srgb,var(--warning) 10%,var(--panel));color:var(--text);}
 :root .stale-checks>svg,:root .outdated-note svg {color:var(--warning);}
 :root .proposal-check .check-result {background:var(--panel);}
+
+/* Check it before applying: the big number leads, one accent rail, values on one line */
+:root .proposal .check-result,:root .proposal .check-result[data-verdict] {border:0!important;border-radius:10px;background:var(--panel);padding:14px;box-shadow:none;}
+:root .proposal {border-left-color:var(--warm);}
+:root .check-big {margin:0 0 8px;color:var(--text);font-size:var(--s-base);font-weight:600;}
+:root .check-big strong {display:block;font-family:var(--font-display);font-weight:820;font-size:2.75rem;letter-spacing:-.03em;line-height:1;color:var(--primary);}
+:root .check-bars {display:grid;gap:6px;margin:0 0 10px;}
+:root .check-bars div {display:grid;grid-template-columns:44px 1fr auto;align-items:center;gap:8px;font-size:var(--s-xs);}
+:root .check-bars span {color:var(--muted);}
+:root .check-bars i {display:block;height:8px;border-radius:4px;background:var(--border);}
+:root .check-bars i.is-after {background:var(--primary);}
+:root .check-bars b {font-family:var(--font-mono);font-weight:400;white-space:nowrap;}
+:root .check-sentence {font-size:var(--s-sm)!important;font-weight:400!important;color:var(--text);}
+:root .check-numbers div {flex-wrap:wrap;}
+:root .check-numbers dd {white-space:nowrap;}
+
+/* Display type below 40px breathes a little */
+:root h2,:root h3,:root .browse-heading h1,:root .new-starters h2,:root .new-shape-section h2 {letter-spacing:-.01em;}
+:root .browse-heading h1 {font-size:clamp(2rem,3.4vw,2.75rem);}
+
+/* Browse cards: inset text, one action per card, nothing over the render */
+:root .product-card {padding:12px;}
+:root .product-meta {padding:12px 6px 4px;}
+:root .product-meta .icon-only {display:none;}
+:root .preview-action {position:static;display:none;}
+
+/* Small text uses medium weight */
+:root .lp-chip,:root .agent-example,:root .button.small,:root .landing-header nav button,:root .site-header nav button,:root .filter-tabs button {font-weight:500;}
+
+/* One navigation layout on every page */
+:root .site-header {border-bottom:0;}
+:root .site-header nav {margin-left:auto;margin-right:12px;}
+:root .new-starters {border-top:0;padding-top:24px;}
+/* Same nav on the home page and every other page */
+@media (min-width:821px) {
+  :root .landing-header nav,:root .site-header nav {margin-left:auto;margin-right:12px;gap:8px;}
+  :root .landing-header nav button,:root .site-header nav button {padding:9px 14px;font-family:var(--font-body);font-size:15px;font-weight:500;border:1px solid transparent;border-radius:6px;}
+  :root .landing-header nav button {color:var(--muted);}
+  :root .site-header nav button:not(.active) {color:var(--muted);}
+}

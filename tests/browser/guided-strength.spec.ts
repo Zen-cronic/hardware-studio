@@ -85,7 +85,7 @@ test('maker reviews a real 0.5 kg component study and refines immutable inputs t
   expect(edit.status()).toBe(200);
   await expect(page.getByRole('button', { name: 'Refine and rerun', exact: true })).toBeDisabled({ timeout: 10000 });
   await expect(page.getByText('The design changed. Review a new study on the current revision.')).toBeVisible();
-  await expect(page.locator('.development-scene-heading')).toContainText('r0');
+  await expect(page.locator('.development-scene-heading')).toContainText('Revision 0');
   await expect(page.locator('.development-scene-heading')).toContainText('Upper arm link');
   await page.goto(`/develop/${id}?part=upper-arm#token=${access.viewerToken}`);
   await openStudySetup(page);

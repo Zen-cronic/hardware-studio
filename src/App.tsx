@@ -53,8 +53,11 @@ export function Brand({ onClick }: { onClick: () => void }) {
       onClick={onClick}
       aria-label="Hardware Studio home"
     >
-      <span className="brand-mark">
-        <Box size={21} strokeWidth={1.5} />
+      <span className="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
+          <circle cx="5" cy="5" r="3.2" /><circle cx="19" cy="5" r="3.2" /><circle cx="5" cy="19" r="3.2" /><circle cx="19" cy="19" r="3.2" />
+          <path d="M7.3 7.3 10 10M16.7 7.3 14 10M7.3 16.7 10 14M16.7 16.7 14 14" /><rect x="9.6" y="9.6" width="4.8" height="4.8" rx="1.2" />
+        </svg>
       </span>
       <span>Hardware Studio</span>
     </button>
@@ -545,9 +548,9 @@ function NewDesign({ navigate }: { navigate: Navigate }) {
   return (
     <main className="new-page">
       <section className="new-ask" aria-labelledby="new-title">
-        <h1 id="new-title">What do you want to build?</h1>
+        <h1 id="new-title">What are you making?</h1>
         <p>Describe it or pick a starting point. Then point at any part and say what to change.</p>
-        <RequestBox navigate={navigate} still={false} />
+        <RequestBox navigate={navigate} still />
       </section>
       <section className="new-starters" aria-labelledby="new-starters-title">
         <h2 id="new-starters-title">Start from a working design</h2>
@@ -693,7 +696,7 @@ function Judge({ navigate }: { navigate: Navigate }) {
         <GuideExample />
       </div>
       <button
-        className="button primary"
+        className="button"
         onClick={() => navigate("/designs/turntable")}
       >
         Begin with the turntable <ChevronRight size={18} />
