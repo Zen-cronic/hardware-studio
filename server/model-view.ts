@@ -36,7 +36,7 @@ export function registerModelRoutes(app: FastifyInstance, store: Store) {
     store.authorize(id, tokenOf(r));
     const found = latestModel(store, id);
     if (!found)
-      throw new HttpError(409, "No 3D model is ready for this design yet. Open the design, choose Build, then Generate build package, and try again.", "MODEL_NOT_BUILT");
+      throw new HttpError(409, "No 3D model is ready for this design yet. Open the design on a computer and press See it in your room; the 3D model is made automatically. Then try again.", "MODEL_NOT_BUILT");
     return found;
   };
   const headers = (reply: FastifyReply, found: ModelFile) => reply

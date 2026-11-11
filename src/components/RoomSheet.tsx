@@ -10,6 +10,8 @@ import "./room.css";
 /**
  * "See it in your room": a 3D preview of the built model and a code a phone can scan to
  * open it straight in AR. The code carries a view-only link, never the editing link.
+ * For an editor, a design without a 3D model gets one made as soon as the sheet opens; the
+ * code and the link appear only once the model is ready, so a scan never lands on an empty page.
  */
 export default function RoomSheet({ designId, token, readOnly, onClose }: {
   designId: string;
@@ -24,7 +26,8 @@ export default function RoomSheet({ designId, token, readOnly, onClose }: {
   const [refresh, setRefresh] = useState(0);
   const { state, revision } = useModelState(designId, token, refresh);
   const [qr, setQr] = useState(""), [copied, setCopied] = useState(false);
-  const [building, setBuilding] = useState(false), [error, setError] = useState("");
+  const [building, setBuilding] = useState(false), [finished, setFinished] = useState(false), [error, setError] = useState("");
+  const ready = state === "ready";
   const link = viewToken ? location.origin + viewPath(designId, viewToken) : "";
   useEffect(() => {
     if (!link) return;
@@ -37,48 +40,64 @@ export default function RoomSheet({ designId, token, readOnly, onClose }: {
   // Effect-scoped, so StrictMode's second effect run leaves the sheet live.
   const alive = useRef(false);
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
+  // The same build the Build tab runs; the server joins a build already running for this revision.
   async function build() {
-    setBuilding(true); setError("");
+    setBuilding(true); setFinished(false); setError("");
     try {
       let job = await api<BuildJob>("/designs/" + designId + "/build", token, {});
       while (alive.current && (job.status === "queued" || job.status === "running")) {
         await new Promise(r => setTimeout(r, 1200));
         job = await api<BuildJob>("/builds/" + job.id, token);
       }
-      if (job.status !== "ready") throw new Error(job.error || "The model could not be prepared.");
+      if (job.status !== "ready") throw new Error(job.error || "The 3D model could not be made.");
       if (alive.current) setRefresh(n => n + 1);
     } catch (e) { if (alive.current) setError((e as Error).message); }
-    finally { if (alive.current) setBuilding(false); }
+    finally { if (alive.current) { setBuilding(false); setFinished(true); } }
   }
+  // An editor never has to find a build control: a missing model is made once, as soon as the sheet knows it is missing.
+  const started = useRef(false);
+  useEffect(() => {
+    if (state !== "missing" || readOnly || started.current) return;
+    started.current = true;
+    void build();
+  }, [state, readOnly]);
+  const making = !readOnly && (building || (state === "missing" && !finished && !error));
+  const waiting = making ? "The code for your phone appears here when the 3D model is ready."
+    : state === "outdated" ? "The code for your phone appears here once the 3D model is up to date."
+    : state === "loading" ? "" : "The code for your phone appears here when the design has a 3D model.";
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <section className="modal room-sheet" role="dialog" aria-modal="true" aria-labelledby="room-title" onClick={e => e.stopPropagation()} data-testid="room-sheet">
+      <section className="modal room-sheet" role="dialog" aria-modal="true" aria-labelledby="room-title" onClick={e => e.stopPropagation()}
+        data-testid="room-sheet" data-model-state={making ? "making" : state}>
         <div className="panel-heading">
           <h2 id="room-title">See it in your room</h2>
           <button className="button icon-only" aria-label="Close room view" onClick={onClose}><X size={18} /></button>
         </div>
         <div className="room-sheet-body">
           <div className="room-sheet-preview">
-            {state === "ready" ? <RoomModel src={modelUrl(designId, token)} ar={false} label="Real-size preview of this design" />
+            {ready ? <RoomModel src={modelUrl(designId, token)} ar={false} label="Real-size preview of this design" />
+              : making ? <div className="room-model is-loading" role="status" data-testid="room-making"><Loader2 className="spin" size={22} /> Making the 3D model…</div>
               : state === "loading" ? <div className="room-model is-loading" role="status"><Loader2 className="spin" size={22} /> Checking the model…</div>
               : <div className="room-model is-empty" role="status">
-                  <p>{state === "missing" ? "The 3D model is made with the build files."
+                  <p>{state === "missing" ? (readOnly ? "This design has no 3D model yet. It is made when someone who can edit the design opens See it in your room." : "The 3D model is not ready yet.")
                     : state === "outdated" ? `This 3D model is from an earlier version${revision !== null ? ` (revision ${revision})` : ""}.`
                     : "The model could not be loaded."}</p>
-                  {(state === "missing" || state === "outdated") && !readOnly && <button className="button primary" disabled={building} onClick={() => void build()}>
-                    {building ? <><Loader2 className="spin" size={16} /> Preparing the model…</> : state === "outdated" ? "Update the 3D model" : "Prepare the 3D model"}</button>}
+                  {state === "outdated" && readOnly && <p>Someone who can edit the design can update it.</p>}
+                  {state === "outdated" && !readOnly && <button className="button primary" onClick={() => void build()}>Update the 3D model</button>}
+                  {state === "missing" && !readOnly && <button className="button primary" onClick={() => void build()}>Try again</button>}
                   {error && <p className="error" role="alert">{error}</p>}
                 </div>}
           </div>
           <div className="room-sheet-phone">
-            {link ? <>
+            {!ready ? waiting && <p className="subtle" data-testid="room-code-waiting">{waiting}</p>
+              : link ? <>
               {qr ? <img className="room-qr" src={qr} width={288} height={288} alt="Code to open this design in AR on a phone" /> : <div className="room-qr" />}
               <p className="room-scan"><Smartphone size={16} aria-hidden="true" /> Scan with your phone camera. It opens this design at real size in your room, on iPhone and Android.</p>
               {/* On a phone the code is not needed: open the room view here. */}
               <a className="button primary room-open-link" href={link}>Open it in your room</a>
               <button className="button small" onClick={async () => { try { await navigator.clipboard.writeText(link); setCopied(true); } catch { setCopied(false); } }}>
                 {copied ? <Check size={15} /> : <Copy size={15} />} {copied ? "Link copied" : "Copy view link"}</button>
-              <p className="subtle">The code and the link are view-only.{revision !== null && state === "ready" ? ` Model from revision ${revision}.` : ""}</p>
+              <p className="subtle">The code and the link are view-only.{revision !== null ? ` Model from revision ${revision}.` : ""}</p>
             </> : <p className="subtle">The view-only link is available in the browser that created this design. Open the design there to show the code.</p>}
           </div>
         </div>

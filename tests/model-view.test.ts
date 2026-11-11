@@ -41,7 +41,9 @@ describe("model for viewing in a room", () => {
       expect((await app.inject({ method: "GET", url })).statusCode).toBe(403);
       const missing = await app.inject({ method: "GET", url: url + "?token=" + viewerToken });
       expect(missing.statusCode).toBe(409);
-      expect(missing.json()).toMatchObject({ code: "MODEL_NOT_BUILT", error: expect.stringContaining("Generate build package") });
+      expect(missing.json()).toMatchObject({ code: "MODEL_NOT_BUILT", error: expect.stringContaining("press See it in your room") });
+      // Only controls that exist in the studio are named.
+      expect(missing.json().error).not.toMatch(/Generate build package|choose Build/);
 
       let job = (await app.inject({ method: "POST", url: `/api/designs/${id}/build`, headers: { authorization: "Bearer " + editorToken } })).json();
       for (let i = 0; i < 300 && ["queued", "running"].includes(job.status); i++) {

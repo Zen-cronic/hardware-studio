@@ -78,7 +78,7 @@ export default function ViewInRoom({ id }: { id: string }) {
         <p className="room-hint">Tap <strong>View in your space</strong>, point your phone at the floor or a table, and it appears at real size. Drag to move it, pinch to turn it.{revision !== null && <> Built from revision {revision}.</>}</p>
       </> : state === "loading" ? <div className="room-status" role="status"><Loader2 className="spin" size={24} /> Preparing the model…</div>
         : <div className="room-status" role="alert"><AlertCircle size={24} />
-          <p>{state === "missing" ? "This design has no 3D model yet. Open it on a computer, choose Build, then Generate build package, and scan the code again."
+          <p>{state === "missing" ? "This design has no 3D model yet. Open this design on a computer and press See it in your room. The 3D model is made automatically; then scan the new code."
             : state === "outdated" ? "This 3D model is from an earlier version of the design. Open the design on a computer, choose See it in your room, then Update the 3D model, and scan the code again."
             : state === "denied" ? "This link is not valid. Ask for a new view link." : "The model could not be loaded. Check your connection and try again."}</p>
         </div>}
