@@ -100,6 +100,18 @@ function proposalTarget(snapshot: Snapshot, selection: SelectionRef | undefined,
   if (pointed) return { partIds: [pointed.partId], featureId: pointed.feature.id, label: pointed.label };
   return { partIds: [...selection.partIds], label: selection.partIds.map(id => snapshot.derived.parts.find(p => p.id === id)!.name).join(", ") };
 }
+/** Sentences that explain a limit or a refusal rather than report something done. */
+const LIMIT = /\b(can['’]?t|cannot|can not|unable|not able|only (?:change|edit|adjust|resize|move)|can (?:only )?change\b.*\bnot|isn['’]t possible|is not possible|not possible|(?:does|do)(?:n['’]t| not) support|not supported)\b/i;
+/**
+ * The explanation for an assistant reply that holds no change and asks nothing: it says so first,
+ * and keeps only the model's sentences that explain a limit or a refusal, never one that reports a
+ * change as made ("Removed every part from the design").
+ */
+export function noChangeExplanation(explanation: unknown): string {
+  const text = typeof explanation === "string" ? explanation.replace(/\s+/g, " ").trim().slice(0, 1200) : "";
+  const kept = text.split(/(?<=[.!?])\s+/).filter(sentence => LIMIT.test(sentence)).join(" ");
+  return kept ? `No change was made. ${kept}` : "No change was made.";
+}
 /** Strict shape check for a model-proposed edit of the pointed feature. */
 export function parseTargetEdit(raw: unknown): SemanticEdit {
   const edit = raw as Record<string, unknown>;
@@ -305,6 +317,8 @@ export async function propose(
       }
       if (!parsed.partChanges.length) customParts=undefined;
     }
+    // A reply with no change and no question of its own must not read as if something changed.
+    const unchanged = !Object.keys(changes).length && !customParts && !questions.length;
     if (Object.keys(changes).length || customParts)
       validateDesign({
         ...d,
@@ -316,8 +330,8 @@ export async function propose(
     return {
       source: "ai",
       ...(target ? { target } : {}),
-      explanation:
-        typeof parsed.explanation === "string"
+      explanation: unchanged ? noChangeExplanation(parsed.explanation)
+        : typeof parsed.explanation === "string"
           ? parsed.explanation.slice(0, 1200)
           : "Review the proposed changes.",
       questions,
