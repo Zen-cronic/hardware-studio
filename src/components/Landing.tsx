@@ -57,8 +57,8 @@ function LandingHero({ navigate, still }: { navigate: Navigate; still: boolean }
     <img className="lp-decor lp-d-bearing" src="/decor/bearing.webp" alt="" aria-hidden="true"/>
     <img className="lp-decor lp-d-bolt" src="/decor/bolt.webp" alt="" aria-hidden="true"/>
     <div className="lp-hero-copy">
-      <h1 id="landing-title">Point at any part and say what to change.</h1>
-      <p className="lp-sub">Hardware Studio redesigns it in 3D, tests that it still holds, and lets you see it in your room before you build it.</p>
+      <h1 id="landing-title">Make anything from scratch.</h1>
+      <p className="lp-sub">Point at any part and say what to change. Hardware Studio redesigns it in 3D, tests that it still holds, and lets you see it in your room before you build it.</p>
       <HeroModel still={still || reduced}/>
       <RequestBox navigate={navigate} still={still}/>
     </div>

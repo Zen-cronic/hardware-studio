@@ -6,6 +6,8 @@ test('landing leads into a separate searchable catalog and preserves navigation'
   page.on('pageerror', e => errors.push(e.message));
   await page.goto('/');
   await expect(page.locator('.landing-page h1')).toHaveCount(1);
+  await expect(page.locator('.landing-page h1')).toHaveText('Make anything from scratch.');
+  await expect(page.locator('.lp-sub')).toHaveText(/^Point at any part and say what to change\. Hardware Studio redesigns it in 3D/);
   await expect(page.locator('.collection')).toHaveCount(0);
   await page.getByTestId('landing-browse').click();
   await expect(page).toHaveURL(/\/browse$/);
