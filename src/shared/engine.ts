@@ -5,6 +5,7 @@ import { standardConveyor } from "./conveyor";
 import { standardSlider } from "./slider";
 import { standardTurntable } from "./turntable";
 import { defaultParams, getProduct, productForDesign } from "./catalog";
+import { applyLook } from "./looks";
 import type {
   Design,
   ProductKind,
@@ -1763,6 +1764,7 @@ export function deriveDesign(d: Design): DerivedDesign {
   for (const part of parts)
     if (part.material === "Reference envelope") part.role = "reference";
     else part.role = part.role || "component";
+  parts = applyLook(d.kind, parts);
   let rows = bom(parts);
   if (d.kind === "turntable" && d.mechanismVersion === 2) {
     rows = rows.filter(
