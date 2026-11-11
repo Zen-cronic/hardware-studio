@@ -15,7 +15,7 @@ const evidence = process.env.COMPANION_EVIDENCE;
 test("/judge is one drone path in five steps, with no turntable widget", async ({ page }) => {
   const errors: string[] = []; page.on("pageerror", e => errors.push(e.message));
   await page.goto("/judge");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("See what Make Anything does, in five steps.");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("See what MakeAnything does, in five steps.");
   const steps = page.locator(".judge-steps > div");
   await expect(steps).toHaveCount(5);
   for (const [i, text] of STEPS.entries()) await expect(steps.nth(i)).toHaveText(`${i + 1}${text}`);

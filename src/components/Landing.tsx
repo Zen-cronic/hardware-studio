@@ -58,7 +58,7 @@ function LandingHero({ navigate, still }: { navigate: Navigate; still: boolean }
     <img className="lp-decor lp-d-bolt" src="/decor/bolt.webp" alt="" aria-hidden="true"/>
     <div className="lp-hero-copy">
       <h1 id="landing-title">Make anything from scratch.</h1>
-      <p className="lp-sub">Click any part of a 3D design and say or type what to change. Make Anything redesigns it, checks the part’s strength with a computer simulation, shows it at real size on your phone, and gives you the CAD files and parts list to build it.</p>
+      <p className="lp-sub">Click any part of a 3D design and say or type what to change. MakeAnything redesigns it, checks the part’s strength with a computer simulation, shows it at real size on your phone, and gives you the CAD files and parts list to build it.</p>
       <HeroModel still={still || reduced}/>
       <RequestBox navigate={navigate} still={still}/>
     </div>

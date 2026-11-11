@@ -1,13 +1,13 @@
-# Make Anything
+# MakeAnything
 
 **Make anything from scratch.**
-Click any part of a 3D design and say or type what to change. Make Anything redesigns it, checks the part's strength with a computer simulation, shows it at real size on your phone, and gives you the CAD files and parts list to build it.
+Click any part of a 3D design and say or type what to change. MakeAnything redesigns it, checks the part's strength with a computer simulation, shows it at real size on your phone, and gives you the CAD files and parts list to build it.
 
 In its strength simulation, making a part 4 → 6 mm thick cuts its bending by 70% under the same stated load: the camera drone's front-right arm goes from 1.19 to 0.36 mm under 1 kgf (9.8 N) of peak motor thrust, and the camera arm's upper link from 0.25 to 0.076 mm under a 0.5 kg (4.9 N) payload.
 
 Live app: https://makeanything.space. No sign-in. For a five-step guided path, open https://makeanything.space/judge.
 
-![Make Anything with a camera drone open. The pointer rests on one arm, a blue circle sits under it, and a label names the exact surface: "Arm, rear right, top face". The bar at the bottom says to hold Space or the mic, point at a part and say what to change.](docs/images/studio-pointing.png)
+![MakeAnything with a camera drone open. The pointer rests on one arm, a blue circle sits under it, and a label names the exact surface: "Arm, rear right, top face". The bar at the bottom says to hold Space or the mic, point at a part and say what to change.](docs/images/studio-pointing.png)
 
 ## What it does
 

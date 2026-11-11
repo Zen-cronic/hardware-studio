@@ -1,6 +1,6 @@
 # Third-party materials
 
-Make Anything uses the components below. Versioned details, upstream package sources and hashes of installed license/notice files are recorded in [the runtime inventory](docs/third-party-runtime.json). Inventory checked November 6, 2026 against `package-lock.json` and `poetry.lock`.
+MakeAnything uses the components below. Versioned details, upstream package sources and hashes of installed license/notice files are recorded in [the runtime inventory](docs/third-party-runtime.json). Inventory checked November 6, 2026 against `package-lock.json` and `poetry.lock`.
 
 The inventory covers 202 installed production npm packages and 88 packages in the declared Python runtime dependency closures on the checked platform. It lists installed dependencies, including packages not necessarily imported on a particular route. Platform-specific optional packages and development tools are not fully covered. Lockfiles remain the source of dependency versions. This is an attribution inventory, not a conclusion that every distribution obligation has been satisfied.
 

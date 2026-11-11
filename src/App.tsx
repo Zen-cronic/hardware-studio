@@ -57,7 +57,7 @@ export function Brand({ onClick }: { onClick: () => void }) {
     <button
       className="brand"
       onClick={onClick}
-      aria-label="Make Anything home"
+      aria-label="MakeAnything home"
     >
       <span className="brand-mark" aria-hidden="true">
         <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
@@ -65,7 +65,7 @@ export function Brand({ onClick }: { onClick: () => void }) {
           <path d="M7.3 7.3 10 10M16.7 7.3 14 10M7.3 16.7 10 14M16.7 16.7 14 14" /><rect x="9.6" y="9.6" width="4.8" height="4.8" rx="1.2" />
         </svg>
       </span>
-      <span>Make Anything</span>
+      <span>MakeAnything</span>
     </button>
   );
 }
@@ -741,7 +741,7 @@ function Judge({ navigate }: { navigate: Navigate }) {
   }
   return (
     <main className="work-page judge-page">
-      <h1>See what Make Anything does, in five steps.</h1>
+      <h1>See what MakeAnything does, in five steps.</h1>
       <p className="lead">
         For makers, students and small hardware teams who want a part designed and checked without learning CAD. Today it starts from a camera drone, a desk arm and six other working designs. It designs and checks the parts; you print, cut or order them yourself.
       </p>

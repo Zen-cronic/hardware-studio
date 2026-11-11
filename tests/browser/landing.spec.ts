@@ -7,7 +7,7 @@ test('landing leads into a separate searchable catalog and preserves navigation'
   await page.goto('/');
   await expect(page.locator('.landing-page h1')).toHaveCount(1);
   await expect(page.locator('.landing-page h1')).toHaveText('Make anything from scratch.');
-  await expect(page.locator('.lp-sub')).toHaveText(/^Click any part of a 3D design and say or type what to change\. Make Anything redesigns it/);
+  await expect(page.locator('.lp-sub')).toHaveText(/^Click any part of a 3D design and say or type what to change\. MakeAnything redesigns it/);
   await expect(page.locator('.collection')).toHaveCount(0);
   await page.getByTestId('landing-browse').click();
   await expect(page).toHaveURL(/\/browse$/);
@@ -25,7 +25,7 @@ test('landing leads into a separate searchable catalog and preserves navigation'
   await expect(page.getByTestId('customize-design')).toBeVisible();
   await page.getByRole('button', {name:'All designs', exact:true}).click();
   await expect(page).toHaveURL(/\/browse$/);
-  await page.getByRole('button', {name:'Make Anything home'}).first().click();
+  await page.getByRole('button', {name:'MakeAnything home'}).first().click();
   await expect(page).toHaveURL(/\/$/);
   await page.getByTestId('landing-try').click();
   await expect(page).toHaveURL(/\/designs\/turntable$/);
