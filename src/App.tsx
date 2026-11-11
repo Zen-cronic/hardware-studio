@@ -36,6 +36,13 @@ import Landing from "./components/Landing";
 import { create, pathFor, recent, type Recent } from "./lib/api";
 import { colors } from "./lib/tokens";
 export type Navigate = (path: string) => void;
+/** Working designs that start as your own editable copy straight away, on /new and /browse alike. */
+const STARTERS = [
+  { key: "drone", name: "Camera drone", label: "Start with a camera drone", testId: "start-drone", category: "Motion & photography", group: "Motion",
+    line: "A 250 mm quadcopter with carbon arms, a rounded body and a camera on a gimbal.", image: "/previews/drone.png", parts: droneParts },
+  { key: "arm", name: "Articulated camera arm", label: "Start with an articulated camera arm", testId: "start-arm", category: "Desk & studio", group: "Desk & studio",
+    line: "A desk-clamped arm that holds a phone or a small camera.", image: "/previews/arm.png", parts: deskArmParts },
+] as const;
 export function preview(kind: ProductKind): Snapshot {
   const design: Design = {
     ...createDesign(kind),
@@ -154,14 +161,27 @@ function Catalog({ navigate }: { navigate: Navigate }) {
       : ["turntable", "slider", "conveyor"].includes(kind)
         ? "Motion"
         : "Desk & studio";
+  const matches = (category: string, text: string) =>
+    (filter === "All designs" || category === filter) && text.toLowerCase().includes(query.toLowerCase());
   const shown = CATALOG.filter(
-    (p) =>
-      p.kind !== "custom" &&
-      (filter === "All designs" || group(p.kind) === filter) &&
-      (p.name + " " + p.description)
-        .toLowerCase()
-        .includes(query.toLowerCase()),
+    (p) => p.kind !== "custom" && matches(group(p.kind), p.name + " " + p.description),
   );
+  // The camera drone and the camera arm come first; each opens as your own copy, as on /new.
+  const starters = STARTERS.filter((s) => matches(s.group, s.name + " " + s.line));
+  const [busy, setBusy] = useState(false),
+    [error, setError] = useState("");
+  async function start(starter: (typeof STARTERS)[number]) {
+    setBusy(true);
+    setError("");
+    try {
+      const r = await create("custom", starter.name, starter.parts());
+      navigate(pathFor(r.snapshot.design.id, r.access.editorToken));
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
   return (
     <main className="catalog-page">
       <header className="browse-heading">
@@ -195,7 +215,15 @@ function Catalog({ navigate }: { navigate: Navigate }) {
             />
           </label>
         </div>
+        {error && (
+          <p role="alert" className="error">
+            {error}
+          </p>
+        )}
         <div className="product-grid">
+          {starters.map((starter) => (
+            <StarterCard key={starter.key} starter={starter} busy={busy} onStart={() => void start(starter)} />
+          ))}
           {shown.map((product, i) => (
             <ProductCard
               key={product.kind}
@@ -205,7 +233,7 @@ function Catalog({ navigate }: { navigate: Navigate }) {
             />
           ))}
         </div>
-        {shown.length === 0 && (
+        {shown.length + starters.length === 0 && (
           <div className="empty">
             <Search size={26} />
             <h3>No designs match this search.</h3>
@@ -234,6 +262,51 @@ function Catalog({ navigate }: { navigate: Navigate }) {
         </button>
       </section>
     </main>
+  );
+}
+function StarterCard({
+  starter,
+  busy,
+  onStart,
+}: {
+  starter: (typeof STARTERS)[number];
+  busy: boolean;
+  onStart: () => void;
+}) {
+  const parts = useMemo(() => {
+    const design: Design = { ...createDesign("custom", starter.name, starter.parts()), id: "preview-" + starter.key, createdAt: "", updatedAt: "" };
+    return deriveDesign(design).parts.filter((part) => part.role !== "reference");
+  }, [starter]);
+  return (
+    <article className="product-card" data-testid={"product-" + starter.key}>
+      <button
+        className="product-preview"
+        aria-label={starter.label}
+        data-testid={"browse-" + starter.testId}
+        disabled={busy}
+        onClick={onStart}
+      >
+        <ModelCanvas compact parts={parts} ariaLabel={starter.name + " 3D preview"} />
+        <span className="preview-action">
+          Make it yours <ChevronRight size={16} />
+        </span>
+      </button>
+      <div className="product-meta">
+        <div>
+          <span className="eyebrow">{starter.category}</span>
+          <h3>{starter.name}</h3>
+          <p>{starter.line}</p>
+        </div>
+        <button
+          className="button icon-only"
+          aria-label={"Open " + starter.name}
+          disabled={busy}
+          onClick={onStart}
+        >
+          {busy ? <Loader2 size={20} className="spin" /> : <ChevronRight size={20} />}
+        </button>
+      </div>
+    </article>
   );
 }
 function ProductCard({
@@ -536,8 +609,7 @@ function NewDesign({ navigate }: { navigate: Navigate }) {
     }
   }
   const starters = [
-    { name: "Camera drone", label: "Start with a camera drone", testId: "start-drone", line: "A 250 mm quadcopter with carbon arms, a rounded body and a camera on a gimbal.", image: "/previews/drone.png", start: () => void starter("Camera drone", droneParts()) },
-    { name: "Articulated camera arm", label: "Start with an articulated camera arm", testId: "start-arm", line: "A desk-clamped arm that holds a phone or a small camera.", image: "/previews/arm.png", start: () => void starter("Articulated camera arm", deskArmParts()) },
+    ...STARTERS.map((s) => ({ name: s.name as string, label: s.label as string, testId: s.testId as string | undefined, line: s.line as string, image: s.image as string, start: () => void starter(s.name, s.parts()) })),
     ...CATALOG.filter((p) => p.kind !== "custom").map((p) => ({ name: p.name, label: "Explore " + p.name, testId: undefined as string | undefined, line: p.description, image: `/previews/${p.kind}.png`, start: () => navigate("/designs/" + p.kind) })),
   ];
   return (

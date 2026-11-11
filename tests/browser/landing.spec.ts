@@ -9,9 +9,9 @@ test('landing leads into a separate searchable catalog and preserves navigation'
   await expect(page.locator('.collection')).toHaveCount(0);
   await page.getByTestId('landing-browse').click();
   await expect(page).toHaveURL(/\/browse$/);
-  await expect(page.locator('.product-card')).toHaveCount(6);
+  await expect(page.locator('.product-card')).toHaveCount(8);
   await page.reload();
-  await expect(page.locator('.product-card')).toHaveCount(6);
+  await expect(page.locator('.product-card')).toHaveCount(8);
   await page.getByRole('button', {name:'Growing', exact:true}).click();
   await expect(page.locator('.product-card')).toHaveCount(1);
   await expect(page.getByTestId('product-planter')).toBeVisible();
@@ -102,12 +102,12 @@ test('landing remains usable without WebGL', async ({ page }) => {
   await expect(page.locator('.landing-page h1')).toBeVisible();
   await page.getByTestId('landing-browse').click();
   await expect(page).toHaveURL(/\/browse$/);
-  await expect(page.locator('.product-card')).toHaveCount(6);
+  await expect(page.locator('.product-card')).toHaveCount(8);
 });
 
  test('unavailable design recovery goes straight to browsing', async ({page})=>{
   await page.goto('/studio/missing#token=invalid');
   await page.getByRole('button',{name:'Back to designs',exact:true}).click();
   await expect(page).toHaveURL(/\/browse$/);
-  await expect(page.locator('.product-card')).toHaveCount(6);
+  await expect(page.locator('.product-card')).toHaveCount(8);
 });
