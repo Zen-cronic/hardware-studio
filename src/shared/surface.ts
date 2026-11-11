@@ -5,7 +5,8 @@ import type { SemanticEdit } from "./selection";
 // that the part model actually declares: a numbered hole, a tube bore, an
 // underside channel, a named planar face, a cylindrical outer surface, the
 // rounded edges of a rounded box or the curved surface of an ellipsoid.
-// Anything else falls back to "face with normal ... near (x, y, z) mm".
+// Anything else falls back to a plain "curved surface" or "surface"; the
+// exact point and normal still travel with the target.
 // Coordinates are part-local millimetres of the derived (scaled) part, the
 // same frame used to render the mesh. Holes run along local Y.
 
@@ -109,13 +110,10 @@ function faceFeature(part: Part, axisIndex: 0 | 1 | 2, side: 1 | -1): SurfaceFea
   return { id: `face${side > 0 ? "+" : "-"}${axis}`, kind: "face", axis, side, label: short, short,
     dimensions: isRound && axis === "y" ? { diameter: clean(part.size[0], 3) } : { [`size${AXES[others[0]].toUpperCase()}`]: clean(part.size[others[0]], 3), [`size${AXES[others[1]].toUpperCase()}`]: clean(part.size[others[1]], 3), offset: clean(part.size[axisIndex] / 2, 3) } };
 }
-function normalWords(normal: Vec3) {
-  const axis = dominantAxis(normal);
-  if (Math.abs(normal[axis]) > 0.95) return `${normal[axis] > 0 ? "+" : "−"}${AXES[axis].toUpperCase()}`;
-  return `(${normal.map(v => v.toFixed(2)).join(", ")})`;
-}
-function fallbackFeature(point: Vec3, normal: Vec3): SurfaceFeature {
-  const label = `face with normal ${normalWords(normal)} near (${point.map(formatMm).join(", ")}) mm`;
+// Plain words for a surface the part model does not name, such as a propeller blade's twist.
+// People read this label; the point and normal stay in the target for the design assistant.
+function fallbackFeature(normal: Vec3): SurfaceFeature {
+  const label = Math.abs(normal[dominantAxis(normal)]) > 0.95 ? "surface" : "curved surface";
   return { id: "surface", kind: "surface", label, short: label, dimensions: {} };
 }
 
@@ -141,7 +139,7 @@ export function resolveSurfaceFeature(part: Part, point: Vec3, normal: Vec3): Su
     const axis = candidates.length ? candidates.reduce((best, a) => Math.abs(normal[a]) > Math.abs(normal[best]) ? a : best) : dominantAxis(normal);
     // A rounded box is flat only inside its fillets; anything else is the rounded edge.
     if (part.edgeRadius) return candidates.includes(axis) && Math.abs(normal[axis]) >= 0.98 ? faceFeature(part, axis, point[axis] >= 0 ? 1 : -1) : edgeFeature(part);
-    if (!candidates.length && Math.abs(normal[axis]) < 0.9) return fallbackFeature(point, normal);
+    if (!candidates.length && Math.abs(normal[axis]) < 0.9) return fallbackFeature(normal);
     const side: 1 | -1 = candidates.includes(axis) ? (point[axis] >= 0 ? 1 : -1) : (normal[axis] >= 0 ? 1 : -1);
     return faceFeature(part, axis, side);
   }
@@ -151,14 +149,14 @@ export function resolveSurfaceFeature(part: Part, point: Vec3, normal: Vec3): Su
     if (ny >= 0.5 && (onCap(1) || onCap(-1))) return faceFeature(part, 1, y >= 0 ? 1 : -1);
     if (Math.abs(r - part.size[2] / 2) <= radialTolerance(part.size[2] / 2, tol)) return outerFeature(part, part.size[2]);
     if (part.holeDiameter && Math.abs(r - part.holeDiameter / 2) <= radialTolerance(part.holeDiameter / 2, tol)) return boreFeature(part, part.holeDiameter);
-    return fallbackFeature(point, normal);
+    return fallbackFeature(normal);
   }
   const radial = Math.hypot(x, z), section = sectionAt(part, y);
   if (ny >= 0.5 && (onCap(1) || onCap(-1))) return faceFeature(part, 1, y >= 0 ? 1 : -1);
   if (section.bore > 0 && ny < 0.5 && Math.abs(radial - section.bore) <= radialTolerance(section.bore, tol))
     return boreFeature(part, section.bore * 2);
   if (ny < 0.5 && Math.abs(radial - section.outer) <= radialTolerance(section.outer, tol)) return outerFeature(part, section.outer * 2);
-  return fallbackFeature(point, normal);
+  return fallbackFeature(normal);
 }
 
 export function roundSurfacePoint(point: Vec3): Vec3 {

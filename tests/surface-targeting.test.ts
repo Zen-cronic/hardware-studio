@@ -48,7 +48,9 @@ describe("hit to feature resolution", () => {
     expect(resolveSurfaceFeature(plate, [26, 2.5, 0], [-1, 0, 0]).id).toBe("hole-0");
     expect(resolveSurfaceFeature(plate, [-10, -1, 0], [0, -1, 0])).toMatchObject({ id: "channel", label: "underside channel 20 mm wide" });
     expect(resolveSurfaceFeature(plate, [-10, -4, 25], [0, -1, 0]).id).toBe("face-y");
-    expect(resolveSurfaceFeature(upper, [10, 0, 0], [0.7071, 0.7071, 0])).toMatchObject({ id: "surface", kind: "surface", label: "face with normal (0.71, 0.71, 0.00) near (10, 0, 0) mm" });
+    // An unnamed surface reads as plain words, never coordinates or a normal vector.
+    expect(resolveSurfaceFeature(upper, [10, 0, 0], [0.7071, 0.7071, 0])).toMatchObject({ id: "surface", kind: "surface", label: "curved surface", short: "curved surface" });
+    expect(resolveSurfaceFeature(column, [0, 5, 20], [0, 0, 1])).toMatchObject({ id: "surface", kind: "surface", label: "surface" });
   });
   it("lists only declared features, each with a target that resolves back to itself", () => {
     expect(partFeatures(upper).map(f => f.feature.id)).toEqual(["hole-0", "hole-1", "face+x", "face-x", "face+y", "face-y", "face+z", "face-z"]);
