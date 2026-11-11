@@ -14,7 +14,7 @@ Live app: https://makeanything.space. No sign-in. For a five-step guided path, o
 The guided path at `/judge` walks through these five steps on the camera drone.
 
 1. **Open the camera drone.** Start from one of eight working designs (a camera drone, a desk camera arm, a turntable, a camera slider, a sorting conveyor, a task lamp, a watering planter and a work holder), from simple shapes, or from an imported STEP, STL, OBJ or GLB file. A new request starts from the closest working design.
-2. **Describe a change.** A blue circle follows the pointer and names the exact part or feature under it, for example "Arm, rear right, top face" or "Upper arm link · Ø6.4 mm hole 1". You can also draw a circle around a part to select it. Hold Space (or the mic button) and talk, or type. The target freezes when you start speaking, so moving the mouse mid-sentence does not change what you meant. The assistant answers out loud through the browser's speech synthesis (you can mute it), and its own circle moves to the part it is talking about. If a request is ambiguous, such as "make the hole 8 mm" on a part with two holes, it asks "Which hole?" instead of guessing. On the guided path, click the top of an arm and type or say "make this arm 6 mm thick"; that change is resolved without any AI.
+2. **Describe a change.** A blue circle follows the pointer and names the exact part or feature under it, for example "Arm, rear right, top face" or "Upper arm link · Ø6.4 mm hole 1". You can also draw a circle around a part to select it. Hold Space (or the mic button) and talk, or type. The target freezes when you start speaking, so moving the mouse mid-sentence does not change what you meant. The assistant answers out loud through the browser's speech synthesis (you can mute it), and its own circle moves to the part it is talking about. If a request is ambiguous, such as "make the hole 8 mm" on a part with two holes, it asks "Which hole?" instead of guessing. On the guided path, click the top of an arm and type or say "make this arm 6 mm thick"; that change is resolved without any agent.
 3. **Check it still holds.** Before you apply a change, the check runs the same linear strength simulation on the old and the new part under the same stated load. On the drone, thickening the arms from 4 to 6 mm makes the front-right arm bend 1.19 → 0.36 mm (−70%) under 1 kgf (9.8 N) of peak motor thrust, and its 95th-percentile stress falls from 22.3 to 10.6 MPa (−52%). On the camera arm, the upper link going from 4 to 6 mm bends 0.25 → 0.076 mm (−70%) under a 0.5 kg (4.9 N) payload. The card also says where the part is held, where the load is applied and which material was used.
 4. **See it in your room.** "See it in your room" shows a QR code. Scan it with an iPhone or Android phone to open a view-only page that places the design at real size, using model-viewer with AR Quick Look, Scene Viewer or WebXR. The phone model is prepared when the sheet opens, and the QR code appears once it is ready.
 5. **Get build files.** "Get build files" packages CAD (STEP, STL and GLB), a parts list and assembly steps. Every file is tied to the accepted revision and listed with its SHA-256 hash.
@@ -27,7 +27,7 @@ Two people can edit the same design live from a share link. Dimensions, componen
 
 Makers, students and small hardware teams who want a part designed and checked without learning 3D design software. You point, say what you want and read a plain answer; the exact dimensions, strength setup and build files stay available when you need them.
 
-## How the AI is used
+## How the agent is used
 
 Every change goes through the same four stages: propose, validate, check, accept.
 
@@ -36,7 +36,7 @@ Every change goes through the same four stages: propose, validate, check, accept
 3. **Check.** The strength simulation compares the original and the proposed part under the same recorded part, material, held end, load and mesh settings. A mismatched, unconverged, failed or outdated study is labeled as such instead of compared.
 4. **Accept.** Nothing changes until the person accepts. The accepted revision then drives the 3D view, the room view and the build files.
 
-Voice input uses the browser's Web Speech API, and spoken replies use the browser's speech synthesis. Typing works in every browser. When no AI key is configured, direct dimension and part controls still work.
+Voice input uses the browser's Web Speech API, and spoken replies use the browser's speech synthesis. Typing works in every browser. When no model provider key is configured, direct dimension and part controls still work.
 
 ### Requests it wasn't prepared for
 

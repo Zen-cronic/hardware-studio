@@ -706,7 +706,7 @@ function NewDesign({ navigate }: { navigate: Navigate }) {
 }
 // The server names a seeded design whose before-and-after card is ready: { proofPath } or { proofPath: null }.
 const EXAMPLES_ENDPOINT = "/api/examples";
-// One path on a fresh camera drone, in order. Step 2 is decided by the local rules, so it needs no AI;
+// One path on a fresh camera drone, in order. Step 2 is decided by the local rules, so it needs no agent;
 // step 3 is the change card's own check; step 4 makes the 3D model itself.
 const JUDGE_STEPS = [
   ["Open the camera drone", "Drag to turn it around. Every part is real and editable."],
