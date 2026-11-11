@@ -54,12 +54,16 @@ test("SYNTHETIC: hover front surface without click, freeze speech-onset target, 
  expect(errors).toEqual([]);
 });
 
-test("SYNTHETIC: no target never borrows an explicit selection or submits partial/empty speech",async({page,request})=>{
- await open(page,request);let requests=0;await page.route("**/propose",route=>{requests++;return route.abort();});
+test("SYNTHETIC: with nothing pointed at, the mic sends for the selected part; partial or empty speech never submits",async({page,request})=>{
+ const d=await open(page,request);const sent:any[]=[];
+ await page.route("**/propose",async route=>{sent.push(route.request().postDataJSON());await route.fulfill({json:{source:"ai",explanation:"The interior spacer is now 40 by 20 by 30 mm.",questions:[],command:{id:"synthetic-spacer",actor:"Maker",baseRevision:0,changes:{},readSet:d.snapshot.design.params,customParts:parts.map(p=>p.id==="hidden"?{...p,size:[40,20,30]}:p),summary:"Resize the interior spacer"}}});});
  await page.getByLabel("Choose a part from the list",{exact:true}).click();await page.getByRole("button",{name:"Interior spacer",exact:true}).click();
- await page.getByRole("button",{name:"Speak an instruction",exact:true}).click();await emit(page,"speech");await emit(page,"partial");await emit(page,"final","");expect(requests).toBe(0);
- await emit(page,"final");await expect(page.getByTestId("design-prompt")).toHaveValue("Make this block 40 x 20 x 30 mm");expect(requests).toBe(0);
- await page.getByTestId("propose-change").click();await expect(page.getByRole("alert")).toContainText("Hover over a part");expect(requests).toBe(0);
+ await page.getByRole("button",{name:"Speak an instruction",exact:true}).click();await emit(page,"speech");await expect(page.getByTestId("voice-status")).toHaveText("Listening about Interior spacer.");
+ await emit(page,"partial");await emit(page,"final","");expect(sent).toHaveLength(0);
+ // No Enter: the final words send themselves for the selected part.
+ await emit(page,"final");await expect(page.getByRole("region",{name:"Proposed change"})).toContainText("The interior spacer is now 40 by 20 by 30 mm.");
+ await expect(page.getByTestId("design-prompt")).toHaveValue("Make this block 40 x 20 x 30 mm");
+ expect(sent).toHaveLength(1);expect(sent[0]).toMatchObject({prompt:"Make this block 40 x 20 x 30 mm",selection:{designId:d.snapshot.design.id,revision:0,partIds:["hidden"]}});
 });
 
 test("SYNTHETIC: pointer exit and drag clear prospective target; cancellation discards a late result",async({page,request})=>{
@@ -67,7 +71,7 @@ test("SYNTHETIC: pointer exit and drag clear prospective target; cancellation di
  await page.getByRole("button",{name:"Speak an instruction",exact:true}).click();await hoverPart(page,"right");
  await page.mouse.move(5,5);await expect(page.locator(".model-canvas")).toHaveAttribute("data-hovered-part","");
  await hoverPart(page,"left");await page.mouse.down();await page.mouse.move(650,600,{steps:4});await expect(page.locator(".model-canvas")).toHaveAttribute("data-hovered-part","");await page.mouse.up();
- await emit(page,"speech");await expect(page.getByTestId("voice-status")).toContainText("No part under the pointer");
+ await emit(page,"speech");await expect(page.getByTestId("voice-status")).toHaveText("Talking about the whole design.");
  await page.getByRole("button",{name:"Stop listening",exact:true}).click();await emit(page,"final");expect(requests).toBe(0);await expect(page.getByTestId("voice-status")).toHaveCount(0);
  await openPrompt(page);await expect(page.getByTestId("design-prompt")).toHaveValue("");
 });
@@ -124,7 +128,7 @@ test("SYNTHETIC: speech onset recasts a stationary pointer after geometry moves"
  await expect.poll(()=>page.locator(".model-canvas").getAttribute("data-hovered-part")).not.toBe("left");
  await page.getByRole("button",{name:"Pause mechanism",exact:true}).evaluate((button:HTMLButtonElement)=>button.click());
  const current=await page.locator(".model-canvas").getAttribute("data-hovered-part");await emit(page,"speech");
- await expect(page.getByTestId("voice-status")).toContainText(current==="right"?"Listening about Support block":"No part under the pointer");
+ await expect(page.getByTestId("voice-status")).toContainText(current==="right"?"Listening about Support block":"Talking about the whole design.");
 });
 
 

@@ -195,10 +195,11 @@ test("a free-form spoken wish with nothing pointed at goes to the assistant as a
   for (const id of ["camera", "camera-mount-left", "camera-mount-right"])
     await expect(page.locator(`[data-companion="agent"][data-agent-target="${id}"]`)).toHaveAttribute("data-agent-state", "arrived");
   await expect.poll(async () => (await spoken(page)).join(" ")).toContain("A 22 millimetres camera fits once the two mount cheeks move 1.5 millimetres apart.");
-  // A spoken "this" with nothing pointed at stays a draft, as before.
+  // A spoken "this" with nothing pointed at asks which part, out loud, instead of leaving a draft.
   await page.getByRole("button", { name: "Dismiss proposal", exact: true }).click();
   await page.mouse.move(5, 5);
   await say(page, "make this smaller");
-  await expect(page.getByTestId("voice-status")).toContainText("No part was targeted");
+  await expect(page.getByRole("region", { name: "Proposed change" })).toContainText("Which part do you mean?");
+  await expect.poll(async () => (await spoken(page)).join(" ")).toContain("Which part do you mean?");
   expect(errors).toEqual([]);
 });

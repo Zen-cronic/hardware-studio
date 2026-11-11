@@ -53,9 +53,10 @@ test("holding Space with nothing pointed at says the request is about the whole 
   // Speech starts with nothing pointed at: still the whole design, not a draft or a hover prompt.
   await speak(page, "speech");
   await expect(status).toHaveText("Talking about the whole design.");
-  // "This" with nothing pointed at stays a draft, as before.
+  // "This" with nothing pointed at asks which part instead of leaving a draft.
   await speak(page, "final", "make this smaller");
   await page.keyboard.up("Space");
-  await expect(status).toContainText("No part was targeted");
+  await expect(page.getByRole("region", { name: "Proposed change" })).toContainText("Which part do you mean?");
+  await expect(status).toHaveText("Hold Space or the mic and answer the question aloud.");
   expect(errors).toEqual([]);
 });
