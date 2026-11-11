@@ -1096,7 +1096,7 @@ export default function Studio({
                 <span className="eyebrow">From screen to workbench</span>
                 <h2>Ready for the next step.</h2>
                 <p>
-                  Review your parts and prepare a consistent package for making
+                  Review your parts and prepare build files for making
                   or requesting a quote.
                 </p>
               </div>
@@ -1789,7 +1789,7 @@ function BuildPanel({
   return (
     <>
       <div className="panel-heading">
-        <h2>Build package</h2>
+        <h2>Build files</h2>
         <Download size={18} />
       </div>
       <p className="subtle">CAD files, drawings, parts lists and assembly instructions for revision {design.revision}.</p>
@@ -1819,7 +1819,7 @@ function BuildPanel({
         ) : (
           <PackageOpen size={17} />
         )}{" "}
-        {working ? "Preparing files…" : "Prepare build package"}
+        {working ? "Preparing build files…" : "Prepare build files"}
       </button>
       {restoring && <p role="status" className="subtle">Checking existing package…</p>}
       {statusError && <p role="alert" className="error">{statusError}</p>}
