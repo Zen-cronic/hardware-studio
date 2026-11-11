@@ -205,7 +205,7 @@ export function registerClipRoutes(app: FastifyInstance, options: ClipOptions) {
   });
   app.get("/api/clips/:jobId/download", async (request, reply) => {
     const job = jobs.get(String((request.params as any).jobId)); store.authorize(job.designId, token(request));
-    return reply.header("Content-Type", "video/mp4").header("Content-Disposition", `attachment; filename="hardware-studio-r${job.revision}.mp4"`).send(createReadStream(jobs.archive(job.id)));
+    return reply.header("Content-Type", "video/mp4").header("Content-Disposition", `attachment; filename="make-anything-r${job.revision}.mp4"`).send(createReadStream(jobs.archive(job.id)));
   });
   return jobs;
 }
