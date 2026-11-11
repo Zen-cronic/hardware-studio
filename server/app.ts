@@ -63,6 +63,17 @@ export async function createApp(options: Options = {}) {
   const aiProvider = options.aiProvider || new AiProviderAdmission(aiProviderConfig(process.env).concurrency);
   const store = new Store(options.dbPath || join(dataDir, "studio.sqlite"), options.aiPolicy || aiBudgetConfig(process.env), aiProvider, options.designPolicy || designAdmissionConfig(process.env));
   const app = Fastify({ logger: false, bodyLimit: 13_000_000 });
+  // Send page visits on an old address to the main address, keeping the path and query.
+  // Set CANONICAL_HOST (e.g. "example.com") and LEGACY_HOSTS (comma-separated) to turn it on.
+  const canonicalHost = process.env.CANONICAL_HOST?.trim();
+  const legacyHosts = new Set((process.env.LEGACY_HOSTS ?? "").split(",").map(h => h.trim().toLowerCase()).filter(Boolean));
+  if (canonicalHost && legacyHosts.size) {
+    app.addHook("onRequest", async (request, reply) => {
+      const host = String(request.headers.host ?? "").split(":")[0].toLowerCase();
+      if (!legacyHosts.has(host) || request.method !== "GET" || request.url.startsWith("/api/") || request.url.startsWith("/collab")) return;
+      return reply.redirect(`https://${canonicalHost}${request.url}`, 301);
+    });
+  }
   const python =
     options.python ||
     process.env.CAD_PYTHON ||
