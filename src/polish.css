@@ -96,7 +96,6 @@
 
 /* Five-step guide page: separate step cards, one main action, footer on the content edge */
 :root .judge-steps {display:grid;gap:8px;}
-:root .guide-values td, :root .guide-values td:last-child {color:var(--text);}
 :root .judge-page + .site-footer {padding-left:calc(max(0px, (100% - 1200px) / 2) + 5.5%);padding-right:calc(max(0px, (100% - 1200px) / 2) + 5.5%);}
 :root .site-header:has(+ .judge-page)>.button {background:var(--surface);color:var(--text);border-color:var(--border);}
 :root .site-header:has(+ .judge-page)>.button:hover {background:var(--surface-hover);color:var(--text);border-color:var(--muted);}

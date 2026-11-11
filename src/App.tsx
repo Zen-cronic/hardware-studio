@@ -32,7 +32,6 @@ import { deskArmParts } from "./shared/desk-arm";
 import { droneParts } from "./shared/drone";
 import RequestBox from "./components/RequestBox";
 import ViewInRoom from "./ViewInRoom";
-import GuideExample from "./components/GuideExample";
 import Landing from "./components/Landing";
 import { create, pathFor, recent, type Recent } from "./lib/api";
 import { colors } from "./lib/tokens";
@@ -635,6 +634,15 @@ function NewDesign({ navigate }: { navigate: Navigate }) {
 }
 // The server names a seeded design whose before-and-after card is ready: { proofPath } or { proofPath: null }.
 const EXAMPLES_ENDPOINT = "/api/examples";
+// One path on a fresh camera drone, in order. Step 2 is decided by the local rules, so it needs no AI;
+// step 3 is the change card's own check; step 4 makes the 3D model itself.
+const JUDGE_STEPS = [
+  ["Open the camera drone", "Drag to turn it around. Every part is real and editable."],
+  ["Describe a change", "Click the top of an arm, then type or say “make this arm 6 mm thick”. The change card shows “4 → 6 mm thick”. This works without any AI."],
+  ["Check that it still holds", "On the change card, press Check it before applying. The same strength test runs on the arm as it is and as proposed, under the same motor thrust. Then press Apply change."],
+  ["See it in your room", "Press See it in your room. The 3D model is made automatically; then scan the code to open the drone at real size on your phone."],
+  ["Get build files", "Press Get build files to download the CAD files, parts list and assembly steps for the accepted design. Prepare build files makes them if they are not ready yet."],
+] as const;
 function Judge({ navigate }: { navigate: Navigate }) {
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
@@ -676,31 +684,16 @@ function Judge({ navigate }: { navigate: Navigate }) {
         )}
       </div>
       {error && <p role="alert" className="error">{error}</p>}
-      <div className="guide-layout">
-        <div className="judge-steps">
-          {[
-            ["Open the camera drone", "Drag to turn it around. Every part is real and editable."],
-            ["Describe a change", "Point at a hole in an arm and type or say “make this hole 8 mm”, then press Apply change. This works without any AI."],
-            ["Check that it still holds", "In Engineering & versions, the same strength test runs before and after a change, under the load you set."],
-            ["See it in your room", "Press See it in your room and open the design on your phone at real size."],
-            ["Get build files", "Download the CAD files, parts list and assembly steps for the accepted design."],
-          ].map(([title, body], i) => (
-            <div key={title}>
-              <span className="step-number">{i + 1}</span>
-              <p><strong>{title}</strong> {body}</p>
-            </div>
-          ))}
-        </div>
-        <GuideExample />
+      <div className="judge-steps">
+        {JUDGE_STEPS.map(([title, body], i) => (
+          <div key={title}>
+            <span className="step-number">{i + 1}</span>
+            <p><strong>{title}</strong> {body}</p>
+          </div>
+        ))}
       </div>
-      <button
-        className="button"
-        onClick={() => navigate("/designs/turntable")}
-      >
-        Begin with the turntable <ChevronRight size={18} />
-      </button>
-      <button className="button" onClick={() => navigate("/new")}>
-        Try a new design
+      <button className="button quiet small judge-more" onClick={() => navigate("/browse")}>
+        Or start from another design <ChevronRight size={15} />
       </button>
     </main>
   );
