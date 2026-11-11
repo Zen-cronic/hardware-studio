@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { lookForColor } from "../shared/looks";
 
 // Render-time looks shared by the home page drone and the studio canvas: a carbon twill
 // texture, a motion-blur disc for spinning propellers, and a tapered, twisted blade.
@@ -75,6 +76,9 @@ function srgb(hex: string) {
 export function finishFor(part: { color: string; material: string; process: string; role?: string; size: [number, number, number] }): Finish {
   const m = part.material || "";
   if (isCarbonFibre(m)) return { color: "#ffffff", metalness: 0.1, roughness: 0.62, clearcoat: 0.25, clearcoatRoughness: 0.45, twill: true };
+  // Starter designs carry a named product finish in their colour (shared/looks.ts).
+  const look = lookForColor(part.color);
+  if (look) return { ...look };
   if (/propeller/i.test(m)) return { color: "#2B3542", metalness: 0.05, roughness: 0.32, clearcoat: 0.6, clearcoatRoughness: 0.2, opacity: 0.9 };
   // Dark anodised bell: rough enough that the top face never mirrors the studio light as a white disc.
   if (/brushless motor/i.test(m)) return { color: "#1B1F25", metalness: 0.7, roughness: 0.46, clearcoat: 0.12, clearcoatRoughness: 0.5 };
