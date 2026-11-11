@@ -149,7 +149,7 @@ test("viewer cannot edit; mobile routes have no horizontal overflow", async ({
     for (const route of ["/", "/designs/slider", "/new", url(r, true)]) {
       await p.goto(route);
       await p
-        .getByRole("button", { name: "Hardware Studio home" })
+        .getByRole("button", { name: "Make Anything home" })
         .first()
         .waitFor();
       await expect

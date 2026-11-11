@@ -23,7 +23,7 @@ test('landing leads into a separate searchable catalog and preserves navigation'
   await expect(page.getByTestId('customize-design')).toBeVisible();
   await page.getByRole('button', {name:'All designs', exact:true}).click();
   await expect(page).toHaveURL(/\/browse$/);
-  await page.getByRole('button', {name:'Hardware Studio home'}).first().click();
+  await page.getByRole('button', {name:'Make Anything home'}).first().click();
   await expect(page).toHaveURL(/\/$/);
   await page.getByTestId('landing-try').click();
   await expect(page).toHaveURL(/\/designs\/turntable$/);

@@ -1,13 +1,13 @@
-# Hardware Studio
+# Make Anything
 
 **Point at any part and say what to change.**
-Hardware Studio redesigns it in 3D, tests that it still holds, and lets you see it in your room before you build it.
+Make Anything redesigns it in 3D, tests that it still holds, and lets you see it in your room before you build it.
 
 In its strength simulation, making a part 4 → 6 mm thick cuts its bending by 70% under the same stated load: the camera drone's front-right arm goes from 1.19 to 0.36 mm under 1 kgf (9.8 N) of peak motor thrust, and the camera arm's upper link from 0.25 to 0.076 mm under a 0.5 kg (4.9 N) payload.
 
 Live app: https://hardware-studio-8bev.onrender.com. No sign-in. For a five-step guided path, open https://hardware-studio-8bev.onrender.com/judge.
 
-![Hardware Studio with a camera drone open. The pointer rests on one arm, a blue circle sits under it, and a label names the exact surface: "Arm, rear right, top face". The bar at the bottom says to hold Space or the mic, point at a part and say what to change.](docs/images/studio-pointing.png)
+![Make Anything with a camera drone open. The pointer rests on one arm, a blue circle sits under it, and a label names the exact surface: "Arm, rear right, top face". The bar at the bottom says to hold Space or the mic, point at a part and say what to change.](docs/images/studio-pointing.png)
 
 ## What it does
 

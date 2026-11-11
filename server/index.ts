@@ -15,7 +15,7 @@ try {
     port: config.port,
     host: config.host,
   });
-  console.log(`Hardware Studio listening on ${config.host}:${config.port}`);
+  console.log(`Make Anything listening on ${config.host}:${config.port}`);
 } catch (error) {
   console.error(
     error instanceof Error ? error.message : "Server could not start.",

@@ -77,7 +77,7 @@ export async function collectBrowserNotices(root: string, moduleIds: string[], f
     fonts.push({ file: `fonts/${file}`, sha256: hash(await readFile(join(root, "public/fonts", file))), notice: licensePath, noticeSha256: hash(bytes) });
     if (!sections.some(s => s.startsWith(`===== ${family} font —`))) sections.push(`===== ${family} font — ${licensePath} =====\n${bytes.toString("utf8")}`);
   }
-  const text = "Hardware Studio — browser third-party notices\n\nThese notices accompany bundled dependencies and fonts. Source-level notices are retained where present. Package presence does not imply every feature is used. This file does not assign a license to original application code.\n\n" + sections.join("\n\n") + "\n";
+  const text = "Make Anything — browser third-party notices\n\nThese notices accompany bundled dependencies and fonts. Source-level notices are retained where present. Package presence does not imply every feature is used. This file does not assign a license to original application code.\n\n" + sections.join("\n\n") + "\n";
   return { text, manifest: { schemaVersion: 1, scope: "Bundled JavaScript modules, imported CSS packages and vendored fonts; excludes server/CAD runtime", packages, fonts, noticesSha256: hash(text) } };
 }
 

@@ -49,7 +49,7 @@ export default function ClipWorkbench({ snapshot, token }: { snapshot: Snapshot;
     const response = await fetch(`/api/clips/${job.id}/download`, { headers: { Authorization: "Bearer " + token } });
     if (!response.ok) { let message = "Could not download this video."; try { message = (await response.json()).error || message; } catch {} throw new Error(message); }
     const url = URL.createObjectURL(await response.blob()), anchor = document.createElement("a");
-    anchor.href = url; anchor.download = `hardware-studio-r${job.revision}.mp4`; anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 30000);
+    anchor.href = url; anchor.download = `make-anything-r${job.revision}.mp4`; anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 30000);
   });
   return <section className="clip-workbench" aria-labelledby="clip-heading" style={{ padding: "16px 0", maxWidth: 1440, margin: "0 auto" }}>
     <div style={{ display: "flex", alignItems: "start", justifyContent: "space-between", gap: 24, flexWrap: "wrap" }}>
