@@ -140,7 +140,7 @@ export default function App() {
       )}
       <footer className="site-footer">
         <Brand onClick={() => navigate("/")} />
-        <span>Design it. Try it. Make it your own.</span>
+        <span>Change a working design, check it, then build it yourself.</span>
         <button
           className="button quiet small"
           onClick={() => navigate("/judge")}
@@ -710,7 +710,7 @@ const EXAMPLES_ENDPOINT = "/api/examples";
 // step 3 is the change card's own check; step 4 makes the 3D model itself.
 const JUDGE_STEPS = [
   ["Open the camera drone", "Drag to turn it around. Every part is real and editable."],
-  ["Describe a change", "Click the top of an arm, then type or say “make this arm 6 mm thick”. The change card shows “4 → 6 mm thick”. This works without any AI."],
+  ["Describe a change", "Click the top of an arm, then type or say “make this arm 6 mm thick”. The change card shows “4 → 6 mm thick”."],
   ["Check that it still holds", "On the change card, press Check it before applying. The same strength test runs on the arm as it is and as proposed, under the same motor thrust. Then press Apply change."],
   ["See it in your room", "Press See it in your room. The 3D model is made automatically; then scan the code to open the drone at real size on your phone."],
   ["Get build files", "Press Get build files to download the CAD files, parts list and assembly steps for the accepted design. Prepare build files makes them if they are not ready yet."],

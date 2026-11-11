@@ -23,7 +23,7 @@ export default function LandingPanels({ navigate, still = false }: { navigate: N
           </div>
         </div>
         <div className="lp-card lp-proof">
-          <p className="lp-proof-label">Checked on Arm, front right: 4 mm to 6 mm</p>
+          <p className="lp-proof-label">Checked on the front-right arm: 4 mm to 6 mm</p>
           <p className="lp-proof-big"><strong>70%</strong> less bending</p>
           <p className="lp-proof-load"><Ruler size={15}/>Same test both times: 1 kgf of motor thrust at the tip</p>
           <div className="lp-bars">

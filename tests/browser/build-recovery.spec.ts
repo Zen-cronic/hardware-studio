@@ -16,9 +16,9 @@ test('real package survives a failed status request, reload, newer revision and 
  });
  const buildResponse=page.waitForResponse(r=>r.request().method()==='POST'&&r.url().endsWith('/build'));
  await page.getByTestId('generate-build').click();const job=await(await buildResponse).json();
- await expect(page.getByText('Could not check your package. Trying again…',{exact:true})).toBeVisible();
+ await expect(page.getByText('Could not check your build files. Trying again…',{exact:true})).toBeVisible();
  const download=page.getByRole('link',{name:'Download package',exact:true});await expect(download).toBeVisible({timeout:60000});
- await expect(page.getByText('Could not check your package. Trying again…',{exact:true})).toHaveCount(0);
+ await expect(page.getByText('Could not check your build files. Trying again…',{exact:true})).toHaveCount(0);
  const archive=await request.get('/api/builds/'+job.id+'/download',{headers:{Authorization:'Bearer '+created.access.editorToken}});expect(archive.status()).toBe(200);const originalHash=sha(await archive.body());
  await page.reload();await studioTab(page, "Build");await expect(download).toBeVisible();expect(await download.getAttribute('href')).toContain('/api/builds/'+job.id+'/download');expect(builds).toBe(1);
  await studioTab(page, "Design");{ await openDimensions(page); await page.getByTestId('param-scale').fill('1.2'); }await page.getByTestId('apply-dimensions').click();

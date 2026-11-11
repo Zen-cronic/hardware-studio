@@ -27,7 +27,7 @@ export default function Landing({ navigate }: { navigate: Navigate }) {
         <p className="lp-who">For makers, students and small hardware teams. Today it starts from a camera drone, a desk arm and six other working designs. It designs and checks the parts; you print, cut or order them yourself.</p>
         <details className="lp-how">
           <summary>How we checked</summary>
-          <p>Under the same 1 kgf (9.8 N) peak motor thrust, upward at the motor end, Arm, front right bends 70% less (1.19 mm to 0.36 mm) and its typical stress drops 52%.</p>
+          <p>Under the same 1 kgf (9.8 N) peak motor thrust, upward at the motor end, the drone’s front-right arm bends 70% less (1.19 mm to 0.36 mm) and its typical stress drops 52%.</p>
           <p>It is a strength simulation of the one arm, held where it meets the frame, refined until the result stopped changing. Holding the arm fully fixed at the frame is a simplification.</p>
         </details>
       </div>
@@ -58,7 +58,7 @@ function LandingHero({ navigate, still }: { navigate: Navigate; still: boolean }
     <img className="lp-decor lp-d-bolt" src="/decor/bolt.webp" alt="" aria-hidden="true"/>
     <div className="lp-hero-copy">
       <h1 id="landing-title">Make anything from scratch.</h1>
-      <p className="lp-sub">Point at any part and say what to change. Make Anything redesigns it in 3D, tests that it still holds, and lets you see it in your room before you build it.</p>
+      <p className="lp-sub">Click any part of a 3D design and say or type what to change. Make Anything redesigns it, checks the part’s strength with a computer simulation, shows it at real size on your phone, and gives you the CAD files and parts list to build it.</p>
       <HeroModel still={still || reduced}/>
       <RequestBox navigate={navigate} still={still}/>
     </div>

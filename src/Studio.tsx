@@ -297,8 +297,8 @@ export default function Studio({
         if (stopped || version !== buildReadVersion.current) return;
         retry = !(e instanceof ApiError && e.status >= 400 && e.status < 500 && e.status !== 429);
         setBuildStatusError(retry
-          ? "Could not check your package. Trying again…"
-          : "Package access could not be verified. Reopen the design with a valid invitation.");
+          ? "Could not check your build files. Trying again…"
+          : "We could not confirm you can open these build files. Reopen the design from a valid invite link.");
       } finally {
         if (!stopped) {
           setBuildRestoring(false);
@@ -1836,7 +1836,7 @@ function BuildPanel({
         )}{" "}
         {working ? "Preparing build files…" : "Prepare build files"}
       </button>
-      {restoring && <p role="status" className="subtle">Checking existing package…</p>}
+      {restoring && <p role="status" className="subtle">Checking for build files you already made…</p>}
       {statusError && <p role="alert" className="error">{statusError}</p>}
       {job?.status === "ready" && (
         <div className="build-ready">
@@ -1904,7 +1904,7 @@ function BuildPanel({
         </div>
       </details>
       <details className="engineering-notes">
-        <summary>Review before fabrication</summary>
+        <summary>Check before you make it</summary>
         {derived.warnings.map((w) => (
           <p key={w}>{w}</p>
         ))}

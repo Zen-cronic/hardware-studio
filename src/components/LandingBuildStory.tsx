@@ -22,7 +22,7 @@ export default function LandingBuildStory({parts,navigate,onSize}:{parts:Part[];
     <section className="landing-build-story" aria-labelledby="landing-build-title">
       <div className="landing-build-copy">
         <p className="eyebrow">From design to build files</p>
-        <h2 id="landing-build-title">The details<br/>come with it.</h2>
+        <h2 id="landing-build-title">Build files<br/>come with it.</h2>
         <p>The same dimensions shape the 3D model, parts list and assembly instructions. See what changes before you start making.</p>
         <button className="button" onClick={()=>navigate('/judge')}>Explore the workflow <ChevronRight size={18}/></button>
       </div>
