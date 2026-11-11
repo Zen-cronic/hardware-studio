@@ -6,7 +6,7 @@ import { createSelection } from "../src/shared/selection";
 import { validateDesign } from "../src/shared/engine";
 import { partFeatures } from "../src/shared/surface";
 import { normalizeSpokenNumbers } from "../src/shared/spoken-numbers";
-import { askWhichPart, clarifyCandidates, isClarification, namedFeature, resolveAnswer } from "../src/lib/clarify";
+import { askForTarget, askWhichPart, clarifyCandidates, isClarification, namedFeature, pointsAtSomething, resolveAnswer } from "../src/lib/clarify";
 
 function drone() {
   const store = new Store(":memory:");
@@ -55,6 +55,28 @@ describe("asking which part, without the assistant", () => {
       .toMatchObject({ kind: "resolved", how: "screen", candidate: { partId: "arm-rear-left" } });
     expect(resolveAnswer(snapshot, "um", candidates, null)).toMatchObject({ kind: "unclear" });
     expect(resolveAnswer(snapshot, "never mind", candidates, null)).toEqual({ kind: "cancel" });
+  });
+});
+
+describe("a spoken request with nothing pointed at or selected", () => {
+  it("asks which part for \"this\" instead of leaving a draft, and leaves whole-design words alone", () => {
+    const { snapshot } = drone();
+    const ask = askForTarget(snapshot, "make this thicker", "Maker", "t1")!;
+    expect(isClarification(ask)).toBe(true);
+    expect(ask.source).toBe("local");
+    expect(ask.target).toBeUndefined();
+    expect(ask.explanation).toBe("Nothing was pointed at or selected.");
+    expect(ask.questions).toEqual(["Which part do you mean? Point at it and say this one, or say its name."]);
+    expect(ask.command).toMatchObject({ id: "t1", actor: "Maker", baseRevision: snapshot.design.revision, changes: {}, summary: "make this thicker" });
+    // No listed choices: the answer joins the request and is proposed again.
+    expect(clarifyCandidates(snapshot, ask, "make this thicker")).toEqual([]);
+    for (const words of ["make it nicer", "move that up", "make these smaller", "put a hole here"]) expect(isClarification(askForTarget(snapshot, words, "Maker", "t2"))).toBe(true);
+    // One of several parts of a kind keeps its listed choice.
+    expect(askForTarget(snapshot, "make the arm 6 mm thick", "Maker", "t3")?.questions?.[0]).toMatch(/^Which arm:/);
+    expect(askForTarget(snapshot, "Make room for a bigger camera", "Maker", "t4")).toBeNull();
+    expect(askForTarget(snapshot, "make the battery smaller", "Maker", "t5")).toBeNull();
+    expect(pointsAtSomething("Make the platter diameter 240 mm")).toBe(false);
+    expect(pointsAtSomething("Thicken this")).toBe(true);
   });
 });
 

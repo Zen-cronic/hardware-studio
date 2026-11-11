@@ -73,15 +73,15 @@ import ReferenceInput, { VoiceButton } from "./components/ReferenceInput";
 import CompanionCursor, { AgentDock, type AgentPointer } from "./components/CompanionCursor";
 import RoomSheet from "./components/RoomSheet";
 import ProposalCheck, { type ProposalCheckHandle } from "./components/ProposalCheck";
-import { replyLines, useVoiceAgent } from "./lib/voiceAgent";
-import { askWhichPart, clarifyCandidates, isClarification, resolveAnswer } from "./lib/clarify";
+import { replyLines, STOP_WORDS, useVoiceAgent } from "./lib/voiceAgent";
+import { askForTarget, clarifyCandidates, isClarification, pointsAtSomething, resolveAnswer } from "./lib/clarify";
 import type { PartTargetRequest, ScreenTarget } from "./lib/projection";
 import { Brand, type Navigate } from "./App";
 import { colors } from "./lib/tokens";
 import { useDialog } from "./lib/useDialog";
 import { FIRST_REQUEST_KEY } from "./lib/heroProduct";
 type Tab = "design" | "assemble" | "build";
-/** The dock hint while Space or the mic is held with nothing pointed at or pinned. */
+/** The hint while a mic listens with nothing pointed at, pinned or selected. */
 const WHOLE_DESIGN_HINT = "Talking about the whole design.";
 export default function Studio({
   id,
@@ -389,33 +389,33 @@ export default function Studio({
       setPromptBusy(false);
     }
   }
-  function speechStarted() {
-    // Freeze the exact pointed surface at speech onset; later movement cannot retarget it.
-    const target = freezeTarget(hoverPicker.current?.() || null);
-    utteranceRef.current = target;
-    setVoiceTarget(target);
-    const name = target && snapshot ? targetLabel(snapshot, target) : "";
-    setVoiceMessage(name ? `Listening about ${name}.` : "No part under the pointer. Your words will be kept as a draft.");
-  }
-  function spokenRequest(text: string, wholeDesign = false) {
+  // A spoken request sends itself, from either mic. The words stay in the request box only when
+  // the studio cannot act on them now.
+  function spokenRequest(text: string) {
     const target = utteranceRef.current;
     utteranceRef.current = null;
     setPrompt(text); setRequestSelection(target); setUnboundVoice(!target);
     setEditorMode("prompt"); setLeftPanelOpen(true); setRightPanelOpen(false); setMobileEditor("prompt");
-    if (!target || !snapshot) {
-      const ask = snapshot && !proposal && !readOnly && tab === "design" ? askWhichPart(snapshot, text, actor, uid()) : null;
-      if (ask) { setProposalBinding(null); setProposal(ask); return; }
-      // Hold-to-talk with nothing pointed at and no "this" or "these": a request about the whole design.
-      // The click-to-talk button keeps such words as a draft.
-      if (wholeDesign && snapshot && !proposal && !readOnly && tab === "design" && !/\b(this|that|these|those|here|there|it)\b/i.test(text)) {
-        setUnboundVoice(false); setRequestSelection(null); setVoiceMessage("");
-        void propose(text, null, true); return;
-      }
-      setVoiceMessage("No part was targeted. Hover over a part and try again, or edit the typed request."); return;
+    if (!snapshot) return;
+    const blocked = readOnly ? "Your words are in the request box. Make your own copy to send them."
+      : tab !== "design" ? "Your words are in the request box. Return to Design to send them."
+      : proposal ? "Your words are in the request box. Review or dismiss the open change, then send them."
+      : "";
+    if (blocked) {
+      // Words about the whole design can be sent later as they are; "this" still needs a part.
+      if (!target && !pointsAtSomething(text)) setUnboundVoice(false);
+      setError(blocked); return;
+    }
+    if (!target) {
+      // Nothing pointed at or selected: "this", or one of several parts of the same kind, asks which part;
+      // any other words are about the whole design.
+      const ask = askForTarget(snapshot, text, actor, uid());
+      if (ask) { setProposalBinding(null); setProposal(ask); setVoiceMessage(""); return; }
+      setUnboundVoice(false); setVoiceMessage("");
+      void propose(text, null, true); return;
     }
     try { assertCurrentSelection(snapshot, target); }
     catch (error) { setError((error as Error).message); return; }
-    if (proposal || readOnly || tab !== "design") { setError("Return to the current design before speaking another request."); return; }
     setVoiceMessage("");
     void propose(text, target);
   }
@@ -433,7 +433,7 @@ export default function Studio({
   const checkRef = useRef<ProposalCheckHandle>(null);
   function voiceListening(active: boolean) {
     setVoiceOn(active);
-    if (!active) { utteranceRef.current = null; setVoiceTarget(null); setVoiceMessage(message => /^(Listening about|Hover over a part, then|No part under the pointer|Talking about the whole design)/.test(message) ? "" : message); }
+    if (!active) { utteranceRef.current = null; setVoiceTarget(null); setVoiceMessage(message => /^(Listening about|Hover over a part, then|Talking about the whole design)/.test(message) ? "" : message); }
     else { setVoiceMessage("Hover over a part, then speak your request."); setPlaying(false); }
   }
   // Hold to talk (Space or the dock mic), from the press until speech starts: the hint follows the pointer.
@@ -442,18 +442,17 @@ export default function Studio({
     setHoldWaiting(active);
     voiceListening(active);
   }
-  function companionSpeechStarted() {
+  // Both mics fix the target at speech onset: the part or surface under the pointer, else the pinned
+  // or selected part (pressing a mic leaves the model), else the whole design. Later pointer movement
+  // cannot retarget it, and a target from before an applied change is moved to the current revision, or dropped.
+  function speechStarted() {
     setHoldWaiting(false);
-    speechStarted();
-    // Holding the mic leaves the model, so a pinned or selected part is the target.
-    // A target from before an applied change is moved to the current revision, or dropped.
+    const pointed = freezeTarget(hoverPicker.current?.() || null);
     const pinned = snapshot ? currentTarget(snapshot, requestSelection === undefined ? selection : requestSelection) : null;
-    if (utteranceRef.current) return;
-    // Nothing pointed at or pinned: a held request is about the whole design.
-    if (!pinned || !snapshot) { if (!isClarification(proposal)) setVoiceMessage(WHOLE_DESIGN_HINT); return; }
-    const target = freezeTarget(pinned);
+    const target = pointed ?? freezeTarget(pinned);
     utteranceRef.current = target; setVoiceTarget(target);
-    setVoiceMessage(`Listening about ${targetLabel(snapshot, target)}.`);
+    if (target && snapshot) setVoiceMessage(`Listening about ${targetLabel(snapshot, target)}.`);
+    else setVoiceMessage(isClarification(proposal) ? "" : WHOLE_DESIGN_HINT);
   }
   // A question asked before any assistant call stays open for a spoken answer.
   const clarifying = isClarification(proposal);
@@ -468,7 +467,9 @@ export default function Studio({
       if (/\b(never ?mind|cancel|forget it|stop)\b/i.test(text)) { setProposal(null); return; }
       const combined = `${prompt.trim()}. ${text}`.slice(0, 2000), target = pointed ?? proposalBinding;
       setProposal(null); setPrompt(combined); setRequestSelection(target ?? undefined);
-      void propose(combined, target);
+      // With nothing pointed at, the answer itself names what the request is about.
+      setUnboundVoice(false);
+      void propose(combined, target, true);
       return;
     }
     const answer = resolveAnswer(snapshot, text, candidates, pointed, c => projector.current?.({ partIds: [c.partId], featureId: c.featureId }) ?? null);
@@ -477,11 +478,13 @@ export default function Studio({
     setProposal(null); setRequestSelection(answer.candidate.target); setUnboundVoice(false); setVoiceMessage("");
     void propose(prompt, answer.candidate.target);
   }
+  // "Stop" is never a design request: it ends an open question and sends nothing.
+  function stopRequest() { utteranceRef.current = null; if (clarifying) setProposal(null); }
   const voice = useVoiceAgent({
     disabled: !snapshot || readOnly || busy || promptBusy || (!!proposal && !clarifying) || pendingCircleSelection || tab !== "design",
     spaceToTalk: !!snapshot && !readOnly && tab === "design",
-    onSpeechStart: companionSpeechStarted, onText: text => clarifying ? answerClarification(text) : spokenRequest(text, true), onError: setError, onListeningChange: holdListening,
-    onStop: () => { utteranceRef.current = null; if (clarifying) setProposal(null); },
+    onSpeechStart: speechStarted, onText: text => clarifying ? answerClarification(text) : spokenRequest(text), onError: setError, onListeningChange: holdListening,
+    onStop: stopRequest,
     reply: proposal ? { key: proposal.command.id, lines: [...replyLines(proposal),
       ...(candidates.length && !proposal.questions?.some(q => /say this one/i.test(q)) ? ["Point at one and say this one, or say the left one or the right one."] : [])].slice(0, 4) } : null,
   });
@@ -1236,8 +1239,8 @@ export default function Studio({
                   </>
                 )}
                 <div className="voice-control">
-                <VoiceButton label="Hands-free" disabled={readOnly || busy || promptBusy || !!proposal || pendingCircleSelection}
-                  onText={text => { voice.expectReply(); spokenRequest(text); }} onError={setError} onSpeechStart={speechStarted}
+                <VoiceButton label="Hands-free" disabled={readOnly || busy || promptBusy || (!!proposal && !clarifying) || pendingCircleSelection}
+                  onText={text => { if (STOP_WORDS.test(text.trim())) return stopRequest(); voice.expectReply(); if (clarifying) answerClarification(text); else spokenRequest(text); }} onError={setError} onSpeechStart={speechStarted}
                   onListeningChange={voiceListening} />
                 {(voiceOn || voiceMessage || proposal) && <p className="voice-status" role="status" data-testid="voice-status">{proposal && !clarifying ? "Review or dismiss this proposal before using voice." : clarifying && !voiceMessage ? "Hold Space or the mic and answer the question aloud." : holdWholeDesign ? WHOLE_DESIGN_HINT : voiceMessage}</p>}
                 </div>

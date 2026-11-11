@@ -133,6 +133,27 @@ export function askWhichPart(snapshot: Snapshot, prompt: string, actor: string, 
   };
 }
 
+/** Words that point at something: "this", "that one", "these", "it". */
+export function pointsAtSomething(prompt: string): boolean {
+  return /\b(this|that|these|those|here|there|it)\b/i.test(prompt);
+}
+
+/**
+ * The studio's own question for a spoken request with nothing pointed at or selected: which of
+ * several parts of one kind, or, when the words point ("make this thicker"), which part at all.
+ * Null when the words are about the whole design.
+ */
+export function askForTarget(snapshot: Snapshot, prompt: string, actor: string, id: string): Proposal | null {
+  const which = askWhichPart(snapshot, prompt, actor, id);
+  if (which || !pointsAtSomething(prompt)) return which;
+  return {
+    source: "local",
+    explanation: "Nothing was pointed at or selected.",
+    questions: ["Which part do you mean? Point at it and say this one, or say its name."],
+    command: { id, baseRevision: snapshot.design.revision, actor, changes: {}, readSet: { ...snapshot.design.params }, summary: prompt.slice(0, 180) },
+  };
+}
+
 const POINTING = /\b(this|that|here|there|it)\b/;
 const CANCEL = /\b(never ?mind|cancel|forget it|stop)\b/;
 /**

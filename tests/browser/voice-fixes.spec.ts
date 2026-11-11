@@ -17,11 +17,17 @@ test("without speech recognition, Space shows the dock hint and no error", async
   await expect(page.getByRole("alert")).toHaveCount(0);
 });
 
-test("a typed request after a spoken one that made no proposal is not read aloud", async ({ page, request }) => {
+test("a typed request after a spoken question is not read aloud", async ({ page, request }) => {
   await open(page, request);
-  // Nothing pointed at and "it" in the words: the studio asks for a target, no proposal.
+  // Nothing pointed at and "it" in the words: the studio asks which part, out loud, and sends nothing.
+  const requests: string[] = [];
+  page.on("request", r => { if (r.method() === "POST" && r.url().includes("/propose")) requests.push(r.url()); });
+  await page.mouse.move(5, 5);
   await say(page, "make it nicer");
-  await expect(page.getByText("No part was targeted.", { exact: false })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Proposed change" })).toContainText("Which part do you mean?");
+  await expect.poll(() => spoken(page)).toContain("Which part do you mean?");
+  expect(requests).toEqual([]);
+  await page.getByRole("button", { name: "Dismiss proposal", exact: true }).click();
   const before = (await spoken(page)).length;
   const prompt = page.getByTestId("design-prompt");
   await prompt.fill("");

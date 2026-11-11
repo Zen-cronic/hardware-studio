@@ -33,25 +33,29 @@ async function open(page: Page, request: APIRequestContext) {
 }
 const speak = (page: Page) => page.getByRole('button', { name: 'Speak an instruction', exact: true });
 
-test('SYNTHETIC: speech without a target keeps a draft without making a proposal or changing a revision', async ({ page, request }) => {
+test('SYNTHETIC: speech with nothing pointed at or selected sends a whole-design request without pressing Enter', async ({ page, request }) => {
   await installRecognizer(page);
   const d = await open(page, request);
-  let proposals = 0;
-  await page.route('**/propose', async route => { proposals++; await route.abort(); });
+  const sent: any[] = [];
+  page.on('request', r => { if (r.method() === 'POST' && r.url().endsWith('/propose')) sent.push(r.postDataJSON()); });
   { await openPrompt(page); await page.getByTestId('design-prompt').fill('Keep the speed.'); }
   await speak(page).click();
   await expect(page.getByRole('button', { name: 'Stop listening' })).toBeVisible();
   const settings = await page.evaluate(() => {
     const r = (window as any).__syntheticVoice.instances[0];
     r.onspeechstart();
-    const result: any = [{ transcript: 'Make the platter 240 millimeters wide.' }]; result.isFinal = true;
+    const result: any = [{ transcript: 'Make the platter diameter 240 millimeters.' }]; result.isFinal = true;
     r.onresult({ results: [result] });
     r.onend();
     return { lang: r.lang, interimResults: r.interimResults };
   });
   expect(settings).toEqual({ lang: 'en-US', interimResults: false });
-  { await openPrompt(page); await expect(page.getByTestId('design-prompt')).toHaveValue('Make the platter 240 millimeters wide.'); }
-  expect(proposals).toBe(0);
+  await expect(page.getByRole('region', { name: 'Proposed change' })).toContainText('Platter diameter');
+  await expect(page.getByTestId('design-prompt')).toHaveValue('Make the platter diameter 240 millimeters.');
+  expect(sent).toHaveLength(1);
+  expect(sent[0].prompt).toBe('Make the platter diameter 240 millimeters.');
+  expect(sent[0].selection).toBeUndefined();
+  // A proposal is only a preview: nothing changes until it is applied.
   const snap = await request.get('/api/designs/' + d.snapshot.design.id, { headers: { Authorization: 'Bearer ' + d.access.editorToken } });
   expect((await snap.json()).design.revision).toBe(0);
 });
